@@ -1,17 +1,40 @@
+FROM node:20.13.1-bullseye-slim AS base
 
-# Use the official Node.js image as the base image
-FROM node:20
+WORKDIR /usr/src/app
+COPY . ./
 
-# Set the working directory inside the container
+RUN apt-get update && \
+  npm install -g npm@10
+
+RUN npm ci
+RUN npm run build
+
+# Development stage
+FROM node:20.13.1-bullseye-slim AS dev
+
+WORKDIR /usr/src/app
+ENV NODE_ENV=development
+
+RUN apt-get update && apt-get install -y curl procps && apt-get clean
+
+COPY --from=base /usr/src/app/ ./
+
+CMD npm run start:debug
+
+# Production stage
+FROM node:20.13.1-bullseye-slim AS prod
+
 WORKDIR /usr/src/app
 
-# Copy package.json and package-lock.json to the working directory
-COPY package*.json ./
+COPY --from=base /usr/src/app/node_modules ./node_modules
+COPY --from=base /usr/src/app/dist ./dist
+COPY --from=base /usr/src/app/package*.json ./
 
-# Install the application dependencies
-RUN npm ci
+EXPOSE 8080
 
-# Copy the rest of the application files
-COPY . .
+RUN apt-get update && \
+  apt-get install -y curl && \
+  apt-get clean && \
+  npm prune --omit="dev"
 
-CMD ["npm", "run", "start:dev"]
+CMD ["node", "dist/main.js"]
