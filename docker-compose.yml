@@ -15,14 +15,17 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      target: dev
     ports:
       - "8080:8080"
+    labels:
+      - dev.dozzle.name=backend-nestjs
     volumes:
       - ./src:/usr/src/app/src
     environment:
       DATABASE_HOST: "host.docker.internal"
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8080/health-check" ]
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/api/health-check" ]
     depends_on:
       database:
         condition: service_healthy
@@ -34,6 +37,8 @@ services:
       POSTGRES_USER: ${DATABASE_USER}
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
       POSTGRES_DB: ${DATABASE_NAME}
+    labels:
+      - dev.dozzle.name=postgresql-main
     volumes:
       - ./data:/var/lib/postgresql/data
     ports:
