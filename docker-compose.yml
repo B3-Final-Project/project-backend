@@ -23,7 +23,7 @@ services:
     volumes:
       - ./src:/usr/src/app/src
     environment:
-      DATABASE_HOST: "host.docker.internal"
+      DATABASE_HOST: "database"
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8080/api/health-check" ]
     depends_on:
@@ -40,11 +40,14 @@ services:
     labels:
       - dev.dozzle.name=postgresql-main
     volumes:
-      - ./data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+
+volumes:
+  postgres_data:
 
 networks:
   default:
