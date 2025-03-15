@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { CognitoIdentityServiceProvider } from 'aws-sdk';
+import { AuthenticationResultType } from 'aws-sdk/clients/cognitoidentityserviceprovider';
 
 @Injectable()
 export class AuthService {
@@ -26,7 +27,10 @@ export class AuthService {
     }
   }
 
-  public async login(username: string, password: string): Promise<any> {
+  public async login(
+    username: string,
+    password: string,
+  ): Promise<AuthenticationResultType> {
     const params = {
       AuthFlow: 'USER_PASSWORD_AUTH',
       ClientId: this.clientId,
