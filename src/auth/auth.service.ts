@@ -62,7 +62,7 @@ export class AuthService {
 
       return result.AuthenticationResult; // Includes AccessToken, IdToken, RefreshToken
     } catch (error) {
-      throw new Error(error.message);
+      throw new Error(error);
     }
   }
 
@@ -79,7 +79,7 @@ export class AuthService {
     try {
       return await this.cognito.confirmSignUp(params).promise();
     } catch (error) {
-      throw new Error(error.message);
+      throw new Error(error);
     }
   }
 
