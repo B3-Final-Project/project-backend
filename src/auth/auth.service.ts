@@ -1,5 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { CognitoIdentityServiceProvider } from 'aws-sdk';
+import { AuthenticationResultType } from 'aws-sdk/clients/cognitoidentityserviceprovider';
+import { Request, Response } from 'express';
+import { serialize } from 'cookie';
+import { LoginDto } from './dto/login.dto';
+import { RegisterDto } from './dto/register.dto';
 
 @Injectable()
 export class AuthService {
@@ -11,12 +16,12 @@ export class AuthService {
     this.clientId = process.env.COGNITO_CLIENT_ID;
   }
 
-  async register(body: any): Promise<any> {
+  async register(body: RegisterDto): Promise<any> {
     const params = {
       ClientId: this.clientId,
-      Username: body.username,
+      Username: body.email,
       Password: body.password,
-      UserAttributes: [{ Name: 'email', Value: body.email }],
+      // UserAttributes: [{ Name: 'display_name', Value: body.username }],
     };
 
     try {
@@ -26,7 +31,12 @@ export class AuthService {
     }
   }
 
-  public async login(username: string, password: string): Promise<any> {
+  public async login(
+    body: LoginDto,
+    res: Response,
+  ): Promise<AuthenticationResultType> {
+    const { username, password } = body;
+
     const params = {
       AuthFlow: 'USER_PASSWORD_AUTH',
       ClientId: this.clientId,
@@ -38,9 +48,22 @@ export class AuthService {
 
     try {
       const result = await this.cognito.initiateAuth(params).promise();
+
+      const refreshToken = result.AuthenticationResult.RefreshToken;
+
+      if (refreshToken) {
+        const serializedCookie = serialize('refreshToken', refreshToken, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          maxAge: 60 * 60 * 24 * 30,
+          path: '/',
+        });
+        res.setHeader('Set-Cookie', serializedCookie);
+      }
+
       return result.AuthenticationResult; // Includes AccessToken, IdToken, RefreshToken
     } catch (error) {
-      throw new Error(error.message);
+      throw new Error(error);
     }
   }
 
@@ -57,11 +80,13 @@ export class AuthService {
     try {
       return await this.cognito.confirmSignUp(params).promise();
     } catch (error) {
-      throw new Error(error.message);
+      throw new Error(error);
     }
   }
 
-  async refreshToken(refreshToken: string): Promise<any> {
+  async refreshToken(req: Request): Promise<any> {
+    const refreshToken = req.cookies.refreshToken;
+
     const params = {
       AuthFlow: 'REFRESH_TOKEN_AUTH',
       ClientId: this.clientId,
