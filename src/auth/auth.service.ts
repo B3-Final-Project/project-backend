@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { CognitoIdentityServiceProvider } from 'aws-sdk';
+import { CognitoIdentityServiceProvider, CognitoIdentity } from 'aws-sdk';
 import { AuthenticationResultType } from 'aws-sdk/clients/cognitoidentityserviceprovider';
 import { Request, Response } from 'express';
 import { serialize } from 'cookie';
@@ -102,4 +102,41 @@ export class AuthService {
       throw new Error(error.message);
     }
   }
+
+  async googleAuthRedirect(req: Request) {
+    const user = req.user;
+
+    // @ts-expect-error should contain an id_token
+    const googleIdToken = req.authInfo.id_token;
+
+    const cognitoIdentity = new CognitoIdentity({
+      region: 'YOUR_AWS_REGION',
+    });
+
+    const params = {
+      IdentityPoolId: 'YOUR_IDENTITY_POOL_ID',
+      Logins: {
+        'accounts.google.com': googleIdToken,
+      },
+    };
+
+    const identityId = await cognitoIdentity.getId(params).promise();
+
+    const credentials = await cognitoIdentity
+      .getCredentialsForIdentity({
+        IdentityId: identityId.IdentityId,
+        Logins: {
+          'accounts.google.com': googleIdToken,
+        },
+      })
+      .promise();
+
+    return {
+      identityId: identityId.IdentityId,
+      credentials,
+      user,
+    };
+  }
+
+  async ssoGoogle(body: any, res: Response) {}
 }

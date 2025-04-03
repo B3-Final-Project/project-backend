@@ -1,19 +1,23 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Post, Req, Res } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { ConfirmAccountDto } from './dto/confirm-account.dto';
-import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { RegisterDto } from './dto/register.dto';
+import { Request, Response } from 'express';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('login')
-  public async login(@Body() body: LoginDto) {
-    return this.authService.login(body.username, body.password);
+  public async login(@Body() body: LoginDto, @Res() res: Response) {
+    return this.authService.login(body, res);
   }
 
+  @Post('google')
+  public async ssoGoogle(@Body() body: LoginDto, @Res() res: Response) {
+    return this.authService.ssoGoogle(body, res);
+  }
   @Post('register')
   public async register(@Body() body: RegisterDto) {
     return this.authService.register(body);
@@ -25,7 +29,7 @@ export class AuthController {
   }
 
   @Post('refresh')
-  async refresh(@Body() body: RefreshTokenDto) {
-    return await this.authService.refreshToken(body.refreshToken);
+  async refresh(@Req() req: Request) {
+    return await this.authService.refreshToken(req);
   }
 }

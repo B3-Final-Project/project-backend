@@ -7,6 +7,8 @@ async function bootstrap() {
   dotenv.configDotenv();
   const app = await NestFactory.create(AppModule);
 
+  app.enableCors();
+
   app.useGlobalPipes(
     new ValidationPipe({
       exceptionFactory: (errors): Error => {
