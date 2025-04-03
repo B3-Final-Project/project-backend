@@ -18,9 +18,9 @@ export class AuthService {
   async register(body: any): Promise<any> {
     const params = {
       ClientId: this.clientId,
-      Username: body.username,
+      Username: body.email,
       Password: body.password,
-      UserAttributes: [{ Name: 'email', Value: body.email }],
+      UserAttributes: [{ Name: 'custom:display_name', Value: body.username }],
     };
 
     try {
