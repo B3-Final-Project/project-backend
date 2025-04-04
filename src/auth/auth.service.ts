@@ -1,10 +1,5 @@
-import {
-  BadRequestException,
-  ConflictException,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
-import { AWSError, CognitoIdentityServiceProvider } from 'aws-sdk';
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { CognitoIdentityServiceProvider } from 'aws-sdk';
 import { AuthenticationResultType } from 'aws-sdk/clients/cognitoidentityserviceprovider';
 import { Request, Response } from 'express';
 import { serialize } from 'cookie';
