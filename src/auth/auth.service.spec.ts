@@ -1,5 +1,7 @@
 import { AuthService } from './auth.service';
 import { CognitoIdentityServiceProvider } from 'aws-sdk';
+import { Response, Request } from 'express';
+import { BadRequestException } from '@nestjs/common';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -34,13 +36,15 @@ describe('AuthService', () => {
       email: 'test@example.com',
     };
     jest.spyOn(cognito, 'signUp').mockReturnValue({
-      promise: jest.fn().mockRejectedValue(new Error('Registration failed')),
+      promise: jest
+        .fn()
+        .mockRejectedValue(new BadRequestException('Registration failed')),
     } as any);
 
-    await expect(service.register(body)).rejects.toThrow('Registration failed');
+    await expect(service.register(body)).rejects.toThrow(BadRequestException);
   });
 
-  it('should login a user', async () => {
+  it('should login a user and set refresh token cookie', async () => {
     const loginResponse = {
       AuthenticationResult: {
         AccessToken: 'access',
@@ -52,8 +56,25 @@ describe('AuthService', () => {
       promise: jest.fn().mockResolvedValue(loginResponse),
     } as any);
 
-    const result = await service.login('testuser', 'password');
+    // Create a mock response object with a spy on setHeader
+    const res = {
+      setHeader: jest.fn(),
+    } as unknown as Response;
+
+    // Call the login method with login credentials and the mock response
+    const result = await service.login(
+      { username: 'testuser', password: 'password' }, //NOSONAR
+      res,
+    );
+
+    // Verify that the method returns the authentication result
     expect(result).toBe(loginResponse.AuthenticationResult);
+
+    // Check that a cookie was set with the refresh token
+    expect(res.setHeader).toHaveBeenCalledWith(
+      'Set-Cookie',
+      expect.stringContaining('refreshToken=refresh'),
+    );
   });
 
   it('should throw error if login fails', async () => {
@@ -61,9 +82,13 @@ describe('AuthService', () => {
       promise: jest.fn().mockRejectedValue(new Error('Login failed')),
     } as any);
 
-    await expect(service.login('testuser', 'password')).rejects.toThrow(
-      'Login failed',
-    );
+    const res = {
+      setHeader: jest.fn(),
+    } as unknown as Response;
+
+    await expect(
+      service.login({ username: 'testuser', password: 'password' }, res), //NOSONAR
+    ).rejects.toThrow(BadRequestException);
   });
 
   it('should confirm account', async () => {
@@ -82,7 +107,7 @@ describe('AuthService', () => {
     } as any);
 
     await expect(service.confirmAccount('testuser', '123456')).rejects.toThrow(
-      'Confirmation failed',
+      BadRequestException,
     );
   });
 
@@ -94,7 +119,14 @@ describe('AuthService', () => {
       promise: jest.fn().mockResolvedValue(refreshResponse),
     } as any);
 
-    const result = await service.refreshToken('refreshToken');
+    // Create a fake request object with cookies containing the refresh token
+    const req = {
+      cookies: {
+        refreshToken: 'refreshToken',
+      },
+    } as unknown as Request;
+
+    const result = await service.refreshToken(req);
     expect(result).toBe(refreshResponse.AuthenticationResult);
   });
 
@@ -103,7 +135,13 @@ describe('AuthService', () => {
       promise: jest.fn().mockRejectedValue(new Error('Token refresh failed')),
     } as any);
 
-    await expect(service.refreshToken('refreshToken')).rejects.toThrow(
+    const req = {
+      cookies: {
+        refreshToken: 'refreshToken',
+      },
+    } as unknown as Request;
+
+    await expect(service.refreshToken(req)).rejects.toThrow(
       'Token refresh failed',
     );
   });

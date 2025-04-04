@@ -1,17 +1,20 @@
 import { Body, Controller, Post, Req, Res } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
+import { Response, Request } from 'express';
 import { ConfirmAccountDto } from './dto/confirm-account.dto';
 import { RegisterDto } from './dto/register.dto';
-import { Request, Response } from 'express';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('login')
-  public async login(@Body() body: LoginDto, @Res() res: Response) {
-    return this.authService.login(body, res);
+  public async login(
+    @Res({ passthrough: true }) res: Response,
+    @Body() body: LoginDto,
+  ) {
+    return await this.authService.login(body, res);
   }
 
   @Post('google')

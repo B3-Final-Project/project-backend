@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { CognitoIdentityServiceProvider, CognitoIdentity } from 'aws-sdk';
 import { AuthenticationResultType } from 'aws-sdk/clients/cognitoidentityserviceprovider';
 import { Request, Response } from 'express';
@@ -21,13 +21,16 @@ export class AuthService {
       ClientId: this.clientId,
       Username: body.email,
       Password: body.password,
-      // UserAttributes: [{ Name: 'display_name', Value: body.username }],
+      UserAttributes: [{ Name: 'custom:display_name', Value: body.username }],
     };
 
     try {
       return await this.cognito.signUp(params).promise();
     } catch (error) {
-      throw new Error(error.message);
+      throw new BadRequestException({
+        code: error.code,
+        message: error.message,
+      });
     }
   }
 
@@ -63,7 +66,11 @@ export class AuthService {
 
       return result.AuthenticationResult; // Includes AccessToken, IdToken, RefreshToken
     } catch (error) {
-      throw new Error(error);
+      console.log(`Cognito Error: ${error.code} - ${error.message}`);
+      throw new BadRequestException({
+        code: error.code,
+        message: error.message,
+      });
     }
   }
 
@@ -80,7 +87,10 @@ export class AuthService {
     try {
       return await this.cognito.confirmSignUp(params).promise();
     } catch (error) {
-      throw new Error(error);
+      throw new BadRequestException({
+        code: error.code,
+        message: error.message,
+      });
     }
   }
 
@@ -99,7 +109,10 @@ export class AuthService {
       const result = await this.cognito.initiateAuth(params).promise();
       return result.AuthenticationResult; // Includes new ID and Access tokens
     } catch (error) {
-      throw new Error(error.message);
+      throw new BadRequestException({
+        code: error.code,
+        message: error.message,
+      });
     }
   }
 
