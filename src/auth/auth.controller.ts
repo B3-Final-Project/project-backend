@@ -1,9 +1,19 @@
-import { Body, Controller, Post, Req, Res } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Query,
+  Req,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { Response, Request } from 'express';
 import { ConfirmAccountDto } from './dto/confirm-account.dto';
 import { RegisterDto } from './dto/register.dto';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('auth')
 export class AuthController {
@@ -17,10 +27,18 @@ export class AuthController {
     return await this.authService.login(body, res);
   }
 
-  @Post('google')
-  public async ssoGoogle(@Body() body: LoginDto, @Res() res: Response) {
-    return this.authService.ssoGoogle(body, res);
+  @Get('google')
+  @UseGuards(AuthGuard('google'))
+  googleAuth() {
+    // Initiates Google OAuth login
   }
+
+  @Get('google/redirect')
+  @UseGuards(AuthGuard('google'))
+  async googleAuthRedirect(@Req() req: Request, @Query('code') code: string) {
+    return this.authService.googleAuthRedirect(req, code);
+  }
+
   @Post('register')
   public async register(@Body() body: RegisterDto) {
     return this.authService.register(body);

@@ -5,6 +5,7 @@ import { Request, Response } from 'express';
 import { serialize } from 'cookie';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import axios from 'axios';
 
 @Injectable()
 export class AuthService {
@@ -12,7 +13,9 @@ export class AuthService {
   private clientId: string;
 
   constructor() {
-    this.cognito = new CognitoIdentityServiceProvider({ region: 'eu-west-3' });
+    this.cognito = new CognitoIdentityServiceProvider({
+      region: process.env.AWS_REGION,
+    });
     this.clientId = process.env.COGNITO_CLIENT_ID;
   }
 
@@ -116,40 +119,133 @@ export class AuthService {
     }
   }
 
-  async googleAuthRedirect(req: Request) {
+  async googleAuthRedirect(req: Request, code: string) {
     const user = req.user;
+    // @ts-ignore
+    const { email, firstName, lastName, picture } = user;
+    const idToken = await this.getIdToken(code);
 
-    // @ts-expect-error should contain an id_token
-    const googleIdToken = req.authInfo.id_token;
+    if (!idToken) {
+      throw new BadRequestException('Google ID token not found.');
+    }
 
+    // Register (or add) the user in the Cognito User Pool
+    // Generate a random password that meets Cognito's complexity requirements
+    const randomPassword = Math.random().toString(36).slice(-8) + 'Aa1!';
+
+    const signUpParams = {
+      ClientId: this.clientId,
+      Username: email,
+      Password: randomPassword,
+      UserAttributes: [
+        { Name: 'email', Value: email },
+        { Name: 'given_name', Value: firstName },
+        { Name: 'family_name', Value: lastName },
+        { Name: 'picture', Value: picture },
+      ],
+    };
+
+    try {
+      await this.cognito.signUp(signUpParams).promise();
+    } catch (error: any) {
+      // If the user already exists, continue; otherwise, throw an error
+      if (error.code !== 'UsernameExistsException') {
+        throw new BadRequestException(
+          `Error signing up user: ${error.message}`,
+        );
+      }
+    }
+
+    // Ensure the Cognito Identity Pool ID is set (separate from the User Pool Client ID)
+    const identityPoolId = process.env.COGNITO_IDENTITY_POOL_ID;
+    if (!identityPoolId) {
+      throw new BadRequestException('Cognito Identity Pool ID is not set.');
+    }
+
+    // Initialize the CognitoIdentity client for Identity Pool operations
     const cognitoIdentity = new CognitoIdentity({
-      region: 'YOUR_AWS_REGION',
+      region: process.env.AWS_REGION,
     });
 
-    const params = {
-      IdentityPoolId: 'YOUR_IDENTITY_POOL_ID',
+    // Get the Cognito Identity ID by providing the Google id_token
+    const getIdParams = {
+      IdentityPoolId: identityPoolId,
       Logins: {
-        'accounts.google.com': googleIdToken,
+        'accounts.google.com': idToken,
       },
     };
 
-    const identityId = await cognitoIdentity.getId(params).promise();
+    let identityIdResponse;
+    try {
+      identityIdResponse = await cognitoIdentity.getId(getIdParams).promise();
+    } catch (error: any) {
+      throw new BadRequestException(
+        `Error obtaining Cognito Identity ID: ${error.message}`,
+      );
+    }
 
-    const credentials = await cognitoIdentity
-      .getCredentialsForIdentity({
-        IdentityId: identityId.IdentityId,
-        Logins: {
-          'accounts.google.com': googleIdToken,
-        },
-      })
-      .promise();
+    const identityId = identityIdResponse.IdentityId;
+    if (!identityId) {
+      throw new BadRequestException(
+        'Failed to obtain IdentityId from Cognito.',
+      );
+    }
+
+    // Exchange the identity ID and Google token for AWS credentials
+    const credentialsParams = {
+      IdentityId: identityId,
+      Logins: {
+        'accounts.google.com': idToken,
+      },
+    };
+
+    let credentialsResponse;
+    try {
+      credentialsResponse = await cognitoIdentity
+        .getCredentialsForIdentity(credentialsParams)
+        .promise();
+    } catch (error: any) {
+      throw new BadRequestException(
+        `Error obtaining AWS credentials: ${error.message}`,
+      );
+    }
 
     return {
-      identityId: identityId.IdentityId,
-      credentials,
+      identityId,
+      credentials: credentialsResponse.Credentials,
       user,
     };
   }
 
-  async ssoGoogle(body: any, res: Response) {}
+  private async getIdToken(code: string): Promise<string> {
+    const tokenUrl = 'https://oauth2.googleapis.com/token';
+
+    // Prepare the URL-encoded request body
+    const params = new URLSearchParams();
+    params.append('code', code);
+    params.append('client_id', process.env.GOOGLE_CLIENT_ID!);
+    params.append('client_secret', process.env.GOOGLE_CLIENT_SECRET!);
+    params.append(
+      'redirect_uri',
+      'http://localhost:8080/api/auth/google/redirect',
+    );
+    params.append('grant_type', 'authorization_code');
+
+    try {
+      const response = await axios.post(tokenUrl, params.toString(), {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      });
+
+      if (response.data && response.data.id_token) {
+        return response.data.id_token;
+      } else {
+        console.log(response);
+        throw new Error('id_token not found in token response');
+      }
+    } catch (error: any) {
+      throw new Error(`Error fetching id_token: ${error.message} ${error}`);
+    }
+  }
 }

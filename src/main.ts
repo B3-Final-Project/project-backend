@@ -11,7 +11,6 @@ async function bootstrap() {
     credentials: true,
     origin: process.env.FRONTEND_URL,
   });
-  app.use(cookieParser());
 
   app.useGlobalPipes(
     new ValidationPipe({
