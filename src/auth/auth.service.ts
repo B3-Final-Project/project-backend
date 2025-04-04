@@ -31,24 +31,10 @@ export class AuthService {
     try {
       return await this.cognito.signUp(params).promise();
     } catch (error) {
-      console.log(`Cognito Error: ${error.code} - ${error.message}`);
-
-      switch (error.code) {
-        case 'UsernameExistsException':
-          throw new ConflictException(
-            'This email address is already registered.',
-          );
-        case 'InvalidPasswordException':
-          throw new BadRequestException(
-            'Password does not meet complexity requirements.',
-          );
-        case 'InvalidParameterException':
-          throw new BadRequestException('Invalid parameters provided.');
-        default:
-          throw new BadRequestException(
-            'An error occurred during registration.',
-          );
-      }
+      throw new BadRequestException({
+        code: error.code,
+        message: error.message,
+      });
     }
   }
 
@@ -85,20 +71,10 @@ export class AuthService {
       return result.AuthenticationResult; // Includes AccessToken, IdToken, RefreshToken
     } catch (error) {
       console.log(`Cognito Error: ${error.code} - ${error.message}`);
-
-      switch (error.code) {
-        case 'UserNotFoundException':
-        case 'NotAuthorizedException':
-          throw new UnauthorizedException('Incorrect username or password.');
-        case 'UserNotConfirmedException':
-          throw new UnauthorizedException(
-            'User account has not been confirmed.',
-          );
-        case 'PasswordResetRequiredException':
-          throw new UnauthorizedException('Password reset is required.');
-        default:
-          throw new BadRequestException('An error occurred during login.');
-      }
+      throw new BadRequestException({
+        code: error.code,
+        message: error.message,
+      });
     }
   }
 
@@ -115,18 +91,10 @@ export class AuthService {
     try {
       return await this.cognito.confirmSignUp(params).promise();
     } catch (error) {
-      switch (error.code) {
-        case 'UserNotFoundException':
-          throw new BadRequestException('User does not exist.');
-        case 'CodeMismatchException':
-          throw new UnauthorizedException('Invalid confirmation code.');
-        case 'ExpiredCodeException':
-          throw new UnauthorizedException('Confirmation code has expired.');
-        default:
-          throw new BadRequestException(
-            'An unknown error occurred during confirmation.',
-          );
-      }
+      throw new BadRequestException({
+        code: error.code,
+        message: error.message,
+      });
     }
   }
 
@@ -145,7 +113,10 @@ export class AuthService {
       const result = await this.cognito.initiateAuth(params).promise();
       return result.AuthenticationResult; // Includes new ID and Access tokens
     } catch (error) {
-      throw new Error(error.message);
+      throw new BadRequestException({
+        code: error.code,
+        message: error.message,
+      });
     }
   }
 }
