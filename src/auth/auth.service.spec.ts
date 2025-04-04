@@ -1,6 +1,7 @@
 import { AuthService } from './auth.service';
 import { CognitoIdentityServiceProvider } from 'aws-sdk';
 import { Response, Request } from 'express';
+import { BadRequestException } from '@nestjs/common';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -35,10 +36,12 @@ describe('AuthService', () => {
       email: 'test@example.com',
     };
     jest.spyOn(cognito, 'signUp').mockReturnValue({
-      promise: jest.fn().mockRejectedValue(new Error('Registration failed')),
+      promise: jest
+        .fn()
+        .mockRejectedValue(new BadRequestException('Registration failed')),
     } as any);
 
-    await expect(service.register(body)).rejects.toThrow('Registration failed');
+    await expect(service.register(body)).rejects.toThrow(BadRequestException);
   });
 
   it('should login a user and set refresh token cookie', async () => {
@@ -85,7 +88,7 @@ describe('AuthService', () => {
 
     await expect(
       service.login({ username: 'testuser', password: 'password' }, res), //NOSONAR
-    ).rejects.toThrow('Login failed');
+    ).rejects.toThrow(BadRequestException);
   });
 
   it('should confirm account', async () => {
@@ -104,7 +107,7 @@ describe('AuthService', () => {
     } as any);
 
     await expect(service.confirmAccount('testuser', '123456')).rejects.toThrow(
-      'Confirmation failed',
+      BadRequestException,
     );
   });
 
