@@ -2,8 +2,8 @@ x-common-configuration: &common-configuration
   env_file:
     - .env
   healthcheck:
-    interval: 10s
-    timeout: 5s
+    interval: 7s
+    timeout: 2s
     retries: 5
   networks:
     - default
