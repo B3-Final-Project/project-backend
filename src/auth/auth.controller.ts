@@ -3,7 +3,6 @@ import {
   Controller,
   Get,
   Post,
-  Query,
   Req,
   Res,
   UseGuards,
@@ -35,8 +34,8 @@ export class AuthController {
 
   @Get('google/redirect')
   @UseGuards(AuthGuard('google'))
-  async googleAuthRedirect(@Req() req: Request, @Query('code') code: string) {
-    return this.authService.googleAuthRedirect(req, code);
+  async googleAuthRedirect(@Req() req: Request) {
+    return this.authService.googleAuthRedirect(req);
   }
 
   @Post('register')

@@ -1,21 +1,35 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { CognitoIdentityServiceProvider, CognitoIdentity } from 'aws-sdk';
-import { AuthenticationResultType } from 'aws-sdk/clients/cognitoidentityserviceprovider';
+import {
+  CognitoIdentityServiceProvider,
+  CognitoIdentity,
+  AWSError,
+} from 'aws-sdk';
+import { InitiateAuthResponse } from 'aws-sdk/clients/cognitoidentityserviceprovider';
 import { Request, Response } from 'express';
 import { serialize } from 'cookie';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
-import axios from 'axios';
+import { PromiseResult } from 'aws-sdk/lib/request';
+import { GoogleAuthUser } from './dto/google-auth.dto';
+import { GetCredentialsForIdentityResponse } from 'aws-sdk/clients/cognitoidentity';
 
 @Injectable()
 export class AuthService {
   private cognito: CognitoIdentityServiceProvider;
+  private cognitoIdentity: CognitoIdentity;
+  private identityPoolId: string;
+  private identityId: string;
   private clientId: string;
 
   constructor() {
     this.cognito = new CognitoIdentityServiceProvider({
       region: process.env.AWS_REGION,
     });
+    this.cognitoIdentity = new CognitoIdentity({
+      region: process.env.AWS_REGION,
+    });
+    this.identityPoolId = process.env.COGNITO_IDENTITY_POOL_ID;
+    this.identityId = process.env.COGNITO_IDENTITY_PROVIDER_ID;
     this.clientId = process.env.COGNITO_CLIENT_ID;
   }
 
@@ -37,23 +51,21 @@ export class AuthService {
     }
   }
 
-  public async login(
-    body: LoginDto,
-    res: Response,
-  ): Promise<AuthenticationResultType> {
-    const { username, password } = body;
+  public async login(body: LoginDto, res: Response) {
+    const { email, password } = body;
 
     const params = {
       AuthFlow: 'USER_PASSWORD_AUTH',
       ClientId: this.clientId,
       AuthParameters: {
-        USERNAME: username,
+        USERNAME: email,
         PASSWORD: password,
       },
     };
 
+    let result: PromiseResult<InitiateAuthResponse, AWSError>;
     try {
-      const result = await this.cognito.initiateAuth(params).promise();
+      result = await this.cognito.initiateAuth(params).promise();
 
       const refreshToken = result.AuthenticationResult.RefreshToken;
 
@@ -66,15 +78,24 @@ export class AuthService {
         });
         res.setHeader('Set-Cookie', serializedCookie);
       }
-
-      return result.AuthenticationResult; // Includes AccessToken, IdToken, RefreshToken
     } catch (error) {
-      console.log(`Cognito Error: ${error.code} - ${error.message}`);
       throw new BadRequestException({
         code: error.code,
         message: error.message,
       });
     }
+
+    const { identityId, credentialsResponse } =
+      await this.getCredentialsFromIdentity(
+        result.AuthenticationResult.IdToken,
+        this.identityId,
+      );
+
+    return {
+      identityId,
+      result: result.AuthenticationResult,
+      credentialsResponse,
+    };
   }
 
   async confirmAccount(
@@ -119,13 +140,11 @@ export class AuthService {
     }
   }
 
-  async googleAuthRedirect(req: Request, code: string) {
-    const user = req.user;
-    // @ts-ignore
-    const { email, firstName, lastName, picture } = user;
-    const idToken = await this.getIdToken(code);
+  async googleAuthRedirect(req: Request) {
+    const user = req.user as GoogleAuthUser;
+    const { email, firstName, lastName, picture, id_token } = user;
 
-    if (!idToken) {
+    if (!id_token) {
       throw new BadRequestException('Google ID token not found.');
     }
 
@@ -156,28 +175,36 @@ export class AuthService {
       }
     }
 
-    // Ensure the Cognito Identity Pool ID is set (separate from the User Pool Client ID)
-    const identityPoolId = process.env.COGNITO_IDENTITY_POOL_ID;
-    if (!identityPoolId) {
-      throw new BadRequestException('Cognito Identity Pool ID is not set.');
-    }
+    const { identityId, credentialsResponse } =
+      await this.getCredentialsFromIdentity(id_token, 'accounts.google.com');
 
-    // Initialize the CognitoIdentity client for Identity Pool operations
-    const cognitoIdentity = new CognitoIdentity({
-      region: process.env.AWS_REGION,
-    });
+    return {
+      identityId,
+      credentials: credentialsResponse.Credentials,
+      user,
+    };
+  }
 
+  private async getCredentialsFromIdentity(
+    id_token: string,
+    identityProvider: string,
+  ): Promise<{
+    identityId: string;
+    credentialsResponse: GetCredentialsForIdentityResponse;
+  }> {
     // Get the Cognito Identity ID by providing the Google id_token
     const getIdParams = {
-      IdentityPoolId: identityPoolId,
+      IdentityPoolId: this.identityPoolId,
       Logins: {
-        'accounts.google.com': idToken,
+        [identityProvider]: id_token,
       },
     };
 
     let identityIdResponse;
     try {
-      identityIdResponse = await cognitoIdentity.getId(getIdParams).promise();
+      identityIdResponse = await this.cognitoIdentity
+        .getId(getIdParams)
+        .promise();
     } catch (error: any) {
       throw new BadRequestException(
         `Error obtaining Cognito Identity ID: ${error.message}`,
@@ -195,13 +222,13 @@ export class AuthService {
     const credentialsParams = {
       IdentityId: identityId,
       Logins: {
-        'accounts.google.com': idToken,
+        [identityProvider]: id_token,
       },
     };
 
     let credentialsResponse;
     try {
-      credentialsResponse = await cognitoIdentity
+      credentialsResponse = await this.cognitoIdentity
         .getCredentialsForIdentity(credentialsParams)
         .promise();
     } catch (error: any) {
@@ -212,40 +239,7 @@ export class AuthService {
 
     return {
       identityId,
-      credentials: credentialsResponse.Credentials,
-      user,
+      credentialsResponse,
     };
-  }
-
-  private async getIdToken(code: string): Promise<string> {
-    const tokenUrl = 'https://oauth2.googleapis.com/token';
-
-    // Prepare the URL-encoded request body
-    const params = new URLSearchParams();
-    params.append('code', code);
-    params.append('client_id', process.env.GOOGLE_CLIENT_ID!);
-    params.append('client_secret', process.env.GOOGLE_CLIENT_SECRET!);
-    params.append(
-      'redirect_uri',
-      'http://localhost:8080/api/auth/google/redirect',
-    );
-    params.append('grant_type', 'authorization_code');
-
-    try {
-      const response = await axios.post(tokenUrl, params.toString(), {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-      });
-
-      if (response.data && response.data.id_token) {
-        return response.data.id_token;
-      } else {
-        console.log(response);
-        throw new Error('id_token not found in token response');
-      }
-    } catch (error: any) {
-      throw new Error(`Error fetching id_token: ${error.message} ${error}`);
-    }
   }
 }
