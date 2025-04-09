@@ -34,8 +34,15 @@ export class AuthController {
 
   @Get('google/redirect')
   @UseGuards(AuthGuard('google'))
-  async googleAuthRedirect(@Req() req: Request) {
-    return this.authService.googleAuthRedirect(req);
+  async googleAuthRedirect(@Req() req: Request, @Res() res: Response) {
+    const { _identityId, credentials, _user } =
+      await this.authService.googleAuthRedirect(req);
+    // Optionally, set any cookies or session info here
+    // For example, if you want to save the tokens:
+    res.cookie('token', credentials.AccessKeyId, { httpOnly: true });
+
+    // Then redirect to the desired page. You could use an environment variable.
+    res.redirect(process.env.FRONTEND_URL || '/');
   }
 
   @Post('register')
