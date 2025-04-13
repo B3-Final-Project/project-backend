@@ -80,6 +80,7 @@ describe('AuthService', () => {
       expect.stringContaining('refreshToken=refresh'),
     );
   });
+
   it('should throw error if login fails', async () => {
     jest.spyOn(cognito, 'initiateAuth').mockReturnValue({
       promise: jest.fn().mockRejectedValue(new Error('Login failed')),
