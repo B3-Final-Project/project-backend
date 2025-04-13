@@ -42,8 +42,8 @@ describe('AuthService', () => {
       } as any);
 
       const registerDto: RegisterDto = {
-        email: 'test@example.com',
-        password: 'Password1!',
+        email: 'test@example.com', //NOSONAR
+        password: 'Password1!', //NOSONAR
         username: 'testuser',
       };
 
@@ -59,8 +59,8 @@ describe('AuthService', () => {
       } as any);
 
       const registerDto: RegisterDto = {
-        email: 'test@example.com',
-        password: 'Password1!',
+        email: 'test@example.com', //NOSONAR
+        password: 'Password1!', //NOSONAR
         username: 'testuser',
       };
 
@@ -83,8 +83,8 @@ describe('AuthService', () => {
       } as any);
 
       const loginDto: LoginDto = {
-        email: 'test@example.com',
-        password: 'Password1!',
+        email: 'test@example.com', //NOSONAR
+        password: 'Password1!', //NOSONAR
       };
       const res: Partial<Response> = { setHeader: jest.fn() };
 
@@ -103,8 +103,8 @@ describe('AuthService', () => {
       } as any);
 
       const loginDto: LoginDto = {
-        email: 'test@example.com',
-        password: 'Password1!',
+        email: 'test@example.com', //NOSONAR
+        password: 'Password1!', //NOSONAR
       };
       const res: Partial<Response> = { setHeader: jest.fn() };
 
