@@ -1,15 +1,10 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsString, MaxLength, MinLength } from 'class-validator';
+import { LoginDto } from './login.dto';
 
-export class RegisterDto {
+export class RegisterDto extends LoginDto {
   @IsString()
   @IsNotEmpty()
+  @MinLength(3)
+  @MaxLength(12)
   username: string;
-
-  @IsString()
-  @IsNotEmpty()
-  password: string;
-
-  @IsString()
-  @IsNotEmpty()
-  email: string;
 }

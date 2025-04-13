@@ -2,8 +2,8 @@ x-common-configuration: &common-configuration
   env_file:
     - .env
   healthcheck:
-    interval: 10s
-    timeout: 5s
+    interval: 7s
+    timeout: 2s
     retries: 5
   networks:
     - default
@@ -28,7 +28,7 @@ services:
       test: [ "CMD", "curl", "-f", "http://localhost:8080/api/health-check" ]
     depends_on:
       database:
-        condition: service_healthy
+        condition: service_started
 
   database:
     <<: *common-configuration
