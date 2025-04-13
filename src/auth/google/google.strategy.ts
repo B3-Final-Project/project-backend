@@ -6,7 +6,7 @@ import {
   Profile,
   GoogleCallbackParameters,
 } from 'passport-google-oauth20';
-import { GoogleAuthUser } from '../dto/google-auth.dto';
+import { GoogleAuthUser } from './dto/google-auth.dto';
 
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
