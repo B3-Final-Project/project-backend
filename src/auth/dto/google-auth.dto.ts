@@ -4,4 +4,6 @@ export interface GoogleAuthUser {
   lastName: string;
   picture: string;
   id_token: string;
+  id: string;
+  refreshToken: string;
 }

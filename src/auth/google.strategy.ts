@@ -15,27 +15,39 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
       {
         clientID: process.env.GOOGLE_CLIENT_ID,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        callbackURL: 'http://localhost:8080/api/auth/google/redirect',
+        callbackURL:
+          process.env.GOOGLE_CALLBACK_URL ||
+          'http://localhost:8080/api/auth/google/redirect',
         scope: ['email', 'profile', 'openid'],
+        prompt: 'consent',
       },
       async (
         _accessToken: string,
-        _refreshToken: string,
+        refreshToken: string,
         params: GoogleCallbackParameters,
         profile: Profile,
         done: VerifyCallback,
       ) => {
         const { id_token } = params;
-        const { name, emails, photos } = profile;
+        const { name, emails, photos, id } = profile;
         const user: GoogleAuthUser = {
           email: emails[0].value,
           firstName: name.givenName,
           lastName: name.familyName,
           picture: photos[0].value,
           id_token,
+          id,
+          refreshToken: refreshToken, // Capture the refresh token from Google.
         };
         done(null, user);
       },
     );
+  }
+
+  authorizationParams(): { [key: string]: string } {
+    return {
+      access_type: 'offline',
+      prompt: 'consent',
+    };
   }
 }
