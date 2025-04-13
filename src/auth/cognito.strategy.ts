@@ -4,11 +4,13 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import * as jwkPem from 'jwk-to-pem';
 import * as jwt from 'jsonwebtoken';
 import axios from 'axios';
+import * as process from 'node:process';
 
 @Injectable()
 export class CognitoStrategy extends PassportStrategy(Strategy, 'jwt') {
   private readonly cognitoIssuer: string;
   private pems: { [key: string]: string } = {};
+  private cognitoUserPoolID = process.env.COGNITO_USER_POOL_ID;
 
   constructor() {
     super({
@@ -21,7 +23,7 @@ export class CognitoStrategy extends PassportStrategy(Strategy, 'jwt') {
         done(null, pem);
       },
     });
-    this.cognitoIssuer = process.env.COGNITO_USER_POOL_URL;
+    this.cognitoIssuer = `https://cognito-idp.eu-west-3.amazonaws.com/${this.cognitoUserPoolID}`;
     this.loadPems();
   }
 
