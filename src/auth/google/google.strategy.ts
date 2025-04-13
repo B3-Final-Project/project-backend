@@ -37,7 +37,6 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
           id_token,
           id,
         };
-        console.log(user);
         done(null, user);
       },
     );

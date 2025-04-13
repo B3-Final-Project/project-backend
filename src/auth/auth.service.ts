@@ -9,6 +9,7 @@ import { serialize } from 'cookie';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { PromiseResult } from 'aws-sdk/lib/request';
+import * as jwt from 'jsonwebtoken';
 
 @Injectable()
 export class AuthService {
@@ -121,5 +122,54 @@ export class AuthService {
         message: error.message,
       });
     }
+  }
+
+  async getUserInfo(req: Request): Promise<any> {
+    // Step 1: Use the refresh token to get new tokens.
+    const authResult = await this.refreshToken(req);
+    if (!authResult || !authResult.IdToken) {
+      throw new BadRequestException('Unable to refresh token');
+    }
+    const idToken = authResult.IdToken;
+
+    // Step 2: Decode the ID token to get the username.
+    const decodedToken: any = jwt.decode(idToken);
+    if (!decodedToken || !decodedToken.sub) {
+      throw new BadRequestException('Failed to decode token');
+    }
+    // Assume that the Cognito username equals the subject (or you could use email if that's stored)
+    const username = decodedToken.sub;
+
+    // Step 3: Retrieve user details from Cognito.
+    let userInfo;
+    try {
+      const userResult = await this.cognito
+        .adminGetUser({
+          UserPoolId: process.env.COGNITO_USER_POOL_ID,
+          Username: username,
+        })
+        .promise();
+
+      // Convert Cognito UserAttributes array to an object.
+      userInfo = userResult.UserAttributes?.reduce((acc, attribute) => {
+        acc[attribute.Name] = attribute.Value;
+        return acc;
+      }, {});
+    } catch (error) {
+      throw new BadRequestException(
+        `Failed to get user info: ${error.message}`,
+      );
+    }
+
+    // Step 4: Return the token and user data.
+    return {
+      accessToken: idToken,
+      user: {
+        email: userInfo.email,
+        surname: userInfo.family_name,
+        name: userInfo.given_name,
+        picture: userInfo.picture,
+      },
+    };
   }
 }

@@ -34,6 +34,6 @@ export class AuthController {
 
   @Get('me')
   async getMe(@Req() req: Request) {
-    return await this.authService.refreshToken(req);
+    return await this.authService.getUserInfo(req);
   }
 }
