@@ -11,7 +11,7 @@ export class LoginDto {
   @Matches(/[A-Z]/, {
     message: 'Password must contain at least one uppercase letter',
   })
-  @Matches(/[0-9]/, { message: 'Password must contain at least one number' })
+  @Matches(/\d/, { message: 'Password must contain at least one number' })
   @Matches(/[^A-Za-z0-9]/, {
     message: 'Password must contain at least one symbol',
   })

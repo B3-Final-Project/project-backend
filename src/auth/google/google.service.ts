@@ -20,67 +20,19 @@ export class GoogleAuthService {
 
   async googleAuthRedirect(req: Request, res: Response) {
     const user = req.user as GoogleAuthUser;
-    const { email, firstName, lastName, picture, id } = user;
+    const { email, id } = user;
 
     const userPoolId = process.env.COGNITO_USER_POOL_ID;
-    const cognitoUsername = email; // We use email as the username
-
-    // Step 1: Check if the user already exists in Cognito.
-    let userExists = true;
-    try {
-      await this.cognito
-        .adminGetUser({
-          UserPoolId: userPoolId,
-          Username: cognitoUsername,
-        })
-        .promise();
-    } catch (error: any) {
-      if (error.code === 'UserNotFoundException') {
-        userExists = false;
-      } else {
-        throw new BadRequestException(error.message);
-      }
-    }
-
-    // Step 2: If the user doesn't exist, create one.
+    const cognitoUsername = email;
     const password = process.env.DEFAULT_GOOGLE_USER_PASSWORD;
-    if (!userExists) {
-      // password = Math.random().toString(36).slice(-14) + 'Aa1!'; // Or use a fixed default for all Google users
-      // TODO make the password random and set in database
 
-      const signUpParams = {
-        UserPoolId: userPoolId,
-        Username: cognitoUsername,
-        TemporaryPassword: password,
-        UserAttributes: [
-          { Name: 'email', Value: email },
-          { Name: 'given_name', Value: firstName },
-          { Name: 'family_name', Value: lastName },
-          { Name: 'picture', Value: picture },
-        ],
-        MessageAction: 'SUPPRESS', // Do not send invitation
-      };
-
-      try {
-        await this.cognito.adminCreateUser(signUpParams).promise();
-        await this.cognito
-          .adminSetUserPassword({
-            UserPoolId: userPoolId,
-            Username: cognitoUsername,
-            Password: password,
-            Permanent: true,
-          })
-          .promise();
-      } catch (error: any) {
-        throw new BadRequestException(`Error creating user: ${error.message}`);
-      }
-    } else {
-      if (!password) {
-        throw new BadRequestException(
-          'No stored password for existing Google user.',
-        );
-      }
+    if (!password) {
+      throw new BadRequestException(
+        'No stored password for existing Google user.',
+      );
     }
+
+    await this.createFullUser(user, password);
 
     // Step 3: Link the Google identity to the Cognito user.
     // This will link the external provider so that Cognito can later
@@ -105,8 +57,7 @@ export class GoogleAuthService {
       // If the error indicates that the provider is already linked, log and continue.
       if (
         error.code === 'InvalidParameterException' &&
-        error.message &&
-        error.message.includes('already linked')
+        error.message?.includes('already linked')
       ) {
         console.warn(
           'Google identity already linked to Cognito user. Continuing...',
@@ -154,5 +105,60 @@ export class GoogleAuthService {
     return {
       AccessToken: authResult.AuthenticationResult.IdToken,
     };
+  }
+
+  private async createFullUser(user: GoogleAuthUser, password: string) {
+    const { email, firstName, lastName, picture } = user;
+    const userPoolId = process.env.COGNITO_USER_POOL_ID;
+    const cognitoUsername = email; // We use email as the username
+
+    // Step 1: Check if the user already exists in Cognito.
+    let userExists = true;
+    try {
+      await this.cognito
+        .adminGetUser({
+          UserPoolId: userPoolId,
+          Username: cognitoUsername,
+        })
+        .promise();
+    } catch (error: any) {
+      if (error.code === 'UserNotFoundException') {
+        userExists = false;
+      } else {
+        throw new BadRequestException(error.message);
+      }
+    }
+
+    if (!userExists) {
+      // password = Math.random().toString(36).slice(-14) + 'Aa1!'; // Or use a fixed default for all Google users
+      // TODO make the password random and set in database
+
+      const signUpParams = {
+        UserPoolId: userPoolId,
+        Username: cognitoUsername,
+        TemporaryPassword: password,
+        UserAttributes: [
+          { Name: 'email', Value: email },
+          { Name: 'given_name', Value: firstName },
+          { Name: 'family_name', Value: lastName },
+          { Name: 'picture', Value: picture },
+        ],
+        MessageAction: 'SUPPRESS', // Do not send invitation
+      };
+
+      try {
+        await this.cognito.adminCreateUser(signUpParams).promise();
+        await this.cognito
+          .adminSetUserPassword({
+            UserPoolId: userPoolId,
+            Username: cognitoUsername,
+            Password: password,
+            Permanent: true,
+          })
+          .promise();
+      } catch (error: any) {
+        throw new BadRequestException(`Error creating user: ${error.message}`);
+      }
+    }
   }
 }

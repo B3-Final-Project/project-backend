@@ -10,7 +10,7 @@ import * as process from 'node:process';
 export class CognitoStrategy extends PassportStrategy(Strategy, 'jwt') {
   private readonly cognitoIssuer: string;
   private pems: { [key: string]: string } = {};
-  private cognitoUserPoolID = process.env.COGNITO_USER_POOL_ID;
+  private readonly cognitoUserPoolID = process.env.COGNITO_USER_POOL_ID;
 
   constructor() {
     super({
@@ -39,7 +39,7 @@ export class CognitoStrategy extends PassportStrategy(Strategy, 'jwt') {
     return {
       userId: payload.sub,
       username: payload['cognito:username'],
-      roles: payload['cognito:groups'] || [],
+      roles: payload['cognito:groups'] ?? [],
     };
   }
 }

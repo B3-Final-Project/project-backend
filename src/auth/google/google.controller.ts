@@ -17,6 +17,6 @@ export class GoogleAuthController {
   @UseGuards(AuthGuard('google'))
   async googleAuthRedirect(@Req() req: Request, @Res() res: Response) {
     await this.googleAuthService.googleAuthRedirect(req, res);
-    res.redirect(process.env.FRONTEND_URL || '/');
+    res.redirect(process.env.FRONTEND_URL ?? '/');
   }
 }
