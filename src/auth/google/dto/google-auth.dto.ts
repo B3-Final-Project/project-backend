@@ -5,5 +5,4 @@ export interface GoogleAuthUser {
   picture: string;
   id_token: string;
   id: string;
-  refreshToken: string;
 }

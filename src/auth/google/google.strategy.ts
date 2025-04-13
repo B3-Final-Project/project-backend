@@ -19,7 +19,6 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
           process.env.GOOGLE_CALLBACK_URL ||
           'http://localhost:8080/api/auth/google/redirect',
         scope: ['email', 'profile', 'openid'],
-        prompt: 'consent',
       },
       async (
         _accessToken: string,
@@ -37,8 +36,8 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
           picture: photos[0].value,
           id_token,
           id,
-          refreshToken: refreshToken, // Capture the refresh token from Google.
         };
+        console.log(user);
         done(null, user);
       },
     );
@@ -46,7 +45,6 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
 
   authorizationParams(): { [key: string]: string } {
     return {
-      access_type: 'offline',
       prompt: 'consent',
     };
   }

@@ -8,9 +8,8 @@ import { GoogleAuthUser } from './dto/google-auth.dto';
 
 @Injectable()
 export class GoogleAuthService {
-  private cognito: CognitoIdentityServiceProvider;
-  private clientId: string;
-  private googleUserPasswords = new Map<string, string>();
+  private readonly cognito: CognitoIdentityServiceProvider;
+  private readonly clientId: string;
 
   constructor() {
     this.cognito = new CognitoIdentityServiceProvider({
@@ -21,10 +20,7 @@ export class GoogleAuthService {
 
   async googleAuthRedirect(req: Request, res: Response) {
     const user = req.user as GoogleAuthUser;
-    const { email, firstName, lastName, picture, id_token, id } = user;
-    if (!id_token) {
-      throw new BadRequestException('Google ID token not found.');
-    }
+    const { email, firstName, lastName, picture, id } = user;
 
     const userPoolId = process.env.COGNITO_USER_POOL_ID;
     const cognitoUsername = email; // We use email as the username
@@ -47,14 +43,11 @@ export class GoogleAuthService {
     }
 
     // Step 2: If the user doesn't exist, create one.
-    // We'll generate a random password (or use a fixed one in production for Google users)
-    let password: string;
+    const password = process.env.DEFAULT_GOOGLE_USER_PASSWORD;
     if (!userExists) {
-      password = Math.random().toString(36).slice(-8) + 'Aa1!'; // Or use a fixed default for all Google users
-      // Store this password for later use (this is crucial if you generate a random one)
-      this.googleUserPasswords.set(email, password);
+      // password = Math.random().toString(36).slice(-14) + 'Aa1!'; // Or use a fixed default for all Google users
+      // TODO make the password random and set in database
 
-      console.log(this.googleUserPasswords);
       const signUpParams = {
         UserPoolId: userPoolId,
         Username: cognitoUsername,
@@ -82,18 +75,10 @@ export class GoogleAuthService {
         throw new BadRequestException(`Error creating user: ${error.message}`);
       }
     } else {
-      // If user exists, we need to have the stored password.
-      // If using a fixed password for all Google users, use that fixed string.
-      if (this.googleUserPasswords.has(email)) {
-        password = this.googleUserPasswords.get(email);
-      } else {
-        // Alternatively, assign a default known password (ensure it's secure and consistent)
-        password = process.env.DEFAULT_GOOGLE_USER_PASSWORD;
-        if (!password) {
-          throw new BadRequestException(
-            'No stored password for existing Google user.',
-          );
-        }
+      if (!password) {
+        throw new BadRequestException(
+          'No stored password for existing Google user.',
+        );
       }
     }
 
@@ -112,12 +97,11 @@ export class GoogleAuthService {
           SourceUser: {
             ProviderName: providerName,
             ProviderAttributeName: 'Cognito_Subject',
-            ProviderAttributeValue: id || '', // Use Google user unique ID if available
+            ProviderAttributeValue: id,
           },
         })
         .promise();
     } catch (error: any) {
-      // If error indicates the user is already linked, you can ignore it.
       // If the error indicates that the provider is already linked, log and continue.
       if (
         error.code === 'InvalidParameterException' &&
@@ -135,7 +119,6 @@ export class GoogleAuthService {
     }
 
     // Step 4: Authenticate the user via Cognito to get Cognito tokens.
-    // We use the ADMIN_NO_SRP_AUTH flow which allows you to pass the username/password directly.
     const authParams = {
       AuthFlow: 'ADMIN_NO_SRP_AUTH',
       ClientId: this.clientId,
@@ -149,7 +132,6 @@ export class GoogleAuthService {
     let authResult: PromiseResult<InitiateAuthResponse, AWSError>;
     try {
       authResult = await this.cognito.adminInitiateAuth(authParams).promise();
-      // Optionally, store the Cognito refresh token in a cookie.
       const cognitoRefreshToken = authResult.AuthenticationResult.RefreshToken;
       if (cognitoRefreshToken) {
         const serializedCookie = serialize(
