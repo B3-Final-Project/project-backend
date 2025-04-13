@@ -63,7 +63,7 @@ describe('AuthService', () => {
 
     // Call the login method with login credentials and the mock response
     const result = await service.login(
-      { username: 'testuser', password: 'password' }, //NOSONAR
+      { email: 'testuser', password: 'password' }, //NOSONAR
       res,
     );
 
@@ -87,7 +87,7 @@ describe('AuthService', () => {
     } as unknown as Response;
 
     await expect(
-      service.login({ username: 'testuser', password: 'password' }, res), //NOSONAR
+      service.login({ email: 'testuser', password: 'password' }, res), //NOSONAR
     ).rejects.toThrow(BadRequestException);
   });
 
