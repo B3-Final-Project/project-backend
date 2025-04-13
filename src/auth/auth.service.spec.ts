@@ -45,38 +45,41 @@ describe('AuthService', () => {
   });
 
   it('should login a user and set refresh token cookie', async () => {
+    // Set up the mocked response with both IdToken and RefreshToken.
     const loginResponse = {
       AuthenticationResult: {
-        AccessToken: 'access',
-        IdToken: 'id',
-        RefreshToken: 'refresh',
+        IdToken: 'id_token_value',
+        RefreshToken: 'refresh', // This string will be used to set the cookie.
       },
     };
+
+    // Spy on the cognito.initiateAuth method to return a resolved promise with loginResponse.
     jest.spyOn(cognito, 'initiateAuth').mockReturnValue({
       promise: jest.fn().mockResolvedValue(loginResponse),
     } as any);
 
-    // Create a mock response object with a spy on setHeader
+    // Create a mock response object with a spy on setHeader.
     const res = {
       setHeader: jest.fn(),
     } as unknown as Response;
 
-    // Call the login method with login credentials and the mock response
+    // Call the login method with test credentials.
     const result = await service.login(
-      { email: 'testuser', password: 'password' }, //NOSONAR
+      { email: 'testuser', password: 'password' }, // NOSONAR
       res,
     );
 
-    // Verify that the method returns the authentication result
-    expect(result).toBe(loginResponse.AuthenticationResult);
+    // Expect that the service returns an object with AccessToken matching the IdToken value.
+    expect(result).toEqual({
+      AccessToken: loginResponse.AuthenticationResult.IdToken,
+    });
 
-    // Check that a cookie was set with the refresh token
+    // And verify that a cookie was set with the refresh token.
     expect(res.setHeader).toHaveBeenCalledWith(
       'Set-Cookie',
       expect.stringContaining('refreshToken=refresh'),
     );
   });
-
   it('should throw error if login fails', async () => {
     jest.spyOn(cognito, 'initiateAuth').mockReturnValue({
       promise: jest.fn().mockRejectedValue(new Error('Login failed')),
