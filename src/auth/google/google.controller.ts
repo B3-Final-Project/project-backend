@@ -3,7 +3,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { Request, Response } from 'express';
 import { GoogleAuthService } from './google.service';
 
-@Controller()
+@Controller('auth')
 export class GoogleAuthController {
   public constructor(private readonly googleAuthService: GoogleAuthService) {}
 

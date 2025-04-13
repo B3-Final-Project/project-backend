@@ -9,7 +9,6 @@ import { serialize } from 'cookie';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { PromiseResult } from 'aws-sdk/lib/request';
-import { GoogleAuthUser } from './dto/google-auth.dto';
 
 @Injectable()
 export class AuthService {

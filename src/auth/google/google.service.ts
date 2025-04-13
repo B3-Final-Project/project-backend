@@ -1,10 +1,10 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { Request, Response } from 'express';
-import { GoogleAuthUser } from '../dto/google-auth.dto';
 import { PromiseResult } from 'aws-sdk/lib/request';
 import { InitiateAuthResponse } from 'aws-sdk/clients/cognitoidentityserviceprovider';
 import { AWSError, CognitoIdentityServiceProvider } from 'aws-sdk';
 import { serialize } from 'cookie';
+import { GoogleAuthUser } from './dto/google-auth.dto';
 
 @Injectable()
 export class GoogleAuthService {
