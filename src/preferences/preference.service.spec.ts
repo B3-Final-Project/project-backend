@@ -32,9 +32,6 @@ describe('PreferenceService', () => {
     preferenceRepository = module.get<Repository<Preference>>(
       getRepositoryToken(Preference),
     );
-    interestRepository = module.get<Repository<Interest>>(
-      getRepositoryToken(Interest),
-    );
   });
 
   it('should throw error if preference not found', async () => {
