@@ -4,6 +4,7 @@ import {
   Get,
   Param,
   Put,
+  Post,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -19,22 +20,32 @@ export class PreferenceController {
 
   @Get('all')
   public async getAllPreferences() {
-    return await this.preferenceService.getAllPreferences();
+    return this.preferenceService.getAllPreferences();
   }
 
   @Get()
   public async getPreferences(@Req() req: HttpRequestDto) {
-    return await this.preferenceService.getPreferences(req);
+    return this.preferenceService.getPreferences(req);
   }
 
-  @Put('/:id')
-  public async updatePreferences(
-    @Param('id') id: number,
+  @Put(':userId')
+  public async updatePreference(
+    @Param('userId') userId: string,
     @Body() body: UpdatePreferenceDto,
   ) {
-    return await this.preferenceService.updatePreferenceInterests(
-      id,
-      body.data,
-    );
+    return this.preferenceService.updatePreference(body, userId);
+  }
+
+  @Put(':userId/interests')
+  public async updatePreferenceInterests(
+    @Param('userId') userId: string,
+    @Body() body: { data: string[] },
+  ) {
+    return this.preferenceService.updatePreferenceInterests(userId, body.data);
+  }
+
+  @Post()
+  public async createPreference(@Body() body: UpdatePreferenceDto) {
+    return this.preferenceService.createPreference(body);
   }
 }

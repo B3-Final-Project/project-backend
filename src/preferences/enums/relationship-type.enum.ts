@@ -1,7 +1,7 @@
 export enum RelationshipTypeEnum {
-  MONOGAMY,
-  POLYAMORY,
-  OPEN_RELATIONSHIP,
-  CASUAL,
-  FRIENDS,
+  CASUAL = 'casual',
+  LONG_TERM = 'long-term',
+  MARRIAGE = 'marriage',
+  FRIENDSHIP = 'friendship',
+  UNSURE = 'unsure',
 }
