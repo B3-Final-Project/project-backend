@@ -91,4 +91,8 @@ export class UpdatePreferenceDto {
   @IsOptional()
   @IsString()
   userId?: string;
+
+  @IsOptional()
+  @IsString()
+  interests?: string[];
 }

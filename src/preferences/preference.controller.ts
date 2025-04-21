@@ -12,6 +12,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { PreferenceService } from './preference.service';
 import { HttpRequestDto } from '../common/dto/http-request.dto';
 import { UpdatePreferenceDto } from './dto/update-preference.dto';
+import { Preference } from '../common/entities/preference.entity';
 
 @UseGuards(AuthGuard('jwt'))
 @Controller('preferences')
@@ -40,7 +41,7 @@ export class PreferenceController {
   public async updatePreferenceInterests(
     @Param('userId') userId: string,
     @Body() body: { data: string[] },
-  ) {
+  ): Promise<Preference> {
     return this.preferenceService.updatePreferenceInterests(userId, body.data);
   }
 

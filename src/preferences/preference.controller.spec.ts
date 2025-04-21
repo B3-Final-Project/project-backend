@@ -5,10 +5,47 @@ import { APP_GUARD } from '@nestjs/core';
 import { Preference } from '../common/entities/preference.entity';
 import { HttpRequestDto } from '../common/dto/http-request.dto';
 import { UpdatePreferenceDto } from './dto/update-preference.dto';
+import {
+  DrinkingEnum,
+  GenderEnum,
+  OrientationEnum,
+  PoliticsEnum,
+  RelationshipTypeEnum,
+  ReligionEnum,
+  SmokingEnum,
+  ZodiacEnum,
+} from './enums';
 
 describe('PreferenceController', () => {
   let controller: PreferenceController;
   let service: PreferenceService;
+
+  const mockedUpdateDto: UpdatePreferenceDto = {
+    lifestyleInfo: {
+      smoking: SmokingEnum.NEVER,
+      drinking: DrinkingEnum.NEVER,
+      religion: ReligionEnum.ATHEIST,
+      politics: PoliticsEnum.LIBERAL,
+      zodiac: ZodiacEnum.ARIES,
+    },
+    locationWork: {
+      city: '',
+      work: '',
+      languages: [],
+    },
+    personalInfo: {
+      name: '',
+      surname: '',
+      gender: GenderEnum.MALE,
+      orientation: OrientationEnum.STRAIGHT,
+    },
+    preferenceInfo: {
+      min_age: 0,
+      max_age: 0,
+      max_distance: 0,
+      relationship_type: RelationshipTypeEnum.CASUAL,
+    },
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -20,9 +57,9 @@ describe('PreferenceController', () => {
             getAllPreferences: jest.fn(),
             getPreferences: jest.fn(),
             updatePreferenceInterests: jest.fn(),
+            updatePreference: jest.fn(),
           },
         },
-        // Override the global auth guard so that it always returns true
         {
           provide: APP_GUARD,
           useValue: { canActivate: () => true },
@@ -52,7 +89,6 @@ describe('PreferenceController', () => {
     ];
     jest.spyOn(service, 'getPreferences').mockResolvedValue(preferences);
 
-    // Pass a fake request object with a user property
     const req = { user: { userId: 'user1' } } as HttpRequestDto;
     const result = await controller.getPreferences(req);
     expect(result).toBe(preferences);
@@ -65,21 +101,29 @@ describe('PreferenceController', () => {
       max_distance: 15.4,
     };
     jest
-      .spyOn(service, 'updatePreferenceInterests')
+      .spyOn(service, 'updatePreference')
       .mockResolvedValue(updatedPreference);
 
-    const updateDto: UpdatePreferenceDto = { data: ['interest1', 'interest2'] };
-    const result = await controller.updatePreferences(1, updateDto);
+    const updateDto: UpdatePreferenceDto = {
+      ...mockedUpdateDto,
+      userId: '1',
+      interests: ['interest1', 'interest2'],
+    };
+    const result = await controller.updatePreference('1', updateDto);
     expect(result).toBe(updatedPreference);
   });
 
   it('should throw error if update preferences fails', async () => {
     jest
-      .spyOn(service, 'updatePreferenceInterests')
+      .spyOn(service, 'updatePreference')
       .mockRejectedValue(new Error('Update failed'));
 
-    const updateDto: UpdatePreferenceDto = { data: ['interest1', 'interest2'] };
-    await expect(controller.updatePreferences(1, updateDto)).rejects.toThrow(
+    const updateDto: UpdatePreferenceDto = {
+      ...mockedUpdateDto,
+      userId: '1',
+      interests: ['interest1', 'interest2'],
+    };
+    await expect(controller.updatePreference('1', updateDto)).rejects.toThrow(
       'Update failed',
     );
   });
