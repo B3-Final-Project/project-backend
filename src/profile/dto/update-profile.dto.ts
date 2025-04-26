@@ -75,7 +75,7 @@ class LifestyleInfo {
   zodiac: ZodiacEnum;
 }
 
-export class UpdatePreferenceDto {
+export class UpdateProfileDto {
   @ValidateNested()
   personalInfo: PersonalInfo;
 

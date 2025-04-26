@@ -5,7 +5,7 @@ import {
   OneToOne,
   JoinColumn,
 } from 'typeorm';
-import { Preference } from './preference.entity';
+import { Profile } from './profile.entity';
 
 @Entity('user_profiles')
 export class UserProfile {
@@ -35,9 +35,9 @@ export class UserProfile {
   @Column({ type: 'int', nullable: true })
   currency: number;
 
-  @OneToOne(() => Preference)
+  @OneToOne(() => Profile)
   @JoinColumn({ name: 'preference_id' })
-  preference: Preference;
+  profile: Profile;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   created_at: Date;

@@ -8,8 +8,8 @@ import {
 
 import { Interest } from './interest.entity';
 
-@Entity('preferences')
-export class Preference {
+@Entity('profiles')
+export class Profile {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -71,7 +71,7 @@ export class Preference {
   @Column({ type: 'varchar', nullable: true })
   zodiac?: string;
 
-  @ManyToMany(() => Interest, (interest) => interest.preferences)
+  @ManyToMany(() => Interest, (interest) => interest.profiles)
   @JoinTable({
     name: 'preferences_interests',
     joinColumn: { name: 'preference_id', referencedColumnName: 'id' },
