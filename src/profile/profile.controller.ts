@@ -29,12 +29,12 @@ export class ProfileController {
     return this.profileService.getProfiles(req);
   }
 
-  @Put(':userId')
+  @Put()
   public async updateProfile(
-    @Param('userId') userId: string,
+    @Req() req: HttpRequestDto,
     @Body() body: UpdateProfileDto,
   ) {
-    return this.profileService.updateProfile(body, userId);
+    return this.profileService.updateProfile(body, req);
   }
 
   @Put(':userId/interests')
@@ -46,7 +46,10 @@ export class ProfileController {
   }
 
   @Post()
-  public async createProfile(@Body() body: UpdateProfileDto) {
-    return this.profileService.createProfile(body);
+  public async createProfile(
+    @Req() req: HttpRequestDto,
+    @Body() body: UpdateProfileDto,
+  ) {
+    return this.profileService.createProfile(body, req);
   }
 }

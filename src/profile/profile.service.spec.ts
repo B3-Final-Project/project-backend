@@ -1,7 +1,7 @@
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Test, TestingModule } from '@nestjs/testing';
-import { PreferenceService } from './profile.service';
+import { ProfileService } from './profile.service';
 import {
   HttpRequestDto,
   UserCredentialsDto,
@@ -9,14 +9,14 @@ import {
 import { Profile } from '../common/entities/profile.entity';
 import { Interest } from '../common/entities/interest.entity';
 
-describe('PreferenceService', () => {
-  let service: PreferenceService;
-  let preferenceRepository: Repository<Profile>;
+describe('ProfileService', () => {
+  let service: ProfileService;
+  let profileRepository: Repository<Profile>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        PreferenceService,
+        ProfileService,
         {
           provide: getRepositoryToken(Profile),
           useClass: Repository,
@@ -28,41 +28,40 @@ describe('PreferenceService', () => {
       ],
     }).compile();
 
-    service = module.get<PreferenceService>(PreferenceService);
-    preferenceRepository = module.get<Repository<Profile>>(
+    service = module.get<ProfileService>(ProfileService);
+    profileRepository = module.get<Repository<Profile>>(
       getRepositoryToken(Profile),
     );
   });
 
   it('should throw error if profile not found', async () => {
-    jest.spyOn(preferenceRepository, 'findOne').mockResolvedValue(null);
+    jest.spyOn(profileRepository, 'findOne').mockResolvedValue(null);
 
     await expect(
-      service.updatePreferenceInterests('1', ['interest1', 'interest2']),
-    ).rejects.toThrow('Preference for user 1 not found');
+      service.updateProfileInterests('1', ['interest1', 'interest2']),
+    ).rejects.toThrow('Profile for user 1 not found');
   });
 
   it('should get profile by user id', async () => {
-    const profiles = [new Profile()];
-    jest.spyOn(preferenceRepository, 'find').mockResolvedValue(profiles);
+    const profiles = new Profile();
+    jest.spyOn(profileRepository, 'findOne').mockResolvedValue(profiles);
 
     const user: UserCredentialsDto = {
       userId: 'user1',
-      username: 'user1',
-      roles: [],
+      groups: [],
     };
 
     const req = { user } as HttpRequestDto;
 
-    const result = await service.getPreferences(req);
+    const result = await service.getProfiles(req);
     expect(result).toBe(profiles);
   });
 
   it('should get all profile', async () => {
     const profiles = [new Profile()];
-    jest.spyOn(preferenceRepository, 'find').mockResolvedValue(profiles);
+    jest.spyOn(profileRepository, 'find').mockResolvedValue(profiles);
 
-    const result = await service.getAllPreferences();
+    const result = await service.getAllProfiles();
     expect(result).toBe(profiles);
   });
 });

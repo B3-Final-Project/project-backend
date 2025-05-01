@@ -18,8 +18,9 @@ export class ProfileService {
 
   async updateProfile(
     preferenceDto: UpdateProfileDto,
-    userId: string,
+    req: HttpRequestDto,
   ): Promise<Profile> {
+    const userId = req.user.userId;
     const profile = await this.findUserProfileOrThrow(userId, ['interests']);
     const updatedProfile = this.mapProfile(preferenceDto, profile);
     return this.preferenceRepository.save(updatedProfile);
@@ -50,8 +51,8 @@ export class ProfileService {
     return this.preferenceRepository.save(profile);
   }
 
-  async getProfiles(req: HttpRequestDto): Promise<Profile[]> {
-    return this.preferenceRepository.find({
+  async getProfiles(req: HttpRequestDto): Promise<Profile> {
+    return this.preferenceRepository.findOne({
       where: { user_id: req.user.userId },
       relations: ['interests'],
     });
@@ -61,8 +62,12 @@ export class ProfileService {
     return this.preferenceRepository.find({ relations: ['interests'] });
   }
 
-  async createProfile(preferenceDto: UpdateProfileDto): Promise<Profile> {
-    const profile = this.mapProfile(preferenceDto);
+  async createProfile(
+    preferenceDto: UpdateProfileDto,
+    req: HttpRequestDto,
+  ): Promise<Profile> {
+    const userId = req.user.userId;
+    const profile = this.mapProfile({ ...preferenceDto, userId });
     return this.preferenceRepository.save(profile);
   }
 
