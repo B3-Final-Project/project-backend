@@ -5,7 +5,7 @@ import { CognitoStrategy } from './auth/cognito.strategy';
 import { ProfileModule } from './profile/profile.module';
 import { Constants } from './constants';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { UserProfile } from './common/entities/user-profile.entity';
+import { User } from './common/entities/user-profile.entity';
 import { Interest } from './common/entities/interest.entity';
 import { Profile } from './common/entities/profile.entity';
 
@@ -17,7 +17,7 @@ import { Profile } from './common/entities/profile.entity';
       port: Constants.DATABASE_PORT,
       username: Constants.DATABASE_USER,
       password: Constants.DATABASE_PASSWORD,
-      entities: [Interest, Profile, UserProfile],
+      entities: [Interest, Profile, User],
       database: Constants.DATABASE_NAME,
       synchronize: true,
     }),

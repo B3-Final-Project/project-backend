@@ -3,31 +3,26 @@ import {
   Entity,
   JoinTable,
   ManyToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
 import { Interest } from './interest.entity';
+import {
+  DrinkingEnum,
+  OrientationEnum,
+  PoliticsEnum,
+  RelationshipTypeEnum,
+  ReligionEnum,
+  SmokingEnum,
+  ZodiacEnum,
+} from '../../profile/enums';
+import { User } from './user-profile.entity';
 
 @Entity('profiles')
 export class Profile {
   @PrimaryGeneratedColumn()
   id: number;
-
-  @Column({ type: 'varchar', nullable: true })
-  user_id: string;
-
-  // Personal Info
-  @Column({ type: 'varchar', nullable: true })
-  name?: string;
-
-  @Column({ type: 'varchar', nullable: true })
-  surname?: string;
-
-  @Column({ type: 'varchar', nullable: true })
-  gender?: string;
-
-  @Column({ type: 'varchar', nullable: true })
-  orientation?: string;
 
   // Location and Work Info
   @Column({ type: 'varchar', nullable: true })
@@ -50,26 +45,26 @@ export class Profile {
   max_distance?: number;
 
   @Column({ type: 'int', nullable: true })
-  gender_preference?: number;
+  orientation?: OrientationEnum;
 
-  @Column({ type: 'varchar', nullable: true })
-  relationship_type?: string;
+  @Column({ type: 'int', nullable: true })
+  relationship_type?: RelationshipTypeEnum;
 
   // Lifestyle Info
-  @Column({ type: 'varchar', nullable: true })
-  smoking?: string;
+  @Column({ type: 'int', nullable: true })
+  smoking?: SmokingEnum;
 
-  @Column({ type: 'varchar', nullable: true })
-  drinking?: string;
+  @Column({ type: 'int', nullable: true })
+  drinking?: DrinkingEnum;
 
-  @Column({ type: 'varchar', nullable: true })
-  religion?: string;
+  @Column({ type: 'int', nullable: true })
+  religion?: ReligionEnum;
 
-  @Column({ type: 'varchar', nullable: true })
-  politics?: string;
+  @Column({ type: 'int', nullable: true })
+  politics?: PoliticsEnum;
 
-  @Column({ type: 'varchar', nullable: true })
-  zodiac?: string;
+  @Column({ type: 'int', nullable: true })
+  zodiac?: ZodiacEnum;
 
   @ManyToMany(() => Interest, (interest) => interest.profiles)
   @JoinTable({
@@ -78,4 +73,13 @@ export class Profile {
     inverseJoinColumn: { name: 'interest_id', referencedColumnName: 'id' },
   })
   interests?: Interest[];
+
+  @OneToOne(() => User, (userProfile) => userProfile.profile)
+  userProfile: User;
+
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  created_at: Date;
+
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  updated_at: Date;
 }

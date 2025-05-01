@@ -6,9 +6,10 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { Profile } from './profile.entity';
+import { GenderEnum } from '../../profile/enums';
 
-@Entity('user_profiles')
-export class UserProfile {
+@Entity('users')
+export class User {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -18,6 +19,12 @@ export class UserProfile {
   @Column({ type: 'varchar', length: 255 })
   surname: string;
 
+  @Column({ type: 'int' })
+  gender: GenderEnum;
+
+  @Column({ type: 'int' })
+  age: number;
+
   @Column({
     type: 'geography',
     spatialFeatureType: 'Point',
@@ -26,16 +33,13 @@ export class UserProfile {
   })
   location: string;
 
-  @Column({ type: 'text', nullable: true })
-  bio: string;
-
   @Column({ type: 'int', nullable: true })
   rarity: number;
 
   @Column({ type: 'int', nullable: true })
   currency: number;
 
-  @OneToOne(() => Profile)
+  @OneToOne(() => Profile, { eager: true })
   @JoinColumn({ name: 'profile_id' })
   profile: Profile;
 
