@@ -4,6 +4,5 @@ export class HttpRequestDto extends Request {
 
 export class UserCredentialsDto {
   userId: string;
-  username: string;
-  roles: string[];
+  groups: string[];
 }
