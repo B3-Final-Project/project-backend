@@ -1,7 +1,7 @@
 export enum RelationshipTypeEnum {
-  CASUAL = 'casual',
-  LONG_TERM = 'long-term',
-  MARRIAGE = 'marriage',
-  FRIENDSHIP = 'friendship',
-  UNSURE = 'unsure',
+  CASUAL,
+  LONG_TERM,
+  MARRIAGE,
+  FRIENDSHIP,
+  UNSURE,
 }
