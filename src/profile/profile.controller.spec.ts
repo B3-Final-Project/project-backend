@@ -1,10 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { PreferenceController } from './profile.controller';
-import { PreferenceService } from './profile.service';
+import { ProfileController } from './profile.controller';
+import { ProfileService } from './profile.service';
 import { APP_GUARD } from '@nestjs/core';
 import { Profile } from '../common/entities/profile.entity';
 import { HttpRequestDto } from '../common/dto/http-request.dto';
-import { UpdatePreferenceDto } from './dto/update-profile.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 import {
   DrinkingEnum,
   GenderEnum,
@@ -17,10 +17,10 @@ import {
 } from './enums';
 
 describe('PreferenceController', () => {
-  let controller: PreferenceController;
-  let service: PreferenceService;
+  let controller: ProfileController;
+  let service: ProfileService;
 
-  const mockedUpdateDto: UpdatePreferenceDto = {
+  const mockedUpdateDto: UpdateProfileDto = {
     lifestyleInfo: {
       smoking: SmokingEnum.NEVER,
       drinking: DrinkingEnum.NEVER,
@@ -49,15 +49,15 @@ describe('PreferenceController', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      controllers: [PreferenceController],
+      controllers: [ProfileController],
       providers: [
         {
-          provide: PreferenceService,
+          provide: ProfileService,
           useValue: {
-            getAllPreferences: jest.fn(),
-            getPreferences: jest.fn(),
-            updatePreferenceInterests: jest.fn(),
-            updatePreference: jest.fn(),
+            getAllProfiles: jest.fn(),
+            getProfiles: jest.fn(),
+            updateProfileInterests: jest.fn(),
+            updateProfile: jest.fn(),
           },
         },
         {
@@ -67,8 +67,8 @@ describe('PreferenceController', () => {
       ],
     }).compile();
 
-    controller = module.get<PreferenceController>(PreferenceController);
-    service = module.get<PreferenceService>(PreferenceService);
+    controller = module.get<ProfileController>(ProfileController);
+    service = module.get<ProfileService>(ProfileService);
   });
 
   it('should be defined', () => {
@@ -77,18 +77,18 @@ describe('PreferenceController', () => {
 
   it('should return all profile', async () => {
     const profiles: Profile[] = [{ id: 1, user_id: '1', max_age: 30 }];
-    jest.spyOn(service, 'getAllPreferences').mockResolvedValue(profiles);
+    jest.spyOn(service, 'getAllProfiles').mockResolvedValue(profiles);
 
-    const result = await controller.getAllPreferences();
+    const result = await controller.getAllProfiles();
     expect(result).toBe(profiles);
   });
 
   it('should return profile for a user', async () => {
-    const profiles: Profile[] = [{ id: 1, user_id: 'user1', min_age: 20 }];
-    jest.spyOn(service, 'getPreferences').mockResolvedValue(profiles);
+    const profiles: Profile = { id: 1, user_id: 'user1', min_age: 20 };
+    jest.spyOn(service, 'getProfiles').mockResolvedValue(profiles);
 
     const req = { user: { userId: 'user1' } } as HttpRequestDto;
-    const result = await controller.getPreferences(req);
+    const result = await controller.getProfiles(req);
     expect(result).toBe(profiles);
   });
 
@@ -98,30 +98,42 @@ describe('PreferenceController', () => {
       user_id: '1',
       max_distance: 15.4,
     };
-    jest
-      .spyOn(service, 'updatePreference')
-      .mockResolvedValue(updatedPreference);
+    jest.spyOn(service, 'updateProfile').mockResolvedValue(updatedPreference);
 
-    const updateDto: UpdatePreferenceDto = {
+    const updateDto: UpdateProfileDto = {
       ...mockedUpdateDto,
       userId: '1',
       interests: ['interest1', 'interest2'],
     };
-    const result = await controller.updatePreference('1', updateDto);
+
+    const req: HttpRequestDto = {
+      user: {
+        userId: '1',
+      },
+    } as HttpRequestDto;
+
+    const result = await controller.updateProfile(req, updateDto);
     expect(result).toBe(updatedPreference);
   });
 
   it('should throw error if update profile fails', async () => {
     jest
-      .spyOn(service, 'updatePreference')
+      .spyOn(service, 'updateProfile')
       .mockRejectedValue(new Error('Update failed'));
 
-    const updateDto: UpdatePreferenceDto = {
+    const updateDto: UpdateProfileDto = {
       ...mockedUpdateDto,
       userId: '1',
       interests: ['interest1', 'interest2'],
     };
-    await expect(controller.updatePreference('1', updateDto)).rejects.toThrow(
+
+    const req: HttpRequestDto = {
+      user: {
+        userId: '1',
+      },
+    } as HttpRequestDto;
+
+    await expect(controller.updateProfile(req, updateDto)).rejects.toThrow(
       'Update failed',
     );
   });

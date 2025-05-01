@@ -73,8 +73,8 @@ export class Profile {
 
   @ManyToMany(() => Interest, (interest) => interest.profiles)
   @JoinTable({
-    name: 'preferences_interests',
-    joinColumn: { name: 'preference_id', referencedColumnName: 'id' },
+    name: 'profiles_interests',
+    joinColumn: { name: 'profile_id', referencedColumnName: 'id' },
     inverseJoinColumn: { name: 'interest_id', referencedColumnName: 'id' },
   })
   interests?: Interest[];

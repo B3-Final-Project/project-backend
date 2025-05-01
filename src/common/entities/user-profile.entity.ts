@@ -36,7 +36,7 @@ export class UserProfile {
   currency: number;
 
   @OneToOne(() => Profile)
-  @JoinColumn({ name: 'preference_id' })
+  @JoinColumn({ name: 'profile_id' })
   profile: Profile;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
