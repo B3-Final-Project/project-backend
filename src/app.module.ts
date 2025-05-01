@@ -1,13 +1,19 @@
-import { Module } from '@nestjs/common';
+import {
+  MiddlewareConsumer,
+  Module,
+  NestModule,
+  RequestMethod,
+} from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { CognitoStrategy } from './auth/cognito.strategy';
 import { ProfileModule } from './profile/profile.module';
 import { Constants } from './constants';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { User } from './common/entities/user-profile.entity';
+import { User } from './common/entities/user.entity';
 import { Interest } from './common/entities/interest.entity';
 import { Profile } from './common/entities/profile.entity';
+import { LoggerMiddleware } from './logger.middleware';
 
 @Module({
   imports: [
@@ -26,4 +32,10 @@ import { Profile } from './common/entities/profile.entity';
   controllers: [AppController],
   providers: [AppService, CognitoStrategy],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  public configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(LoggerMiddleware)
+      .forRoutes({ path: '*', method: RequestMethod.ALL });
+  }
+}

@@ -17,7 +17,7 @@ import {
   SmokingEnum,
   ZodiacEnum,
 } from '../../profile/enums';
-import { User } from './user-profile.entity';
+import { User } from './user.entity';
 
 @Entity('profiles')
 export class Profile {

@@ -53,7 +53,7 @@ describe('ProfileService', () => {
 
     const req = { user } as HttpRequestDto;
 
-    const result = await service.getProfiles(req);
+    const result = await service.getProfile(req);
     expect(result).toBe(profiles);
   });
 

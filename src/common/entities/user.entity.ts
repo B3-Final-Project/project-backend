@@ -11,7 +11,10 @@ import { GenderEnum } from '../../profile/enums';
 @Entity('users')
 export class User {
   @PrimaryGeneratedColumn()
-  id: number;
+  id: string;
+
+  @Column({ type: 'varchar', length: 255, unique: true })
+  user_id: string;
 
   @Column({ type: 'varchar', length: 255 })
   name: string;

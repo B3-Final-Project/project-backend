@@ -25,8 +25,8 @@ export class ProfileController {
   }
 
   @Get()
-  public async getProfiles(@Req() req: HttpRequestDto) {
-    return this.profileService.getProfiles(req);
+  public async getProfile(@Req() req: HttpRequestDto) {
+    return this.profileService.getProfile(req);
   }
 
   @Put()

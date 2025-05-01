@@ -23,6 +23,9 @@ class PersonalInfo {
   @IsString()
   surname: string;
 
+  @IsNumber()
+  age: number;
+
   @IsEnum(GenderEnum)
   gender: GenderEnum;
 
