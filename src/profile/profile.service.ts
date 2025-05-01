@@ -62,27 +62,16 @@ export class ProfileService {
   async getProfile(req: HttpRequestDto): Promise<any> {
     const profile = await this.findProfileOrThrowByUserId(req.user.userId, [
       'interests',
-      'userProfile',
     ]);
 
+    const user = await this.userRepository.findOne({
+      where: { user_id: req.user.userId },
+    });
+
+    profile.userProfile = undefined;
     return {
-      name: profile.userProfile.name,
-      surname: profile.userProfile.surname,
-      gender: profile.userProfile.gender,
-      orientation: profile.orientation,
-      city: profile.city,
-      work: profile.work,
-      languages: profile.languages,
-      min_age: profile.min_age,
-      max_age: profile.max_age,
-      max_distance: profile.max_distance,
-      relationship_type: profile.relationship_type,
-      smoking: profile.smoking,
-      drinking: profile.drinking,
-      religion: profile.religion,
-      politics: profile.politics,
-      zodiac: profile.zodiac,
-      interests: profile.interests,
+      profile,
+      user,
     };
   }
 
@@ -163,7 +152,7 @@ export class ProfileService {
   }
 
   private mapProfile(dto: UpdateProfileDto, entity: Profile): Profile {
-    const { locationWork, preferenceInfo, lifestyleInfo } = dto;
+    const { locationWork, preferenceInfo, lifestyleInfo, personalInfo } = dto;
 
     if (locationWork) {
       Object.assign(entity, locationWork);
@@ -175,6 +164,11 @@ export class ProfileService {
 
     if (lifestyleInfo) {
       Object.assign(entity, lifestyleInfo);
+    }
+
+    // Map orientation from personalInfo to profile entity
+    if (personalInfo && personalInfo.orientation !== undefined) {
+      entity.orientation = personalInfo.orientation;
     }
 
     return entity;
