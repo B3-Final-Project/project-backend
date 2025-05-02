@@ -5,6 +5,7 @@ import {
   IsString,
   ValidateNested,
 } from 'class-validator';
+import { PartialType } from '@nestjs/mapped-types';
 import {
   DrinkingEnum,
   GenderEnum,
@@ -99,3 +100,5 @@ export class UpdateProfileDto {
   @IsString()
   interests?: string[];
 }
+
+export class PartialUpdateProfileDto extends PartialType(UpdateProfileDto) {}

@@ -7,6 +7,7 @@ import {
   Post,
   Req,
   UseGuards,
+  Patch,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { HttpRequestDto } from '../common/dto/http-request.dto';
@@ -51,5 +52,13 @@ export class ProfileController {
     @Body() body: UpdateProfileDto,
   ) {
     return this.profileService.createProfile(body, req);
+  }
+
+  @Patch()
+  public async updateProfileField(
+    @Body() body: Partial<UpdateProfileDto>,
+    @Req() req: HttpRequestDto,
+  ) {
+    return this.profileService.updateProfileField(body, req);
   }
 }
