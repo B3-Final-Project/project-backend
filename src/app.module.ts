@@ -13,7 +13,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './common/entities/user.entity';
 import { Interest } from './common/entities/interest.entity';
 import { Profile } from './common/entities/profile.entity';
-import { LoggerMiddleware } from './logger.middleware';
+import { LoggerMiddleware } from './middlewares/logger.middleware';
 
 @Module({
   imports: [

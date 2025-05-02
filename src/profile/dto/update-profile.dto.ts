@@ -94,10 +94,6 @@ export class UpdateProfileDto {
 
   @IsOptional()
   @IsString()
-  userId?: string;
-
-  @IsOptional()
-  @IsString()
   interests?: string[];
 }
 
