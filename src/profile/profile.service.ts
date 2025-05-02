@@ -189,7 +189,7 @@ export class ProfileService {
       where: { user_id: userId },
       relations: ['profile'],
     });
-    if (!user || !user.profile) {
+    if (!user?.profile) {
       throw new NotFoundException(`Profile for user ${userId} not found`);
     }
 

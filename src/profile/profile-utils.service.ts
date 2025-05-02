@@ -21,7 +21,7 @@ export class ProfileUtils {
     }
 
     // Map orientation from personalInfo to profile entity
-    if (personalInfo && personalInfo.orientation !== undefined) {
+    if (personalInfo?.orientation !== undefined) {
       entity.orientation = personalInfo.orientation;
     }
 
