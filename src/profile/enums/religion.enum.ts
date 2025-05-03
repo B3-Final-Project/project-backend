@@ -1,0 +1,12 @@
+export enum ReligionEnum {
+  ATHEIST,
+  AGNOSTIC,
+  BUDDHIST,
+  CHRISTIAN,
+  HINDU,
+  JEWISH,
+  MUSLIM,
+  SPIRITUAL,
+  OTHER,
+  PREFER_NOT_TO_SAY,
+}

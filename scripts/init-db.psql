@@ -1,9 +1,9 @@
 CREATE EXTENSION IF NOT EXISTS postgis;
 
 -- ======================================
--- 1. Create Table: preferences
+-- 1. Create Table: profiles
 -- ======================================
-CREATE TABLE preferences (
+CREATE TABLE profiles (
   id SERIAL PRIMARY KEY,
   user_id VARCHAR(255),
   -- Personal Info
@@ -40,7 +40,7 @@ CREATE TABLE interests (
 
 -- ======================================
 -- 3. Create Table: user_profiles
---    One-to-one relationship with preferences (via preference_id)
+--    One-to-one relationship with profiles (via preference_id)
 --    'location' uses PostGIS geography type with SRID=4326 (point)
 -- ======================================
 CREATE TABLE user_profiles (
@@ -55,9 +55,9 @@ CREATE TABLE user_profiles (
   preference_id INT UNIQUE, -- Unique for one-to-one
   created_at TIMESTAMP,
   updated_at TIMESTAMP,
-  CONSTRAINT fk_userprofiles_preferences
+  CONSTRAINT fk_userprofiles_profiles
     FOREIGN KEY (preference_id)
-    REFERENCES preferences (id)
+    REFERENCES profiles (id)
 );
 
 -- ======================================
@@ -70,17 +70,17 @@ CREATE TABLE prompts (
 );
 
 -- ======================================
--- 5. Create Table: preferences_interests
---    Many-to-one to preferences
+-- 5. Create Table: profiles_interests
+--    Many-to-one to profiles
 --    Many-to-one to interests
 -- ======================================
-CREATE TABLE preferences_interests (
+CREATE TABLE profiles_interests (
   preference_id INT NOT NULL,
   interest_id INT NOT NULL,
   PRIMARY KEY (preference_id, interest_id),
-  CONSTRAINT fk_prefsint_preferences
+  CONSTRAINT fk_prefsint_profiles
     FOREIGN KEY (preference_id)
-    REFERENCES preferences (id),
+    REFERENCES profiles (id),
   CONSTRAINT fk_prefsint_interests
     FOREIGN KEY (interest_id)
     REFERENCES interests (id)
@@ -161,7 +161,7 @@ CREATE TABLE swipes (
 
 /*
   Additional Notes:
-  1. If you need user_profiles <-> preferences to be one-to-many,
+  1. If you need user_profiles <-> profiles to be one-to-many,
      remove the UNIQUE constraint on user_profiles.preference_id.
   2. If pack_ids references an actual "packs" table, consider storing
      them in a separate table with a proper FK, rather than a varchar field.

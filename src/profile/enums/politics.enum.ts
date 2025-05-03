@@ -1,0 +1,8 @@
+export enum PoliticsEnum {
+  LIBERAL,
+  MODERATE,
+  CONSERVATIVE,
+  NOT_POLITICAL,
+  OTHER,
+  PREFER_NOT_TO_SAY,
+}

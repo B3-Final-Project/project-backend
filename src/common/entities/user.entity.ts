@@ -5,18 +5,28 @@ import {
   OneToOne,
   JoinColumn,
 } from 'typeorm';
-import { Preference } from './preference.entity';
+import { Profile } from './profile.entity';
+import { GenderEnum } from '../../profile/enums';
 
-@Entity('user_profiles')
-export class UserProfile {
+@Entity('users')
+export class User {
   @PrimaryGeneratedColumn()
-  id: number;
+  id: string;
+
+  @Column({ type: 'varchar', length: 255, unique: true })
+  user_id: string;
 
   @Column({ type: 'varchar', length: 255 })
   name: string;
 
   @Column({ type: 'varchar', length: 255 })
   surname: string;
+
+  @Column({ type: 'int' })
+  gender: GenderEnum;
+
+  @Column({ type: 'int' })
+  age: number;
 
   @Column({
     type: 'geography',
@@ -26,18 +36,15 @@ export class UserProfile {
   })
   location: string;
 
-  @Column({ type: 'text', nullable: true })
-  bio: string;
-
   @Column({ type: 'int', nullable: true })
   rarity: number;
 
   @Column({ type: 'int', nullable: true })
   currency: number;
 
-  @OneToOne(() => Preference)
-  @JoinColumn({ name: 'preference_id' })
-  preference: Preference;
+  @OneToOne(() => Profile, { eager: true })
+  @JoinColumn({ name: 'profile_id' })
+  profile: Profile;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   created_at: Date;

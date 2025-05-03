@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToMany } from 'typeorm';
-import { Preference } from './preference.entity';
+import { Profile } from './profile.entity';
 
 @Entity('interests')
 export class Interest {
@@ -9,6 +9,6 @@ export class Interest {
   @Column({ type: 'varchar', length: 255 })
   description: string;
 
-  @ManyToMany(() => Preference, (preference) => preference.interests)
-  preferences: Preference[];
+  @ManyToMany(() => Profile, (profile) => profile.interests)
+  profiles: Profile[];
 }
