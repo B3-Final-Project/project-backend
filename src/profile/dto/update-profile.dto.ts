@@ -41,8 +41,8 @@ class LocationWorkInfo {
   @IsString()
   work: string;
 
-  @IsString()
-  languages: string;
+  @IsString({ each: true })
+  languages: string[];
 }
 
 class PreferenceInfo {
