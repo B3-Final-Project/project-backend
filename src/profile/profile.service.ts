@@ -1,7 +1,7 @@
 import {
+  BadRequestException,
   Injectable,
   NotFoundException,
-  BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
@@ -10,8 +10,8 @@ import { HttpRequestDto } from '../common/dto/http-request.dto';
 import { Profile } from '../common/entities/profile.entity';
 import { Interest } from '../common/entities/interest.entity';
 import {
-  UpdateProfileDto,
   PartialUpdateProfileDto,
+  UpdateProfileDto,
 } from './dto/update-profile.dto';
 import { User } from '../common/entities/user.entity';
 import { ProfileUtils } from './profile-utils.service';
@@ -84,18 +84,24 @@ export class ProfileService {
   }
 
   async getProfile(req: HttpRequestDto): Promise<any> {
-    const profile = await this.findProfileOrThrowByUserId(req.user.userId, [
-      'interests',
-    ]);
-
     const user = await this.userRepository.findOne({
       where: { user_id: req.user.userId },
+      relations: ['profile'],
     });
 
-    profile.userProfile = undefined;
+    if (!user?.profile) {
+      return {
+        profile: null,
+        user: null,
+      };
+    }
+
     return {
-      profile,
-      user,
+      profile: user.profile,
+      user: {
+        ...user,
+        profile: undefined,
+      },
     };
   }
 
@@ -126,6 +132,10 @@ export class ProfileService {
         gender: personalInfo.gender,
         age: personalInfo.age,
         profile: savedProfile,
+        location: {
+          type: 'Point',
+          coordinates: [2.3522, 48.8566],
+        },
       });
     } else {
       // 4) If it already existed, update their “personalInfo” and attach the new Profile
@@ -134,6 +144,10 @@ export class ProfileService {
         surname: personalInfo.surname,
         gender: personalInfo.gender,
         age: personalInfo.age,
+        location: {
+          type: 'Point',
+          coordinates: [2.3522, 48.8566],
+        },
       });
       user.profile = savedProfile;
     }
