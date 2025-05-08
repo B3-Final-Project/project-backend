@@ -26,9 +26,7 @@ import { LoggerMiddleware } from './middlewares/logger.middleware';
       entities: [Interest, Profile, User],
       database: Constants.DATABASE_NAME,
       synchronize: true,
-      ssl: {
-        rejectUnauthorized: false,
-      },
+      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: true } : { rejectUnauthorized: false },
       extra: {
         connectionTimeoutMillis: 30000,
       },
