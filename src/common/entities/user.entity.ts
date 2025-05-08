@@ -5,6 +5,7 @@ import {
   OneToOne,
   JoinColumn,
 } from 'typeorm';
+import { Point } from 'geojson';
 import { Profile } from './profile.entity';
 import { GenderEnum } from '../../profile/enums';
 
@@ -34,7 +35,7 @@ export class User {
     srid: 4326,
     nullable: true,
   })
-  location: string;
+  location: Point;
 
   @Column({ type: 'int', nullable: true })
   rarity: number;

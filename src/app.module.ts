@@ -14,25 +14,29 @@ import { User } from './common/entities/user.entity';
 import { Interest } from './common/entities/interest.entity';
 import { Profile } from './common/entities/profile.entity';
 import { LoggerMiddleware } from './middlewares/logger.middleware';
+import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions';
+import { BoosterModule } from './booster/booster.module';
+
+export const ormConfig: PostgresConnectionOptions = {
+  type: 'postgres',
+  host: Constants.DATABASE_HOST,
+  port: Constants.DATABASE_PORT,
+  username: Constants.DATABASE_USER,
+  password: Constants.DATABASE_PASSWORD,
+  entities: [Interest, Profile, User],
+  database: Constants.DATABASE_NAME,
+  synchronize: true,
+  ssl:
+    process.env.NODE_ENV === 'production'
+      ? { rejectUnauthorized: false }
+      : false,
+  extra: {
+    connectionTimeoutMillis: 30000,
+  },
+};
 
 @Module({
-  imports: [
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: Constants.DATABASE_HOST,
-      port: Constants.DATABASE_PORT,
-      username: Constants.DATABASE_USER,
-      password: Constants.DATABASE_PASSWORD,
-      entities: [Interest, Profile, User],
-      database: Constants.DATABASE_NAME,
-      synchronize: true,
-      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: true } : { rejectUnauthorized: false },
-      extra: {
-        connectionTimeoutMillis: 30000,
-      },
-    }),
-    ProfileModule,
-  ],
+  imports: [TypeOrmModule.forRoot(ormConfig), ProfileModule, BoosterModule],
   controllers: [AppController],
   providers: [AppService, CognitoStrategy],
 })

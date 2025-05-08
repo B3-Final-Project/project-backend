@@ -32,7 +32,7 @@ services:
 
   database:
     <<: *common-configuration
-    image: postgis/postgis:latest
+    image: postgis/postgis:17-3.4
     environment:
       POSTGRES_USER: ${DATABASE_USER}
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD}

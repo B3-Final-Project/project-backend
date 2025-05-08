@@ -1,7 +1,7 @@
 import {
+  BadRequestException,
   Injectable,
   NotFoundException,
-  BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
@@ -10,8 +10,8 @@ import { HttpRequestDto } from '../common/dto/http-request.dto';
 import { Profile } from '../common/entities/profile.entity';
 import { Interest } from '../common/entities/interest.entity';
 import {
-  UpdateProfileDto,
   PartialUpdateProfileDto,
+  UpdateProfileDto,
 } from './dto/update-profile.dto';
 import { User } from '../common/entities/user.entity';
 import { ProfileUtils } from './profile-utils.service';
@@ -133,12 +133,14 @@ export class ProfileService {
         name: personalInfo.name,
         surname: personalInfo.surname,
         gender: personalInfo.gender,
-        age: personalInfo.age,
+        age: 23,
       });
       user.profile = savedProfile;
     }
 
+    // 5) Persist the User (with its new profile_id FK)
     await this.userRepository.save(user);
+
     return savedProfile;
   }
 
@@ -185,11 +187,12 @@ export class ProfileService {
     userId: string,
     relations: string[] = [],
   ): Promise<Profile> {
+    // fetch the user + its profile
     const user = await this.userRepository.findOne({
       where: { user_id: userId },
       relations: ['profile'],
     });
-    if (!user?.profile) {
+    if (!user || !user.profile) {
       throw new NotFoundException(`Profile for user ${userId} not found`);
     }
 
@@ -197,11 +200,13 @@ export class ProfileService {
       return user.profile;
     }
 
+    // reload with extra joins
     const profile = await this.profileRepository.findOne({
       where: { id: user.profile.id },
       relations,
     });
     if (!profile) {
+      // should never happen, but just in case
       throw new NotFoundException(`Profile #${user.profile.id} disappeared`);
     }
     return profile;
