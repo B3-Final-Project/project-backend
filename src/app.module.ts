@@ -26,6 +26,12 @@ import { LoggerMiddleware } from './middlewares/logger.middleware';
       entities: [Interest, Profile, User],
       database: Constants.DATABASE_NAME,
       synchronize: true,
+      ssl: {
+        rejectUnauthorized: false,
+      },
+      extra: {
+        connectionTimeoutMillis: 30000,
+      },
     }),
     ProfileModule,
   ],
