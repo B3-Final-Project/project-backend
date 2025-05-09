@@ -83,7 +83,7 @@ export async function seedUsers(dataSource: DataSource, count = 50) {
     const location = {
       type: 'Point',
       coordinates: [faker.location.longitude(), faker.location.latitude()],
-    } as Point;
+    };
 
     const user = userRepo.create({
       user_id: faker.string.uuid(),

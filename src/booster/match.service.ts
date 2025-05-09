@@ -24,7 +24,7 @@ export class MatchService {
       where: { user_id: userId },
       relations: ['profile'],
     });
-    if (!user || !user.profile) {
+    if (!user?.profile) {
       throw new NotFoundException('User or profile not found');
     }
     const prefs = user.profile;
@@ -58,7 +58,7 @@ export class MatchService {
             orientation: prefs.orientation,
           }).andWhere('u.gender = :gender', { gender: GenderEnum.FEMALE });
           break;
-        case OrientationEnum.STRAIGHT:
+        case OrientationEnum.STRAIGHT: {
           // Straight users match opposite gender
           qb.andWhere('p.orientation = :orientation', {
             orientation: prefs.orientation,
@@ -69,6 +69,7 @@ export class MatchService {
               : GenderEnum.MALE;
           qb.andWhere('u.gender = :gender', { gender: opposite });
           break;
+        }
         default:
           // Bisexual, Pansexual, Asexual: match nothing
           break;
@@ -91,7 +92,7 @@ export class MatchService {
           lng: (user.location as any).coordinates[0],
         })
         .having('distance_km <= :maxDist', {
-          maxDist: prefs.max_distance || 100,
+          maxDist: prefs.max_distance ?? 100,
         })
         .orderBy('distance_km', 'ASC');
     }
