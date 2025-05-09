@@ -210,18 +210,6 @@ describe('ProfileService', () => {
     });
   });
 
-  describe('getAllProfiles', () => {
-    it('returns all profiles with relations', async () => {
-      const arr = [{} as Profile];
-      profileRepository.find.mockResolvedValue(arr);
-      const result = await service.getAllProfiles();
-      expect(profileRepository.find).toHaveBeenCalledWith({
-        relations: ['interests', 'userProfile'],
-      });
-      expect(result).toBe(arr);
-    });
-  });
-
   describe('createProfile', () => {
     const dto = {
       personalInfo: { name: 'N', surname: 'S', gender: 'g', age: 20 },

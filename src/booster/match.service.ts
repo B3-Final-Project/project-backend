@@ -1,40 +1,26 @@
-// src/match/match.service.ts
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Injectable } from '@nestjs/common';
 import { Profile } from '../common/entities/profile.entity';
-import { User } from '../common/entities/user.entity';
 import { GenderEnum, OrientationEnum } from '../profile/enums';
 import { UserMatches } from '../common/entities/user-matches.entity';
 import { BoosterAction } from './enums/action.enum';
+import { MatchRepository } from 'src/common/repository/matches.repository';
+import { ProfileRepository } from 'src/common/repository/profile.repository';
+import { UserRepository } from '../common/repository/user.repository';
 
 @Injectable()
 export class MatchService {
   constructor(
-    @InjectRepository(User)
-    private readonly userRepo: Repository<User>,
-    @InjectRepository(Profile)
-    private readonly profileRepo: Repository<Profile>,
-    @InjectRepository(UserMatches)
-    private readonly userMatches: Repository<UserMatches>,
+    private readonly userRepo: UserRepository,
+    private readonly matchRepository: MatchRepository,
+    private readonly profileRepository: ProfileRepository,
   ) {}
 
   private async baseQuery(userId: string) {
-    const user = await this.userRepo.findOne({
-      where: { user_id: userId },
-      relations: ['profile'],
-    });
-    if (!user?.profile) {
-      throw new NotFoundException('User or profile not found');
-    }
+    const user = await this.userRepo.findUserWithProfile(userId);
     const prefs = user.profile;
 
     // 2. Base query: other users
-    const qb = this.profileRepo
-      .createQueryBuilder('p')
-      .innerJoin('p.userProfile', 'u')
-      .where('u.user_id != :me', { me: userId });
-
+    const qb = this.profileRepository.createUserMatchQueryBuilder(userId);
     // 3. Age range
     if (prefs.min_age != null) {
       qb.andWhere('u.age >= :minAge', { minAge: prefs.min_age });
@@ -97,12 +83,7 @@ export class MatchService {
         .orderBy('distance_km', 'ASC');
     }
 
-    const seenRows = await this.userMatches.find({
-      where: { user_id: userId },
-    });
-
-    const seenIds = seenRows.map((row) => row.profile_id);
-    console.log('Seen IDs:', seenIds);
+    const seenIds = await this.matchRepository.getSeenRows(userId);
 
     // 7b. Exclude them
     if (seenIds.length > 0) {
@@ -172,6 +153,6 @@ export class MatchService {
 
     console.log('creating matches', userMatches);
 
-    return this.userMatches.save(userMatches);
+    return this.matchRepository.save(userMatches);
   }
 }
