@@ -6,9 +6,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Profile } from '../common/entities/profile.entity';
 import { Interest } from '../common/entities/interest.entity';
 import { User } from '../common/entities/user.entity';
+import { UserMatches } from '../common/entities/user-matches.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Profile, Interest, User])],
+  imports: [TypeOrmModule.forFeature([Profile, Interest, User, UserMatches])],
   controllers: [BoosterController],
   providers: [BoosterService, MatchService],
 })

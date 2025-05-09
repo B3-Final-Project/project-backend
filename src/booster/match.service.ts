@@ -5,6 +5,8 @@ import { Repository } from 'typeorm';
 import { Profile } from '../common/entities/profile.entity';
 import { User } from '../common/entities/user.entity';
 import { GenderEnum, OrientationEnum } from '../profile/enums';
+import { UserMatches } from '../common/entities/user-matches.entity';
+import { BoosterAction } from './enums/action.enum';
 
 @Injectable()
 export class MatchService {
@@ -13,6 +15,8 @@ export class MatchService {
     private readonly userRepo: Repository<User>,
     @InjectRepository(Profile)
     private readonly profileRepo: Repository<Profile>,
+    @InjectRepository(UserMatches)
+    private readonly userMatches: Repository<UserMatches>,
   ) {}
 
   private async baseQuery(userId: string) {
@@ -92,6 +96,18 @@ export class MatchService {
         .orderBy('distance_km', 'ASC');
     }
 
+    const seenRows = await this.userMatches.find({
+      where: { user_id: userId },
+    });
+
+    const seenIds = seenRows.map((row) => row.profile_id);
+    console.log('Seen IDs:', seenIds);
+
+    // 7b. Exclude them
+    if (seenIds.length > 0) {
+      qb.andWhere('p.id NOT IN (:...seenIds)', { seenIds });
+    }
+
     return {
       qb,
       prefs,
@@ -123,14 +139,38 @@ export class MatchService {
     return qb.getMany();
   }
 
-  public async findBroadMatches(userId: string, maxResults = 20) {
+  public async findBroadMatches(
+    userId: string,
+    excludeIds: number[],
+    maxResults = 20,
+  ) {
     // 1. Load user and their profile
     const { qb } = await this.baseQuery(userId);
 
+    if (excludeIds.length > 0) {
+      qb.andWhere('p.id NOT IN (:...excludeIds)', { excludeIds });
+    }
     // 7. Limit
     qb.limit(maxResults);
 
     // 8. Execute
     return qb.getMany();
+  }
+
+  public async createMatches(
+    profiles: Profile[],
+    userId: string,
+  ): Promise<UserMatches[]> {
+    const userMatches = profiles.map((profile) => {
+      const match = new UserMatches();
+      match.user_id = userId;
+      match.profile_id = profile.id.toString();
+      match.action = BoosterAction.SEEN;
+      return match;
+    });
+
+    console.log('creating matches', userMatches);
+
+    return this.userMatches.save(userMatches);
   }
 }

@@ -7,6 +7,7 @@ export class BoosterService {
   public constructor(private readonly matchService: MatchService) {}
 
   public async getBooster(amount: string, req: HttpRequestDto) {
+    const parsedAmount = parseInt(amount, 10);
     const user = req.user;
     if (!user) {
       throw new Error('User not found');
@@ -14,16 +15,19 @@ export class BoosterService {
 
     const profiles = await this.matchService.findMatchesForUser(
       user.userId,
-      10,
+      parsedAmount,
     );
 
-    if (profiles.length < 10) {
+    if (profiles.length < parsedAmount) {
       const extraProfiles = await this.matchService.findBroadMatches(
         user.userId,
+        profiles.map((p) => p.id),
         10 - profiles.length,
       );
-      return [...profiles, ...extraProfiles];
+      profiles.push(...extraProfiles);
     }
+
+    await this.matchService.createMatches(profiles, user.userId);
 
     return profiles;
   }

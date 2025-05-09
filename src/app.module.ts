@@ -16,6 +16,7 @@ import { Profile } from './common/entities/profile.entity';
 import { LoggerMiddleware } from './middlewares/logger.middleware';
 import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions';
 import { BoosterModule } from './booster/booster.module';
+import { UserMatches } from './common/entities/user-matches.entity';
 
 export const ormConfig: PostgresConnectionOptions = {
   type: 'postgres',
@@ -23,7 +24,7 @@ export const ormConfig: PostgresConnectionOptions = {
   port: Constants.DATABASE_PORT,
   username: Constants.DATABASE_USER,
   password: Constants.DATABASE_PASSWORD,
-  entities: [Interest, Profile, User],
+  entities: [Interest, Profile, User, UserMatches],
   database: Constants.DATABASE_NAME,
   synchronize: true,
   ssl:
