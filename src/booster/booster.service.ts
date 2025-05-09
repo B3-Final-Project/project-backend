@@ -12,6 +12,19 @@ export class BoosterService {
       throw new Error('User not found');
     }
 
-    return await this.matchService.findMatchesForUser(user.userId, 10);
+    const profiles = await this.matchService.findMatchesForUser(
+      user.userId,
+      10,
+    );
+
+    if (profiles.length < 10) {
+      const extraProfiles = await this.matchService.findBroadMatches(
+        user.userId,
+        10 - profiles.length,
+      );
+      return [...profiles, ...extraProfiles];
+    }
+
+    return profiles;
   }
 }
