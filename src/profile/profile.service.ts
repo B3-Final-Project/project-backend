@@ -133,7 +133,7 @@ export class ProfileService {
         name: personalInfo.name,
         surname: personalInfo.surname,
         gender: personalInfo.gender,
-        age: 23,
+        age: personalInfo.age,
       });
       user.profile = savedProfile;
     }
