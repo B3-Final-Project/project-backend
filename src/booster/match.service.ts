@@ -15,14 +15,7 @@ export class MatchService {
     private readonly profileRepo: Repository<Profile>,
   ) {}
 
-  /**
-   * Find matching profiles for the given userId
-   */
-  async findMatchesForUser(
-    userId: string,
-    maxResults = 20,
-  ): Promise<Profile[]> {
-    // 1. Load user and their profile
+  private async baseQuery(userId: string) {
     const user = await this.userRepo.findOne({
       where: { user_id: userId },
       relations: ['profile'],
@@ -73,19 +66,9 @@ export class MatchService {
           qb.andWhere('u.gender = :gender', { gender: opposite });
           break;
         default:
-          // Bisexual, Pansexual, Asexual: match orientation only
-          qb.andWhere('p.orientation = :orientation', {
-            orientation: prefs.orientation,
-          });
+          // Bisexual, Pansexual, Asexual: match nothing
           break;
       }
-    }
-
-    // 5. Relationship type
-    if (prefs.relationship_type != null) {
-      qb.andWhere('p.relationship_type = :relType', {
-        relType: prefs.relationship_type,
-      });
     }
 
     // 6. Distance (PostGIS)
@@ -108,6 +91,41 @@ export class MatchService {
         })
         .orderBy('distance_km', 'ASC');
     }
+
+    return {
+      qb,
+      prefs,
+      user,
+    };
+  }
+
+  /**
+   * Find matching profiles for the given userId
+   */
+  async findMatchesForUser(
+    userId: string,
+    maxResults = 20,
+  ): Promise<Profile[]> {
+    // 1. Load user and their profile
+    const { qb, prefs } = await this.baseQuery(userId);
+
+    // 5. Relationship type
+    if (prefs.relationship_type != null) {
+      qb.andWhere('p.relationship_type = :relType', {
+        relType: prefs.relationship_type,
+      });
+    }
+
+    // 7. Limit
+    qb.limit(maxResults);
+
+    // 8. Execute
+    return qb.getMany();
+  }
+
+  public async findBroadMatches(userId: string, maxResults = 20) {
+    // 1. Load user and their profile
+    const { qb } = await this.baseQuery(userId);
 
     // 7. Limit
     qb.limit(maxResults);
