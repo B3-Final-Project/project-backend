@@ -10,7 +10,7 @@ export class BoosterService {
     const parsedAmount = parseInt(amount, 10);
     const user = req.user;
     if (!user) {
-      throw new Error('User not found');
+      throw new NotFoundException('User not found');
     }
 
     const profiles = await this.matchService.findMatchesForUser(
