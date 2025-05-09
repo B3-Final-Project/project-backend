@@ -1,10 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
-
 import { HttpRequestDto } from '../common/dto/http-request.dto';
 import { Profile } from '../common/entities/profile.entity';
-import { Interest } from '../common/entities/interest.entity';
 import {
   PartialUpdateProfileDto,
   UpdateProfileDto,
@@ -13,15 +9,14 @@ import { User } from '../common/entities/user.entity';
 import { ProfileUtils } from './profile-utils.service';
 import { UserRepository } from '../common/repository/user.repository';
 import { ProfileRepository } from '../common/repository/profile.repository';
+import { InterestRepository } from '../common/repository/interest.repository';
 
 @Injectable()
 export class ProfileService {
   constructor(
     private readonly profileRepository: ProfileRepository,
     private readonly userRepository: UserRepository,
-
-    @InjectRepository(Interest)
-    private readonly interestRepository: Repository<Interest>,
+    private readonly interestRepository: InterestRepository,
   ) {}
 
   async updateProfile(
@@ -65,18 +60,9 @@ export class ProfileService {
     );
 
     // fetch existing, create the rest
-    const existing = await this.interestRepository.find({
-      where: { description: In(interestDescriptions) },
-    });
-    const existingSet = new Set(existing.map((i) => i.description));
 
-    const toCreate = interestDescriptions
-      .filter((d) => !existingSet.has(d))
-      .map((d) => this.interestRepository.create({ description: d }));
-
-    // save all and reassign
-    const savedNew = await this.interestRepository.save(toCreate);
-    profile.interests = [...existing, ...savedNew];
+    profile.interests =
+      await this.interestRepository.saveNewInterest(interestDescriptions);
 
     return this.profileRepository.save(profile);
   }

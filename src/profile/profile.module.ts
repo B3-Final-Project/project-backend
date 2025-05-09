@@ -7,10 +7,16 @@ import { ProfileService } from './profile.service';
 import { User } from '../common/entities/user.entity';
 import { UserRepository } from '../common/repository/user.repository';
 import { ProfileRepository } from '../common/repository/profile.repository';
+import { InterestRepository } from '../common/repository/interest.repository';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Profile, Interest, User])],
   controllers: [ProfileController],
-  providers: [ProfileService, UserRepository, ProfileRepository],
+  providers: [
+    ProfileService,
+    UserRepository,
+    ProfileRepository,
+    InterestRepository,
+  ],
 })
 export class ProfileModule {}
