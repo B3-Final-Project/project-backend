@@ -3,8 +3,8 @@ import { Profile } from '../common/entities/profile.entity';
 import { GenderEnum, OrientationEnum } from '../profile/enums';
 import { UserMatches } from '../common/entities/user-matches.entity';
 import { BoosterAction } from './enums/action.enum';
-import { MatchRepository } from 'src/common/repository/matches.repository';
-import { ProfileRepository } from 'src/common/repository/profile.repository';
+import { MatchRepository } from '../common/repository/matches.repository';
+import { ProfileRepository } from '../common/repository/profile.repository';
 import { UserRepository } from '../common/repository/user.repository';
 
 @Injectable()
@@ -102,7 +102,7 @@ export class MatchService {
    */
   async findMatchesForUser(
     userId: string,
-    maxResults = 20,
+    maxResults = 10,
   ): Promise<Profile[]> {
     // 1. Load user and their profile
     const { qb, prefs } = await this.baseQuery(userId);
@@ -124,7 +124,7 @@ export class MatchService {
   public async findBroadMatches(
     userId: string,
     excludeIds: number[],
-    maxResults = 20,
+    maxResults = 10,
   ) {
     // 1. Load user and their profile
     const { qb } = await this.baseQuery(userId);
@@ -146,7 +146,7 @@ export class MatchService {
     const userMatches = profiles.map((profile) => {
       const match = new UserMatches();
       match.user_id = userId;
-      match.profile_id = profile.id.toString();
+      match.profile_id = profile.id;
       match.action = BoosterAction.SEEN;
       return match;
     });

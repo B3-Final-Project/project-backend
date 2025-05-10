@@ -14,8 +14,8 @@ export class UserRepository {
     private readonly profileRepository: ProfileRepository,
   ) {}
 
-  public async findById(id: string): Promise<User | null> {
-    return await this.userRepository.findOne({ where: { id } });
+  public async findById(userId: string): Promise<User | null> {
+    return await this.userRepository.findOne({ where: { id: userId } });
   }
 
   public async findProfileOrThrowByUserId(
@@ -45,7 +45,7 @@ export class UserRepository {
     return user;
   }
 
-  public async create(user: User): Promise<User> {
+  public create(user: User): User {
     return this.userRepository.create(user);
   }
 

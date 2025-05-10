@@ -94,7 +94,7 @@ export class ProfileService {
 
     const { personalInfo } = dto;
     if (!user) {
-      user = await this.userRepository.create({
+      user = this.userRepository.create({
         user_id: req.user.userId,
         name: personalInfo.name,
         surname: personalInfo.surname,
