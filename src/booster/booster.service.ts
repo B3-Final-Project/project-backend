@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { HttpRequestDto } from '../common/dto/http-request.dto';
 import { MatchService } from './match.service';
+import { Profile } from '../common/entities/profile.entity';
 
 @Injectable()
 export class BoosterService {
@@ -18,13 +19,16 @@ export class BoosterService {
       parsedAmount,
     );
 
+    const extraProfiles: Profile[] = profiles;
+
     if (profiles.length < parsedAmount) {
-      const extraProfiles = await this.matchService.findBroadMatches(
-        user.userId,
-        profiles.map((p) => p.id),
-        10 - profiles.length,
+      extraProfiles.push(
+        ...(await this.matchService.findBroadMatches(
+          user.userId,
+          profiles.map((p) => p.id),
+          10 - extraProfiles.length,
+        )),
       );
-      profiles.push(...extraProfiles);
     }
 
     await this.matchService.createMatches(profiles, user.userId);

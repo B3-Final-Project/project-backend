@@ -80,15 +80,6 @@ describe('ProfileController', () => {
     expect(controller).toBeDefined();
   });
 
-  describe('getAllProfiles', () => {
-    it('returns an array of profiles', async () => {
-      jest.spyOn(service, 'getAllProfiles').mockResolvedValue([mockProfile]);
-      const result = await controller.getAllProfiles();
-      expect(result).toEqual([mockProfile]);
-      expect(service.getAllProfiles).toHaveBeenCalled();
-    });
-  });
-
   describe('getProfile', () => {
     it('returns profile and user', async () => {
       const returnValue = { profile: mockProfile, user: { user_id: 'u1' } };

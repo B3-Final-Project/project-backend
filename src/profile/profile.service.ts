@@ -1,41 +1,32 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
-
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { HttpRequestDto } from '../common/dto/http-request.dto';
 import { Profile } from '../common/entities/profile.entity';
-import { Interest } from '../common/entities/interest.entity';
 import {
   PartialUpdateProfileDto,
   UpdateProfileDto,
 } from './dto/update-profile.dto';
 import { User } from '../common/entities/user.entity';
 import { ProfileUtils } from './profile-utils.service';
+import { UserRepository } from '../common/repository/user.repository';
+import { ProfileRepository } from '../common/repository/profile.repository';
+import { InterestRepository } from '../common/repository/interest.repository';
 
 @Injectable()
 export class ProfileService {
   constructor(
-    @InjectRepository(Profile)
-    private readonly profileRepository: Repository<Profile>,
-
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
-
-    @InjectRepository(Interest)
-    private readonly interestRepository: Repository<Interest>,
+    private readonly profileRepository: ProfileRepository,
+    private readonly userRepository: UserRepository,
+    private readonly interestRepository: InterestRepository,
   ) {}
 
   async updateProfile(
     dto: UpdateProfileDto,
     req: HttpRequestDto,
   ): Promise<Profile> {
-    const profile = await this.findProfileOrThrowByUserId(req.user.userId, [
-      'interests',
-    ]);
+    const profile = await this.userRepository.findProfileOrThrowByUserId(
+      req.user.userId,
+      ['interests'],
+    );
 
     const updated = ProfileUtils.mapProfile(dto, profile);
     return this.profileRepository.save(updated);
@@ -46,9 +37,10 @@ export class ProfileService {
     dto: PartialUpdateProfileDto[K],
     req: HttpRequestDto,
   ): Promise<Profile> {
-    const profile = await this.findProfileOrThrowByUserId(req.user.userId, [
-      'interests',
-    ]);
+    const profile = await this.userRepository.findProfileOrThrowByUserId(
+      req.user.userId,
+      ['interests'],
+    );
     // Dynamically map only the provided section
     const updated = ProfileUtils.mapProfile(
       { [section]: dto } as PartialUpdateProfileDto,
@@ -62,47 +54,32 @@ export class ProfileService {
     userId: string,
     interestDescriptions: string[],
   ): Promise<Profile> {
-    const profile = await this.findProfileOrThrowByUserId(userId, [
-      'interests',
-    ]);
+    const profile = await this.userRepository.findProfileOrThrowByUserId(
+      userId,
+      ['interests'],
+    );
 
     // fetch existing, create the rest
-    const existing = await this.interestRepository.find({
-      where: { description: In(interestDescriptions) },
-    });
-    const existingSet = new Set(existing.map((i) => i.description));
 
-    const toCreate = interestDescriptions
-      .filter((d) => !existingSet.has(d))
-      .map((d) => this.interestRepository.create({ description: d }));
-
-    // save all and reassign
-    const savedNew = await this.interestRepository.save(toCreate);
-    profile.interests = [...existing, ...savedNew];
+    profile.interests =
+      await this.interestRepository.saveNewInterest(interestDescriptions);
 
     return this.profileRepository.save(profile);
   }
 
   async getProfile(req: HttpRequestDto): Promise<any> {
-    const profile = await this.findProfileOrThrowByUserId(req.user.userId, [
-      'interests',
-    ]);
+    const profile = await this.userRepository.findProfileOrThrowByUserId(
+      req.user.userId,
+      ['interests'],
+    );
 
-    const user = await this.userRepository.findOne({
-      where: { user_id: req.user.userId },
-    });
+    const user = await this.userRepository.findById(req.user.userId);
 
     profile.userProfile = undefined;
     return {
       profile,
       user,
     };
-  }
-
-  async getAllProfiles(): Promise<Profile[]> {
-    return this.profileRepository.find({
-      relations: ['interests', 'userProfile'],
-    });
   }
 
   async createProfile(
@@ -113,9 +90,7 @@ export class ProfileService {
     const profileEntity = ProfileUtils.mapProfile(dto, new Profile());
     const savedProfile = await this.profileRepository.save(profileEntity);
 
-    let user = await this.userRepository.findOne({
-      where: { user_id: req.user.userId },
-    });
+    let user = await this.userRepository.findById(req.user.userId);
 
     const { personalInfo } = dto;
     if (!user) {
@@ -126,7 +101,7 @@ export class ProfileService {
         gender: personalInfo.gender,
         age: personalInfo.age,
         profile: savedProfile,
-      });
+      } as User);
     } else {
       // 4) If it already existed, update their “personalInfo” and attach the new Profile
       Object.assign(user, {
@@ -181,34 +156,5 @@ export class ProfileService {
     const dto = body[section]!;
 
     return this.updatePartialProfile(section, dto, req);
-  }
-
-  private async findProfileOrThrowByUserId(
-    userId: string,
-    relations: string[] = [],
-  ): Promise<Profile> {
-    // fetch the user + its profile
-    const user = await this.userRepository.findOne({
-      where: { user_id: userId },
-      relations: ['profile'],
-    });
-    if (!user?.profile) {
-      throw new NotFoundException(`Profile for user ${userId} not found`);
-    }
-
-    if (relations.length === 0) {
-      return user.profile;
-    }
-
-    // reload with extra joins
-    const profile = await this.profileRepository.findOne({
-      where: { id: user.profile.id },
-      relations,
-    });
-    if (!profile) {
-      // should never happen, but just in case
-      throw new NotFoundException(`Profile #${user.profile.id} disappeared`);
-    }
-    return profile;
   }
 }

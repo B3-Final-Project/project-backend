@@ -10,7 +10,7 @@ export class UserMatches {
   public user_id: string;
 
   @Column({ type: 'varchar' })
-  public profile_id: string;
+  public profile_id: number;
 
   @Column({ type: 'int', nullable: true })
   public action: BoosterAction;
