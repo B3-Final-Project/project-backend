@@ -5,5 +5,4 @@ export enum OrientationEnum {
   BISEXUAL,
   PANSEXUAL,
   ASEXUAL,
-  OTHER,
 }
