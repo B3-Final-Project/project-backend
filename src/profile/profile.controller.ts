@@ -20,11 +20,6 @@ import { ProfileService } from './profile.service';
 export class ProfileController {
   constructor(private readonly profileService: ProfileService) {}
 
-  @Get('all')
-  public async getAllProfiles() {
-    return this.profileService.getAllProfiles();
-  }
-
   @Get()
   public async getProfile(@Req() req: HttpRequestDto) {
     return this.profileService.getProfile(req);
