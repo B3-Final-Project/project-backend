@@ -151,8 +151,6 @@ export class MatchService {
       return match;
     });
 
-    console.log('creating matches', userMatches);
-
     return this.matchRepository.save(userMatches);
   }
 }

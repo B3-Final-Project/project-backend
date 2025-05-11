@@ -15,7 +15,7 @@ export class UserRepository {
   ) {}
 
   public async findById(userId: string): Promise<User | null> {
-    return await this.userRepository.findOne({ where: { id: userId } });
+    return await this.userRepository.findOne({ where: { user_id: userId } });
   }
 
   public async findProfileOrThrowByUserId(
