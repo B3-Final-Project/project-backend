@@ -1,24 +1,26 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException } from '@nestjs/common';
 
-import { ProfileService } from './services/profile.service';
-import { ProfileUtils } from './services/profile-utils.service';
-import { Profile } from '../common/entities/profile.entity';
-import { User } from '../common/entities/user.entity';
-import { HttpRequestDto } from '../common/dto/http-request.dto';
+import { ProfileService } from './profile.service';
+import { ProfileUtils } from './profile-utils.service';
+import { Profile } from '../../common/entities/profile.entity';
+import { User } from '../../common/entities/user.entity';
+import { HttpRequestDto } from '../../common/dto/http-request.dto';
 import {
   UpdateProfileDto,
   PartialUpdateProfileDto,
-} from './dto/update-profile.dto';
-import { ProfileRepository } from '../common/repository/profile.repository';
-import { UserRepository } from '../common/repository/user.repository';
-import { InterestRepository } from '../common/repository/interest.repository';
+} from '../dto/update-profile.dto';
+import { ProfileRepository } from '../../common/repository/profile.repository';
+import { UserRepository } from '../../common/repository/user.repository';
+import { InterestRepository } from '../../common/repository/interest.repository';
+import { S3Service } from './s3.service';
 
 describe('ProfileService', () => {
   let service: ProfileService;
   let profileRepository: jest.Mocked<ProfileRepository>;
   let userRepository: jest.Mocked<UserRepository>;
   let interestRepository: jest.Mocked<InterestRepository>;
+  let s3Service: jest.Mocked<S3Service>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -29,6 +31,8 @@ describe('ProfileService', () => {
           useValue: {
             save: jest.fn(),
             findByProfileId: jest.fn(),
+            findByUserId: jest.fn(),
+            saveImageUrl: jest.fn(),
           },
         },
         {
@@ -46,6 +50,13 @@ describe('ProfileService', () => {
             saveNewInterest: jest.fn(),
           },
         },
+        {
+          provide: S3Service,
+          useValue: {
+            extractKeyFromUrl: jest.fn(),
+            deleteObject: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
@@ -53,6 +64,7 @@ describe('ProfileService', () => {
     profileRepository = module.get(ProfileRepository);
     userRepository = module.get(UserRepository);
     interestRepository = module.get(InterestRepository);
+    s3Service = module.get(S3Service);
 
     jest
       .spyOn(ProfileUtils, 'mapProfile')
@@ -209,6 +221,115 @@ describe('ProfileService', () => {
       } as any;
       await service.updateProfileField(body, req);
       expect(spy).toHaveBeenCalledWith('personalInfo', body.personalInfo, req);
+    });
+  });
+
+  describe('uploadImage', () => {
+    it('throws if index is out of bounds', async () => {
+      const file = {
+        location: 'https://example.com/image.jpg',
+      } as Express.MulterS3.File;
+      const req = { user: { userId: 'u1' } } as HttpRequestDto;
+
+      await expect(service.uploadImage(file, req, -1)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.uploadImage(file, req, 6)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('deletes old image from S3 if it exists', async () => {
+      const file = {
+        location: 'https://example.com/new-image.jpg',
+      } as Express.MulterS3.File;
+      const req = { user: { userId: 'u1' } } as HttpRequestDto;
+      const profile = { images: ['https://example.com/old-image.jpg'] } as any;
+
+      jest
+        .spyOn(service['profileRepository'], 'findByUserId')
+        .mockResolvedValue(profile);
+      jest
+        .spyOn(service['s3Service'], 'extractKeyFromUrl')
+        .mockReturnValue('old-image.jpg');
+      jest
+        .spyOn(service['s3Service'], 'deleteObject')
+        .mockResolvedValue(undefined);
+      jest
+        .spyOn(service['profileRepository'], 'saveImageUrl')
+        .mockResolvedValue({ images: [file.location] });
+
+      const result = await service.uploadImage(file, req, 0);
+
+      expect(service['s3Service'].deleteObject).toHaveBeenCalledWith(
+        'old-image.jpg',
+      );
+      expect(result).toEqual({ images: [file.location] });
+    });
+
+    it('saves new image URL if no old image exists', async () => {
+      const file = {
+        location: 'https://example.com/new-image.jpg',
+      } as Express.MulterS3.File;
+      const req = { user: { userId: 'u1' } } as HttpRequestDto;
+      const profile = { images: [null] } as any;
+
+      jest
+        .spyOn(service['profileRepository'], 'findByUserId')
+        .mockResolvedValue(profile);
+      jest
+        .spyOn(service['profileRepository'], 'saveImageUrl')
+        .mockResolvedValue({ images: [file.location] });
+
+      const result = await service.uploadImage(file, req, 0);
+
+      expect(service['profileRepository'].saveImageUrl).toHaveBeenCalledWith(
+        profile,
+        file.location,
+        0,
+      );
+      expect(result).toEqual({ images: [file.location] });
+    });
+  });
+
+  describe('removeImage', () => {
+    it('throws if no image exists at the given index', async () => {
+      const req = { user: { userId: 'u1' } } as HttpRequestDto;
+      const profile = { images: [null] } as any;
+
+      jest
+        .spyOn(service['profileRepository'], 'findByUserId')
+        .mockResolvedValue(profile);
+
+      await expect(service.removeImage(req, 0)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('deletes the image from S3 and removes it from the profile', async () => {
+      const req = { user: { userId: 'u1' } } as HttpRequestDto;
+      const profile = { images: ['https://example.com/old-image.jpg'] } as any;
+
+      jest
+        .spyOn(service['profileRepository'], 'findByUserId')
+        .mockResolvedValue(profile);
+      jest
+        .spyOn(service['s3Service'], 'extractKeyFromUrl')
+        .mockReturnValue('old-image.jpg');
+      jest
+        .spyOn(service['s3Service'], 'deleteObject')
+        .mockResolvedValue(undefined);
+      jest
+        .spyOn(service['profileRepository'], 'save')
+        .mockResolvedValue({ images: [null] } as Profile);
+
+      const result = await service.removeImage(req, 0);
+
+      expect(service['s3Service'].deleteObject).toHaveBeenCalledWith(
+        'old-image.jpg',
+      );
+      expect(service['profileRepository'].save).toHaveBeenCalledWith(profile);
+      expect(result).toEqual({ images: [null] });
     });
   });
 });

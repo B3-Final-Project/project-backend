@@ -180,7 +180,6 @@ export class ProfileService {
       const oldImageKey = this.s3Service.extractKeyFromUrl(oldImageUrl);
 
       if (oldImageKey) {
-        // Delete old image from S3 (don't wait for it, do it async)
         this.s3Service.deleteObject(oldImageKey).catch((error) => {
           this.logger.error(
             `Failed to delete old image ${oldImageKey}:`,

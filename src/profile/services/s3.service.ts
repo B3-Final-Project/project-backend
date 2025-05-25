@@ -35,10 +35,8 @@ export class S3Service {
       const urlObj = new URL(url);
 
       if (urlObj.hostname.includes(this.bucketName)) {
-        // Format: https://bucket-name.s3.region.amazonaws.com/key
         return urlObj.pathname.substring(1); // Remove leading slash
       } else if (urlObj.pathname.startsWith(`/${this.bucketName}/`)) {
-        // Format: https://s3.region.amazonaws.com/bucket-name/key
         return urlObj.pathname.substring(`/${this.bucketName}/`.length);
       }
 
