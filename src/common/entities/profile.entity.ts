@@ -6,8 +6,6 @@ import {
   OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-
-import { Interest } from './interest.entity';
 import {
   DrinkingEnum,
   OrientationEnum,
@@ -17,6 +15,8 @@ import {
   SmokingEnum,
   ZodiacEnum,
 } from '../../profile/enums';
+
+import { Interest } from './interest.entity';
 import { User } from './user.entity';
 
 @Entity('profiles')
@@ -65,6 +65,13 @@ export class Profile {
 
   @Column({ type: 'int', nullable: true })
   zodiac?: ZodiacEnum;
+
+  // Images
+  @Column('simple-array', { nullable: true })
+  images?: string[];
+
+  @Column({ type: 'varchar', nullable: true })
+  avatarUrl?: string;
 
   @ManyToMany(() => Interest, (interest) => interest.profiles)
   @JoinTable({
