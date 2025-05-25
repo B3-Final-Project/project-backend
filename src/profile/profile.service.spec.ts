@@ -1,12 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException } from '@nestjs/common';
-import { In } from 'typeorm';
 
-import { ProfileService } from './profile.service';
-import { ProfileUtils } from './profile-utils.service';
+import { ProfileService } from './services/profile.service';
+import { ProfileUtils } from './services/profile-utils.service';
 import { Profile } from '../common/entities/profile.entity';
 import { User } from '../common/entities/user.entity';
-import { Interest } from '../common/entities/interest.entity';
 import { HttpRequestDto } from '../common/dto/http-request.dto';
 import {
   UpdateProfileDto,

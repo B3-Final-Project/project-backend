@@ -2,15 +2,15 @@ import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import {
   PartialUpdateProfileDto,
   UpdateProfileDto,
-} from './dto/update-profile.dto';
+} from '../dto/update-profile.dto';
 
-import { HttpRequestDto } from '../common/dto/http-request.dto';
-import { InterestRepository } from '../common/repository/interest.repository';
-import { Profile } from '../common/entities/profile.entity';
-import { ProfileRepository } from '../common/repository/profile.repository';
+import { HttpRequestDto } from '../../common/dto/http-request.dto';
+import { InterestRepository } from '../../common/repository/interest.repository';
+import { Profile } from '../../common/entities/profile.entity';
+import { ProfileRepository } from '../../common/repository/profile.repository';
 import { ProfileUtils } from './profile-utils.service';
-import { User } from '../common/entities/user.entity';
-import { UserRepository } from '../common/repository/user.repository';
+import { User } from '../../common/entities/user.entity';
+import { UserRepository } from '../../common/repository/user.repository';
 import { S3Service } from './s3.service';
 
 @Injectable()

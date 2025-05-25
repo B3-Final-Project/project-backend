@@ -3,7 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Profile } from '../common/entities/profile.entity';
 import { Interest } from '../common/entities/interest.entity';
 import { ProfileController } from './profile.controller';
-import { ProfileService } from './profile.service';
+import { ProfileService } from './services/profile.service';
 import { User } from '../common/entities/user.entity';
 import { UserRepository } from '../common/repository/user.repository';
 import { ProfileRepository } from '../common/repository/profile.repository';
@@ -11,7 +11,7 @@ import { InterestRepository } from '../common/repository/interest.repository';
 import { MulterModule } from '@nestjs/platform-express';
 import { S3Client } from '@aws-sdk/client-s3';
 import * as multerS3 from 'multer-s3';
-import { S3Service } from './s3.service';
+import { S3Service } from './services/s3.service';
 
 @Module({
   imports: [
