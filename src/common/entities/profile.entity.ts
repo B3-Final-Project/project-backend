@@ -68,7 +68,7 @@ export class Profile {
 
   // Images
   @Column('simple-array', { nullable: true })
-  images?: string[];
+  images?: (string | null)[];
 
   @Column({ type: 'varchar', nullable: true })
   avatarUrl?: string;

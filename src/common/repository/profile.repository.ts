@@ -58,12 +58,11 @@ export class ProfileRepository {
   public async saveImageUrl(
     profile: Profile,
     imageUrl: string,
-    index: number,
   ): Promise<{ images: string[] }> {
     if (!profile.images) {
       profile.images = [null, null, null, null, null, null];
     }
-    profile.images[index] = imageUrl;
+    profile.images.push(imageUrl);
     await this.save(profile);
     return { images: profile.images };
   }

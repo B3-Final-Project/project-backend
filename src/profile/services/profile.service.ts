@@ -15,7 +15,7 @@ import { S3Service } from './s3.service';
 
 @Injectable()
 export class ProfileService {
-  private readonly logger = new Logger(S3Service.name);
+  private readonly logger = new Logger(ProfileService.name);
   constructor(
     private readonly profileRepository: ProfileRepository,
     private readonly userRepository: UserRepository,
@@ -193,7 +193,6 @@ export class ProfileService {
     const result = await this.profileRepository.saveImageUrl(
       profile,
       file.location,
-      index,
     );
 
     this.logger.log(
