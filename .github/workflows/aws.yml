@@ -6,7 +6,7 @@ on:
 
 env:
   AWS_REGION: eu-west-3
-  ECR_REPOSITORY: 989418411786.dkr.ecr.eu-west-3.amazonaws.com/b3-dating-app/server
+  ECR_REPOSITORY: 989418411786.dkr.ecr.eu-west-3.amazonaws.com/holomatch-backend-repo
   CONTAINER_NAME: server
 
 permissions:
