@@ -193,6 +193,7 @@ export class ProfileService {
     const result = await this.profileRepository.saveImageUrl(
       profile,
       file.location,
+      index,
     );
 
     this.logger.log(
@@ -218,7 +219,9 @@ export class ProfileService {
         this.logger.error(`Failed to delete old image ${oldImageKey}:`, error);
       });
     }
-    profile.images[index] = null; // Remove the image by setting it to null
+    // Remove the image from the profile
+    profile.images.splice(index, 1);
+
     await this.profileRepository.save(profile);
 
     return { images: profile.images };
