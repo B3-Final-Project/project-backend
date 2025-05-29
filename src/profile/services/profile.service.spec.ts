@@ -286,7 +286,6 @@ describe('ProfileService', () => {
       expect(service['profileRepository'].saveImageUrl).toHaveBeenCalledWith(
         profile,
         file.location,
-        0,
       );
       expect(result).toEqual({ images: [file.location] });
     });
