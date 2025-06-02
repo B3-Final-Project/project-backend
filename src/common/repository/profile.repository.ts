@@ -58,17 +58,19 @@ export class ProfileRepository {
   public async saveImageUrl(
     profile: Profile,
     imageUrl: string,
-    index?: number,
+    index: number = 0,
   ): Promise<{ images: string[] }> {
     if (!profile.images) {
       profile.images = [];
     }
-    if (index) {
-      if (index < 0 || index > 5) {
-        throw new Error('Index must be between 0 and 5');
-      }
+    if (index > profile.images.length) {
+      index = profile.images.length;
+    }
+    if (profile.images[index]) {
+      // If there's already an image at this index, replace it
       profile.images[index] = imageUrl;
     } else {
+      // If the index is empty, just add the new image
       profile.images.push(imageUrl);
     }
     await this.save(profile);
