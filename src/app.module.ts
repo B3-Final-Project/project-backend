@@ -17,6 +17,7 @@ import { LoggerMiddleware } from './middlewares/logger.middleware';
 import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions';
 import { BoosterModule } from './booster/booster.module';
 import { UserMatches } from './common/entities/user-matches.entity';
+import { SettingsModule } from './settings/settings.module';
 
 export const ormConfig: PostgresConnectionOptions = {
   type: 'postgres',
@@ -37,7 +38,12 @@ export const ormConfig: PostgresConnectionOptions = {
 };
 
 @Module({
-  imports: [TypeOrmModule.forRoot(ormConfig), ProfileModule, BoosterModule],
+  imports: [
+    TypeOrmModule.forRoot(ormConfig),
+    ProfileModule,
+    BoosterModule,
+    SettingsModule,
+  ],
   controllers: [AppController],
   providers: [AppService, CognitoStrategy],
 })
