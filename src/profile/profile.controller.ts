@@ -64,6 +64,8 @@ export class ProfileController {
     return this.profileService.updateProfileField(body, req);
   }
 
+  // Image goes through S3 interceptor and automatically uploads to S3
+  // returning only the object URL
   @Put('image/:index')
   @UseInterceptors(FileInterceptor('image'))
   public async uploadImage(

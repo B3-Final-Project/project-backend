@@ -272,7 +272,7 @@ describe('ProfileService', () => {
         location: 'https://example.com/new-image.jpg',
       } as Express.MulterS3.File;
       const req = { user: { userId: 'u1' } } as HttpRequestDto;
-      const profile = { images: [null] } as any;
+      const profile = { images: [] } as any;
 
       jest
         .spyOn(service['profileRepository'], 'findByUserId')
@@ -286,6 +286,7 @@ describe('ProfileService', () => {
       expect(service['profileRepository'].saveImageUrl).toHaveBeenCalledWith(
         profile,
         file.location,
+        0,
       );
       expect(result).toEqual({ images: [file.location] });
     });
@@ -294,7 +295,7 @@ describe('ProfileService', () => {
   describe('removeImage', () => {
     it('throws if no image exists at the given index', async () => {
       const req = { user: { userId: 'u1' } } as HttpRequestDto;
-      const profile = { images: [null] } as any;
+      const profile = { images: [] } as any;
 
       jest
         .spyOn(service['profileRepository'], 'findByUserId')
@@ -320,7 +321,7 @@ describe('ProfileService', () => {
         .mockResolvedValue(undefined);
       jest
         .spyOn(service['profileRepository'], 'save')
-        .mockResolvedValue({ images: [null] } as Profile);
+        .mockResolvedValue({ images: [] } as Profile);
 
       const result = await service.removeImage(req, 0);
 
@@ -328,7 +329,7 @@ describe('ProfileService', () => {
         'old-image.jpg',
       );
       expect(service['profileRepository'].save).toHaveBeenCalledWith(profile);
-      expect(result).toEqual({ images: [null] });
+      expect(result).toEqual({ images: [] });
     });
   });
 });

@@ -214,6 +214,7 @@ export class ProfileService {
     }
     const oldImageUrl = profile.images[index];
     const oldImageKey = this.s3Service.extractKeyFromUrl(oldImageUrl);
+    // If there's an old image, delete it from S3 using the key extracted from the URL
     if (oldImageKey) {
       this.s3Service.deleteObject(oldImageKey).catch((error) => {
         this.logger.error(`Failed to delete old image ${oldImageKey}:`, error);
