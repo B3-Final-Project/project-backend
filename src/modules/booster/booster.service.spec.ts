@@ -2,7 +2,7 @@ import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { BoosterService } from './booster.service';
 import { MatchService } from './match.service';
-import { HttpRequestDto } from '../common/dto/http-request.dto';
+import { HttpRequestDto } from '../../common/dto/http-request.dto';
 
 describe('BoosterService', () => {
   let boosterService: BoosterService;

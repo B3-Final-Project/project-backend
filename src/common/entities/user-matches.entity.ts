@@ -1,5 +1,5 @@
 import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
-import { BoosterAction } from '../../booster/enums/action.enum';
+import { BoosterAction } from '../../modules/booster/enums/action.enum';
 
 @Entity('matches')
 export class UserMatches {

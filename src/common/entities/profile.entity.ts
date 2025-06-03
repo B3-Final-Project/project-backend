@@ -14,7 +14,7 @@ import {
   ReligionEnum,
   SmokingEnum,
   ZodiacEnum,
-} from '../../profile/enums';
+} from '../../modules/profile/enums';
 
 import { Interest } from './interest.entity';
 import { User } from './user.entity';

@@ -7,7 +7,7 @@ import {
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { CognitoStrategy } from './auth/cognito.strategy';
-import { ProfileModule } from './profile/profile.module';
+import { ProfileModule } from './modules/profile/profile.module';
 import { Constants } from './constants';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './common/entities/user.entity';
@@ -15,9 +15,9 @@ import { Interest } from './common/entities/interest.entity';
 import { Profile } from './common/entities/profile.entity';
 import { LoggerMiddleware } from './middlewares/logger.middleware';
 import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions';
-import { BoosterModule } from './booster/booster.module';
+import { BoosterModule } from './modules/booster/booster.module';
 import { UserMatches } from './common/entities/user-matches.entity';
-import { SettingsModule } from './settings/settings.module';
+import { SettingsModule } from './modules/settings/settings.module';
 
 export const ormConfig: PostgresConnectionOptions = {
   type: 'postgres',
