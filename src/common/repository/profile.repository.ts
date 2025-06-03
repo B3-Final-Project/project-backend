@@ -34,7 +34,46 @@ export class ProfileRepository {
     return profile;
   }
 
+  public async findByUserId(
+    userId: string,
+    extraRelations?: string[],
+  ): Promise<Profile | null> {
+    const profile = await this.profileRepository.findOne({
+      where: { userProfile: { user_id: userId } },
+      relations: extraRelations,
+    });
+
+    if (!profile) {
+      // should never happen, but just in case
+      throw new NotFoundException(`Profile #${userId} disappeared`);
+    }
+
+    return profile;
+  }
+
   public async save(profile: Profile): Promise<Profile> {
     return await this.profileRepository.save(profile);
+  }
+
+  public async saveImageUrl(
+    profile: Profile,
+    imageUrl: string,
+    index: number = 0,
+  ): Promise<{ images: string[] }> {
+    if (!profile.images) {
+      profile.images = [];
+    }
+    if (index > profile.images.length) {
+      index = profile.images.length;
+    }
+    if (profile.images[index]) {
+      // If there's already an image at this index, replace it
+      profile.images[index] = imageUrl;
+    } else {
+      // If the index is empty, just add the new image
+      profile.images.push(imageUrl);
+    }
+    await this.save(profile);
+    return { images: profile.images };
   }
 }

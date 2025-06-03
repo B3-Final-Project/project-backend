@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ProfileController } from './profile.controller';
-import { ProfileService } from './profile.service';
+import { ProfileService } from './services/profile.service';
 import { APP_GUARD } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
 import { HttpRequestDto } from '../common/dto/http-request.dto';

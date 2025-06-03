@@ -1,22 +1,26 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-import { HttpRequestDto } from '../common/dto/http-request.dto';
-import { Profile } from '../common/entities/profile.entity';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import {
   PartialUpdateProfileDto,
   UpdateProfileDto,
-} from './dto/update-profile.dto';
-import { User } from '../common/entities/user.entity';
+} from '../dto/update-profile.dto';
+
+import { HttpRequestDto } from '../../common/dto/http-request.dto';
+import { InterestRepository } from '../../common/repository/interest.repository';
+import { Profile } from '../../common/entities/profile.entity';
+import { ProfileRepository } from '../../common/repository/profile.repository';
 import { ProfileUtils } from './profile-utils.service';
-import { UserRepository } from '../common/repository/user.repository';
-import { ProfileRepository } from '../common/repository/profile.repository';
-import { InterestRepository } from '../common/repository/interest.repository';
+import { User } from '../../common/entities/user.entity';
+import { UserRepository } from '../../common/repository/user.repository';
+import { S3Service } from './s3.service';
 
 @Injectable()
 export class ProfileService {
+  private readonly logger = new Logger(ProfileService.name);
   constructor(
     private readonly profileRepository: ProfileRepository,
     private readonly userRepository: UserRepository,
     private readonly interestRepository: InterestRepository,
+    private readonly s3Service: S3Service,
   ) {}
 
   async updateProfile(
@@ -156,5 +160,71 @@ export class ProfileService {
     const dto = body[section]!;
 
     return this.updatePartialProfile(section, dto, req);
+  }
+
+  public async uploadImage(
+    file: Express.MulterS3.File,
+    req: HttpRequestDto,
+    index: number,
+  ): Promise<{ images: string[] }> {
+    if (index < 0 || index >= 6) {
+      throw new BadRequestException('Image index must be between 0 and 5');
+    }
+
+    const userId = req.user.userId;
+    const profile = await this.profileRepository.findByUserId(userId);
+
+    // If there's already an image at this index, delete the old one from S3
+    if (profile.images && profile.images[index]) {
+      const oldImageUrl = profile.images[index];
+      const oldImageKey = this.s3Service.extractKeyFromUrl(oldImageUrl);
+
+      if (oldImageKey) {
+        this.s3Service.deleteObject(oldImageKey).catch((error) => {
+          this.logger.error(
+            `Failed to delete old image ${oldImageKey}:`,
+            error,
+          );
+        });
+      }
+    }
+
+    // Save the new image URL
+    const result = await this.profileRepository.saveImageUrl(
+      profile,
+      file.location,
+      index,
+    );
+
+    this.logger.log(
+      `Image uploaded for user ${userId} at index ${index}: ${file.location}`,
+    );
+    return result;
+  }
+
+  public async removeImage(
+    req: HttpRequestDto,
+    index: number,
+  ): Promise<{ images: string[] }> {
+    const userId = req.user.userId;
+
+    const profile = await this.profileRepository.findByUserId(userId);
+    if (!profile.images || !profile.images[index]) {
+      throw new BadRequestException(`No image found at index ${index}`);
+    }
+    const oldImageUrl = profile.images[index];
+    const oldImageKey = this.s3Service.extractKeyFromUrl(oldImageUrl);
+    // If there's an old image, delete it from S3 using the key extracted from the URL
+    if (oldImageKey) {
+      this.s3Service.deleteObject(oldImageKey).catch((error) => {
+        this.logger.error(`Failed to delete old image ${oldImageKey}:`, error);
+      });
+    }
+    // Remove the image from the profile
+    profile.images.splice(index, 1);
+
+    await this.profileRepository.save(profile);
+
+    return { images: profile.images };
   }
 }
