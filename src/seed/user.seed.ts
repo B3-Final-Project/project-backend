@@ -6,7 +6,7 @@ import {
   ReligionEnum,
   SmokingEnum,
   ZodiacEnum,
-} from '../profile/enums';
+} from '../modules/profile/enums';
 
 import { DataSource } from 'typeorm';
 import { Interest } from 'src/common/entities/interest.entity';

@@ -3,9 +3,9 @@ import { ProfileController } from './profile.controller';
 import { ProfileService } from './services/profile.service';
 import { APP_GUARD } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
-import { HttpRequestDto } from '../common/dto/http-request.dto';
+import { HttpRequestDto } from '../../common/dto/http-request.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
-import { Profile } from '../common/entities/profile.entity';
+import { Profile } from '../../common/entities/profile.entity';
 import { OrientationEnum } from './enums';
 
 describe('ProfileController', () => {

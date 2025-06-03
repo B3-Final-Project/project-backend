@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { Profile } from '../common/entities/profile.entity';
+import { Profile } from '../../common/entities/profile.entity';
 import { GenderEnum, OrientationEnum } from '../profile/enums';
-import { UserMatches } from '../common/entities/user-matches.entity';
+import { UserMatches } from '../../common/entities/user-matches.entity';
 import { BoosterAction } from './enums/action.enum';
-import { MatchRepository } from '../common/repository/matches.repository';
-import { ProfileRepository } from '../common/repository/profile.repository';
-import { UserRepository } from '../common/repository/user.repository';
+import { MatchRepository } from '../../common/repository/matches.repository';
+import { ProfileRepository } from '../../common/repository/profile.repository';
+import { UserRepository } from '../../common/repository/user.repository';
 
 @Injectable()
 export class MatchService {

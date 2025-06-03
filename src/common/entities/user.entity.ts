@@ -7,7 +7,7 @@ import {
 } from 'typeorm';
 import { Point } from 'geojson';
 import { Profile } from './profile.entity';
-import { GenderEnum } from '../../profile/enums';
+import { GenderEnum } from '../../modules/profile/enums';
 
 @Entity('users')
 export class User {

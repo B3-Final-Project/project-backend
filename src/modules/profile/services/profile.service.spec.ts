@@ -3,16 +3,16 @@ import { BadRequestException } from '@nestjs/common';
 
 import { ProfileService } from './profile.service';
 import { ProfileUtils } from './profile-utils.service';
-import { Profile } from '../../common/entities/profile.entity';
-import { User } from '../../common/entities/user.entity';
-import { HttpRequestDto } from '../../common/dto/http-request.dto';
+import { Profile } from '../../../common/entities/profile.entity';
+import { User } from '../../../common/entities/user.entity';
+import { HttpRequestDto } from '../../../common/dto/http-request.dto';
 import {
   UpdateProfileDto,
   PartialUpdateProfileDto,
 } from '../dto/update-profile.dto';
-import { ProfileRepository } from '../../common/repository/profile.repository';
-import { UserRepository } from '../../common/repository/user.repository';
-import { InterestRepository } from '../../common/repository/interest.repository';
+import { ProfileRepository } from '../../../common/repository/profile.repository';
+import { UserRepository } from '../../../common/repository/user.repository';
+import { InterestRepository } from '../../../common/repository/interest.repository';
 import { S3Service } from './s3.service';
 
 describe('ProfileService', () => {

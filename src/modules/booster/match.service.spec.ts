@@ -1,11 +1,11 @@
 // match.service.spec.ts
 import { Test, TestingModule } from '@nestjs/testing';
 import { MatchService } from './match.service';
-import { UserRepository } from '../common/repository/user.repository';
-import { MatchRepository } from '../common/repository/matches.repository';
-import { ProfileRepository } from '../common/repository/profile.repository';
-import { Profile } from '../common/entities/profile.entity';
-import { UserMatches } from '../common/entities/user-matches.entity';
+import { UserRepository } from '../../common/repository/user.repository';
+import { MatchRepository } from '../../common/repository/matches.repository';
+import { ProfileRepository } from '../../common/repository/profile.repository';
+import { Profile } from '../../common/entities/profile.entity';
+import { UserMatches } from '../../common/entities/user-matches.entity';
 import { BoosterAction } from './enums/action.enum';
 import { GenderEnum, OrientationEnum } from '../profile/enums';
 

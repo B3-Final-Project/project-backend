@@ -1,4 +1,4 @@
-import { Profile } from '../../common/entities/profile.entity';
+import { Profile } from '../../../common/entities/profile.entity';
 import { UpdateProfileDto } from '../dto/update-profile.dto';
 
 export class ProfileUtils {

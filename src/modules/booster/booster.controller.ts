@@ -1,7 +1,7 @@
 import { Controller, Get, Param, Req, UseGuards } from '@nestjs/common';
 import { BoosterService } from './booster.service';
 import { AuthGuard } from '@nestjs/passport';
-import { HttpRequestDto } from '../common/dto/http-request.dto';
+import { HttpRequestDto } from '../../common/dto/http-request.dto';
 
 @Controller('booster')
 @UseGuards(AuthGuard('jwt'))

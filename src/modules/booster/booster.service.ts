@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { HttpRequestDto } from '../common/dto/http-request.dto';
+import { HttpRequestDto } from '../../common/dto/http-request.dto';
 import { MatchService } from './match.service';
-import { Profile } from '../common/entities/profile.entity';
+import { Profile } from '../../common/entities/profile.entity';
 
 @Injectable()
 export class BoosterService {
