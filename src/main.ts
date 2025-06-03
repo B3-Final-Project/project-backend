@@ -11,11 +11,7 @@ async function bootstrap() {
 
   app.enableCors({
     credentials: true,
-    origin: [
-      process.env.FRONTEND_URL,
-      process.env.ALB_DNS_NAME,
-      'http://localhost:3000',
-    ].filter(Boolean), // Remove any undefined values
+    origin: '*',
   });
 
   app.use(cookieParser());
