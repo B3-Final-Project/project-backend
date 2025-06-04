@@ -1,6 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { Profile } from '../../common/entities/profile.entity';
-import { GenderEnum, OrientationEnum } from '../profile/enums';
+import {
+  GenderEnum,
+  OrientationEnum,
+  RelationshipTypeEnum,
+} from '../profile/enums';
 import { UserMatches } from '../../common/entities/user-matches.entity';
 import { BoosterAction } from './enums/action.enum';
 import { MatchRepository } from '../../common/repository/matches.repository';
@@ -103,13 +107,14 @@ export class MatchService {
   async findMatchesForUser(
     userId: string,
     maxResults = 10,
+    relationshipType?: RelationshipTypeEnum,
   ): Promise<Profile[]> {
     // 1. Load user and their profile
     const { qb, prefs } = await this.baseQuery(userId);
 
     // 5. Relationship type
     if (prefs.relationship_type != null) {
-      qb.andWhere('p.relationship_type = :relType', {
+      qb.andWhere(`p.relationship_type = :${relationshipType ?? ':relType'}`, {
         relType: prefs.relationship_type,
       });
     }

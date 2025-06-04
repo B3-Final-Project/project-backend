@@ -2,12 +2,17 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { HttpRequestDto } from '../../common/dto/http-request.dto';
 import { MatchService } from './match.service';
 import { Profile } from '../../common/entities/profile.entity';
+import { RelationshipTypeEnum } from '../profile/enums';
 
 @Injectable()
 export class BoosterService {
   public constructor(private readonly matchService: MatchService) {}
 
-  public async getBooster(amount: string, req: HttpRequestDto) {
+  public async getBooster(
+    amount: string,
+    req: HttpRequestDto,
+    type?: RelationshipTypeEnum,
+  ) {
     const parsedAmount = parseInt(amount, 10);
     const user = req.user;
     if (!user) {
@@ -17,6 +22,7 @@ export class BoosterService {
     const profiles = await this.matchService.findMatchesForUser(
       user.userId,
       parsedAmount,
+      type,
     );
 
     const extraProfiles: Profile[] = profiles;
