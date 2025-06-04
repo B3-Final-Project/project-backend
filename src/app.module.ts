@@ -18,6 +18,9 @@ import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConne
 import { BoosterModule } from './modules/booster/booster.module';
 import { UserMatches } from './common/entities/user-matches.entity';
 import { SettingsModule } from './modules/settings/settings.module';
+import { MessagesModule } from './modules/messages/messages.module';
+import { Message } from './common/entities/message.entity';
+import { Conversation } from './common/entities/conversation.entity';
 
 export const ormConfig: PostgresConnectionOptions = {
   type: 'postgres',
@@ -25,7 +28,7 @@ export const ormConfig: PostgresConnectionOptions = {
   port: Constants.DATABASE_PORT,
   username: Constants.DATABASE_USER,
   password: Constants.DATABASE_PASSWORD,
-  entities: [Interest, Profile, User, UserMatches],
+  entities: [Interest, Profile, User, UserMatches, Message, Conversation],
   database: Constants.DATABASE_NAME,
   synchronize: true,
   ssl:
@@ -43,6 +46,7 @@ export const ormConfig: PostgresConnectionOptions = {
     ProfileModule,
     BoosterModule,
     SettingsModule,
+    MessagesModule,
   ],
   controllers: [AppController],
   providers: [AppService, CognitoStrategy],
