@@ -13,6 +13,7 @@ import { CognitoStrategy } from './auth/cognito.strategy';
 import { Constants } from './constants';
 import { Interest } from './common/entities/interest.entity';
 import { LoggerMiddleware } from './middlewares/logger.middleware';
+import { MatchesModule } from './modules/matches/matches.module';
 import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions';
 import { Profile } from './common/entities/profile.entity';
 import { ProfileModule } from './modules/profile/profile.module';
@@ -30,10 +31,7 @@ export const ormConfig: PostgresConnectionOptions = {
   entities: [Interest, Profile, User, UserMatches, BoosterPack],
   database: Constants.DATABASE_NAME,
   synchronize: true,
-  ssl:
-    process.env.NODE_ENV === 'production'
-      ? { rejectUnauthorized: false }
-      : false,
+  ssl: false,
   extra: {
     connectionTimeoutMillis: 30000,
   },
@@ -45,6 +43,7 @@ export const ormConfig: PostgresConnectionOptions = {
     ProfileModule,
     BoosterModule,
     SettingsModule,
+    MatchesModule,
   ],
   controllers: [AppController],
   providers: [AppService, CognitoStrategy],

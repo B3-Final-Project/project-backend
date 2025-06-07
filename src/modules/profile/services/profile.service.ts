@@ -9,9 +9,9 @@ import { InterestRepository } from '../../../common/repository/interest.reposito
 import { Profile } from '../../../common/entities/profile.entity';
 import { ProfileRepository } from '../../../common/repository/profile.repository';
 import { ProfileUtils } from './profile-utils.service';
+import { S3Service } from './s3.service';
 import { User } from '../../../common/entities/user.entity';
 import { UserRepository } from '../../../common/repository/user.repository';
-import { S3Service } from './s3.service';
 
 @Injectable()
 export class ProfileService {
@@ -160,6 +160,11 @@ export class ProfileService {
     const dto = body[section]!;
 
     return this.updatePartialProfile(section, dto, req);
+  }
+
+  public async getMatchedProfiles(req: HttpRequestDto): Promise<Profile[]> {
+    const userId = req.user.userId;
+    return this.profileRepository.findMatchedProfiles(userId);
   }
 
   public async uploadImage(
