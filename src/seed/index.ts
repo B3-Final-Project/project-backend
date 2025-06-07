@@ -9,15 +9,17 @@ export class Seed {
   public async main() {
     const ds = new DataSource(ormConfig);
     await ds.initialize();
-    
+
     // Seed users and interests
     await seedUsersAndInterests(ds, 100);
-    
+
     // Seed boosters
-    const boosterRepository = new BoosterRepository(ds.getRepository(BoosterPack));
+    const boosterRepository = new BoosterRepository(
+      ds.getRepository(BoosterPack),
+    );
     const boosterSeed = new BoosterSeed(boosterRepository);
     await boosterSeed.seed();
-    
+
     await ds.destroy();
     console.log('✅ All seeds completed successfully');
   }

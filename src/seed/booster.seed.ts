@@ -15,27 +15,32 @@ export class BoosterSeed {
     const boosters: CreateBoosterDto[] = [
       {
         name: 'Water Pack',
-        imageUrl: 'https://example.com/basic-booster.png',
+        imageUrl:
+          'https://tf--holomatch-images.s3.eu-west-3.amazonaws.com/users/7159708e-6051-70a3-ad59-f44a2f3d4d23/1748851953562-9s960sc7x2u.jpg',
         type: RelationshipTypeEnum.CASUAL,
       },
       {
         name: 'Grass Pack',
-        imageUrl: 'https://example.com/advanced-booster.png',
+        imageUrl:
+          'https://tf--holomatch-images.s3.eu-west-3.amazonaws.com/users/7159708e-6051-70a3-ad59-f44a2f3d4d23/1748851953562-9s960sc7x2u.jpg',
         type: RelationshipTypeEnum.FRIENDSHIP,
       },
       {
         name: 'Rock Pack',
-        imageUrl: 'https://example.com/premium-booster.png',
+        imageUrl:
+          'https://tf--holomatch-images.s3.eu-west-3.amazonaws.com/users/7159708e-6051-70a3-ad59-f44a2f3d4d23/1748851953562-9s960sc7x2u.jpg',
         type: RelationshipTypeEnum.LONG_TERM,
       },
       {
         name: 'Metal Pack',
-        imageUrl: 'https://example.com/ultimate-booster.png',
+        imageUrl:
+          'https://tf--holomatch-images.s3.eu-west-3.amazonaws.com/users/7159708e-6051-70a3-ad59-f44a2f3d4d23/1748851953562-9s960sc7x2u.jpg',
         type: RelationshipTypeEnum.MARRIAGE,
       },
       {
         name: 'Random Pack',
-        imageUrl: 'https://example.com/speed-booster.png',
+        imageUrl:
+          'https://tf--holomatch-images.s3.eu-west-3.amazonaws.com/users/7159708e-6051-70a3-ad59-f44a2f3d4d23/1748851953562-9s960sc7x2u.jpg',
         type: RelationshipTypeEnum.UNSURE,
       },
     ];
