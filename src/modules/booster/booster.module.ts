@@ -1,18 +1,20 @@
-import { Module } from '@nestjs/common';
-import { BoosterService } from './booster.service';
 import { BoosterController } from './booster.controller';
-import { MatchService } from './match.service';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { Profile } from '../../common/entities/profile.entity';
+import { BoosterPack } from '../../common/entities/booster.entity';
+import { BoosterRepository } from '../../common/repository/booster.repository';
+import { BoosterService } from './booster.service';
 import { Interest } from '../../common/entities/interest.entity';
+import { MatchRepository } from '../../common/repository/matches.repository';
+import { MatchService } from './match.service';
+import { Module } from '@nestjs/common';
+import { Profile } from '../../common/entities/profile.entity';
+import { ProfileRepository } from '../../common/repository/profile.repository';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from '../../common/entities/user.entity';
 import { UserMatches } from '../../common/entities/user-matches.entity';
-import { MatchRepository } from '../../common/repository/matches.repository';
 import { UserRepository } from '../../common/repository/user.repository';
-import { ProfileRepository } from '../../common/repository/profile.repository';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Profile, Interest, User, UserMatches])],
+  imports: [TypeOrmModule.forFeature([Profile, Interest, User, UserMatches, BoosterPack])],
   controllers: [BoosterController],
   providers: [
     BoosterService,
@@ -20,6 +22,7 @@ import { ProfileRepository } from '../../common/repository/profile.repository';
     MatchRepository,
     UserRepository,
     ProfileRepository,
+    BoosterRepository,
   ],
 })
 export class BoosterModule {}
