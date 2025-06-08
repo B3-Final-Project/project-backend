@@ -87,18 +87,22 @@ export class ProfileRepository {
     return await this.profileRepository
       .createQueryBuilder('p')
       .innerJoin('p.userProfile', 'u')
-      .innerJoin('user_matches', 'my_like', 
-        'my_like.profile_id = p.id AND my_like.user_id = :userId AND my_like.action = :likeAction'
+      .innerJoin(
+        'matches',
+        'my_like',
+        'my_like.profile_id = p.id AND my_like.user_id = :userId AND my_like.action = :likeAction',
       )
-      .innerJoin('user_matches', 'their_like', 
-        'their_like.user_id = u.user_id AND their_like.action = :likeAction'
+      .innerJoin(
+        'matches',
+        'their_like',
+        'their_like.user_id = u.user_id AND their_like.action = :likeAction',
       )
       .innerJoin('users', 'my_user', 'my_user.user_id = :userId')
       .innerJoin('profiles', 'my_profile', 'my_profile.id = my_user.profile_id')
       .where('their_like.profile_id = my_profile.id')
-      .setParameters({ 
-        userId, 
-        likeAction: BoosterAction.LIKE 
+      .setParameters({
+        userId,
+        likeAction: BoosterAction.LIKE,
       })
       .getMany();
   }

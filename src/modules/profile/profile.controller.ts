@@ -107,11 +107,4 @@ export class ProfileController {
 
     return this.profileService.removeImage(req, index);
   }
-
-  @Get('matches')
-  public async getMatchedProfiles(
-    @Req() req: HttpRequestDto,
-  ): Promise<Profile[]> {
-    return this.profileService.getMatchedProfiles(req);
-  }
 }

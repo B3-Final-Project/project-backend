@@ -40,7 +40,7 @@ export class MatchesService {
       .innerJoin('profiles', 'p', 'p.id = um.profile_id')
       .innerJoin('users', 'u', 'u.profile_id = p.id')
       .leftJoin(
-        'user_matches',
+        'matches',
         'our_response',
         'our_response.user_id = :userId AND our_response.profile_id = p.id',
       )
@@ -83,7 +83,7 @@ export class MatchesService {
       .innerJoin('profiles', 'p', 'p.id = um.profile_id')
       .innerJoin('users', 'u', 'u.profile_id = p.id')
       .leftJoin(
-        'user_matches',
+        'matches',
         'their_response',
         'their_response.user_id = u.user_id AND their_response.action = :likeAction',
       )
