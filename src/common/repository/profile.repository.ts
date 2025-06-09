@@ -35,6 +35,21 @@ export class ProfileRepository {
     return profile;
   }
 
+  public async findByProfileIds(profileIds: number[]): Promise<Profile[]> {
+    return this.profileRepository
+      .createQueryBuilder('p')
+      .where('p.id IN (:...profileIds)', { profileIds })
+      .getMany();
+  }
+
+  public async findByUserIds(userIds: string[]): Promise<Profile[]> {
+    return await this.profileRepository
+      .createQueryBuilder('p')
+      .innerJoin('p.userProfile', 'u')
+      .where('u.user_id IN (:...userIds)', { userIds })
+      .getMany();
+  }
+
   public async findByUserId(
     userId: string,
     extraRelations?: string[],
@@ -54,10 +69,6 @@ export class ProfileRepository {
 
   public async save(profile: Profile): Promise<Profile> {
     return await this.profileRepository.save(profile);
-  }
-
-  public createQueryBuilder(alias: string) {
-    return this.profileRepository.createQueryBuilder(alias);
   }
 
   public async saveImageUrl(
@@ -82,26 +93,22 @@ export class ProfileRepository {
     return { images: profile.images };
   }
 
-  public async findMatchedProfiles(userId: string): Promise<Profile[]> {
-    // Find profiles where both users have liked each other
+  public async findMatchedProfiles(profileId: number): Promise<Profile[]> {
+    // Find profiles where both profiles have liked each other
     return await this.profileRepository
       .createQueryBuilder('p')
-      .innerJoin('p.userProfile', 'u')
       .innerJoin(
         'matches',
         'my_like',
-        'my_like.profile_id = p.id AND my_like.user_id = :userId AND my_like.action = :likeAction',
+        'my_like.to_profile_id = p.id AND my_like.from_profile_id = :profileId AND my_like.action = :likeAction',
       )
       .innerJoin(
         'matches',
         'their_like',
-        'their_like.user_id = u.user_id AND their_like.action = :likeAction',
+        'their_like.from_profile_id = p.id AND their_like.to_profile_id = :profileId AND their_like.action = :likeAction',
       )
-      .innerJoin('users', 'my_user', 'my_user.user_id = :userId')
-      .innerJoin('profiles', 'my_profile', 'my_profile.id = my_user.profile_id')
-      .where('their_like.profile_id = my_profile.id')
       .setParameters({
-        userId,
+        profileId,
         likeAction: BoosterAction.LIKE,
       })
       .getMany();

@@ -1,13 +1,14 @@
+import { GenderEnum, OrientationEnum } from '../profile/enums';
 // match.service.spec.ts
 import { Test, TestingModule } from '@nestjs/testing';
-import { MatchService } from './match.service';
-import { UserRepository } from '../../common/repository/user.repository';
-import { MatchRepository } from '../../common/repository/matches.repository';
-import { ProfileRepository } from '../../common/repository/profile.repository';
-import { Profile } from '../../common/entities/profile.entity';
-import { UserMatches } from '../../common/entities/user-matches.entity';
+
 import { BoosterAction } from './enums/action.enum';
-import { GenderEnum, OrientationEnum } from '../profile/enums';
+import { MatchRepository } from '../../common/repository/matches.repository';
+import { MatchService } from './match.service';
+import { Profile } from '../../common/entities/profile.entity';
+import { ProfileRepository } from '../../common/repository/profile.repository';
+import { UserMatches } from '../../common/entities/user-matches.entity';
+import { UserRepository } from '../../common/repository/user.repository';
 
 describe('MatchService', () => {
   let svc: MatchService;
@@ -55,6 +56,7 @@ describe('MatchService', () => {
         gender: GenderEnum.MALE,
         location: null,
         profile: {
+          id: 'profile123',
           min_age: 18,
           max_age: 30,
           orientation: OrientationEnum.STRAIGHT,
@@ -74,6 +76,8 @@ describe('MatchService', () => {
 
       // assert: user & prefs loaded
       expect(userRepo.findUserWithProfile).toHaveBeenCalledWith('u123');
+      // getSeenRows should be called with profile ID instead of user ID
+      expect(matchRepo.getSeenRows).toHaveBeenCalledWith('profile123');
       // age filters
       expect(qb.andWhere).toHaveBeenCalledWith('u.age >= :minAge', {
         minAge: 18,
@@ -110,8 +114,9 @@ describe('MatchService', () => {
     it('excludes given IDs and uses default limit', async () => {
       const qb = makeQB();
       profileRepo.createUserMatchQueryBuilder.mockReturnValue(qb);
-      // stub baseQuery user/prefs not used here
-      userRepo.findUserWithProfile.mockResolvedValue({ profile: {} } as any);
+      // stub baseQuery user/prefs 
+      const fakeUser = { profile: { id: 'profileX' } } as any;
+      userRepo.findUserWithProfile.mockResolvedValue(fakeUser);
       matchRepo.getSeenRows.mockResolvedValue([]);
 
       const broad: Profile[] = [{ id: 99 } as any];
@@ -132,7 +137,8 @@ describe('MatchService', () => {
     it('skips exclude filter when no IDs', async () => {
       const qb = makeQB();
       profileRepo.createUserMatchQueryBuilder.mockReturnValue(qb);
-      userRepo.findUserWithProfile.mockResolvedValue({ profile: {} } as any);
+      const fakeUser = { profile: { id: 'profileY' } } as any;
+      userRepo.findUserWithProfile.mockResolvedValue(fakeUser);
       matchRepo.getSeenRows.mockResolvedValue([]);
 
       qb.getMany.mockResolvedValue([]);
@@ -153,21 +159,27 @@ describe('MatchService', () => {
       const profiles: Profile[] = [{ id: 7 } as any, { id: 13 } as any];
       const saved: UserMatches[] = [];
       matchRepo.save.mockResolvedValue(saved);
+      
+      // Mock the user with profile
+      const fakeUser = {
+        profile: { id: 'profile123' }
+      } as any;
+      userRepo.findUserWithProfile.mockResolvedValue(fakeUser);
 
       const got = await svc.createMatches(profiles, 'USER42');
 
-      // it should build two UserMatches
+      // it should build two UserMatches with profile-based structure
       expect(matchRepo.save).toHaveBeenCalledTimes(1);
       const toSave = matchRepo.save.mock.calls[0][0] as UserMatches[];
-      expect(toSave).toHaveLength(2);
+      expect(toSave.length).toBe(2);
       expect(toSave[0]).toMatchObject({
-        user_id: 'USER42',
-        profile_id: 7,
+        from_profile_id: 'profile123',
+        to_profile_id: 7,
         action: BoosterAction.SEEN,
       });
       expect(toSave[1]).toMatchObject({
-        user_id: 'USER42',
-        profile_id: 13,
+        from_profile_id: 'profile123',
+        to_profile_id: 13,
         action: BoosterAction.SEEN,
       });
       // returns repository result

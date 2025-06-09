@@ -12,8 +12,12 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { MatchesService } from './matches.service';
 import { HttpRequestDto } from '../../common/dto/http-request.dto';
-import { Profile } from '../../common/entities/profile.entity';
-import { MatchResponseDto, MatchActionDto } from './dto/match-response.dto';
+import {
+  GetMatchesResponse,
+  GetPendingMatchesResponse,
+  GetSentMatchesResponse,
+  MatchActionResponseDto,
+} from './dto/match-response.dto';
 
 @UseGuards(AuthGuard('jwt'))
 @Controller('matches')
@@ -24,7 +28,9 @@ export class MatchesController {
    * Get all mutual matches for the authenticated user
    */
   @Get()
-  async getUserMatches(@Req() req: HttpRequestDto): Promise<Profile[]> {
+  async getUserMatches(
+    @Req() req: HttpRequestDto,
+  ): Promise<GetMatchesResponse> {
     return this.matchesService.getUserMatches(req);
   }
 
@@ -32,7 +38,9 @@ export class MatchesController {
    * Get profiles that liked you but you haven't responded to yet
    */
   @Get('pending')
-  async getPendingMatches(@Req() req: HttpRequestDto): Promise<Profile[]> {
+  async getPendingMatches(
+    @Req() req: HttpRequestDto,
+  ): Promise<GetPendingMatchesResponse> {
     return this.matchesService.getPendingMatches(req);
   }
 
@@ -40,7 +48,9 @@ export class MatchesController {
    * Get profiles you liked but haven't heard back from
    */
   @Get('sent')
-  async getSentLikes(@Req() req: HttpRequestDto): Promise<Profile[]> {
+  async getSentLikes(
+    @Req() req: HttpRequestDto,
+  ): Promise<GetSentMatchesResponse> {
     return this.matchesService.getSentLikes(req);
   }
 
@@ -78,7 +88,7 @@ export class MatchesController {
     )
     profileId: number,
     @Req() req: HttpRequestDto,
-  ): Promise<MatchResponseDto> {
+  ): Promise<MatchActionResponseDto> {
     return this.matchesService.likeProfile(req, profileId);
   }
 
@@ -97,8 +107,7 @@ export class MatchesController {
     )
     profileId: number,
     @Req() req: HttpRequestDto,
-  ): Promise<MatchActionDto> {
-    await this.matchesService.passProfile(req, profileId);
-    return { success: true };
+  ) {
+    return await this.matchesService.passProfile(req, profileId);
   }
 }

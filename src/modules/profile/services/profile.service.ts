@@ -164,7 +164,12 @@ export class ProfileService {
 
   public async getMatchedProfiles(req: HttpRequestDto): Promise<Profile[]> {
     const userId = req.user.userId;
-    return this.profileRepository.findMatchedProfiles(userId);
+    
+    // Get the current user's profile ID
+    const currentUser = await this.userRepository.findUserWithProfile(userId);
+    const profileId = currentUser.profile.id;
+    
+    return this.profileRepository.findMatchedProfiles(profileId);
   }
 
   public async uploadImage(

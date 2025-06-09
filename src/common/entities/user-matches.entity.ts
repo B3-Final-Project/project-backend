@@ -14,15 +14,19 @@ export class UserMatches {
   @PrimaryGeneratedColumn()
   public id: number;
 
-  @Column({ type: 'varchar' })
-  public user_id: string;
+  @Column({ type: 'int' })
+  public from_profile_id: number;
 
   @Column({ type: 'int' })
-  public profile_id: number;
+  public to_profile_id: number;
 
   @ManyToOne(() => Profile)
-  @JoinColumn({ name: 'profile_id' })
-  public profile: Profile;
+  @JoinColumn({ name: 'from_profile_id' })
+  public fromProfile: Profile;
+
+  @ManyToOne(() => Profile)
+  @JoinColumn({ name: 'to_profile_id' })
+  public toProfile: Profile;
 
   @Column({ type: 'int', nullable: true })
   public action: BoosterAction;
