@@ -3,6 +3,7 @@ import { AuthSettingsDto } from './dto/auth-settings.dto';
 
 @Controller('settings')
 export class SettingsController {
+  // gets credentials for the authentication service
   @Get('auth')
   public getAuthConfig(): AuthSettingsDto {
     return {
