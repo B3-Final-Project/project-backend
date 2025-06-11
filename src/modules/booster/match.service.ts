@@ -1,10 +1,15 @@
-import { Injectable } from '@nestjs/common';
-import { Profile } from '../../common/entities/profile.entity';
-import { GenderEnum, OrientationEnum } from '../profile/enums';
-import { UserMatches } from '../../common/entities/user-matches.entity';
+import {
+  GenderEnum,
+  OrientationEnum,
+  RelationshipTypeEnum,
+} from '../profile/enums';
+
 import { BoosterAction } from './enums/action.enum';
+import { Injectable } from '@nestjs/common';
 import { MatchRepository } from '../../common/repository/matches.repository';
+import { Profile } from '../../common/entities/profile.entity';
 import { ProfileRepository } from '../../common/repository/profile.repository';
+import { UserMatches } from '../../common/entities/user-matches.entity';
 import { UserRepository } from '../../common/repository/user.repository';
 
 @Injectable()
@@ -83,7 +88,7 @@ export class MatchService {
         .orderBy('distance_km', 'ASC');
     }
 
-    const seenIds = await this.matchRepository.getSeenRows(userId);
+    const seenIds = await this.matchRepository.getSeenRows(user.profile.id);
 
     // 7b. Exclude them
     if (seenIds.length > 0) {
@@ -103,6 +108,7 @@ export class MatchService {
   async findMatchesForUser(
     userId: string,
     maxResults = 10,
+    relationshipType?: RelationshipTypeEnum,
   ): Promise<Profile[]> {
     // 1. Load user and their profile
     const { qb, prefs } = await this.baseQuery(userId);
@@ -143,10 +149,14 @@ export class MatchService {
     profiles: Profile[],
     userId: string,
   ): Promise<UserMatches[]> {
+    // Get the user's profile ID
+    const user = await this.userRepo.findUserWithProfile(userId);
+    const fromProfileId = user.profile.id;
+
     const userMatches = profiles.map((profile) => {
       const match = new UserMatches();
-      match.user_id = userId;
-      match.profile_id = profile.id;
+      match.from_profile_id = fromProfileId;
+      match.to_profile_id = profile.id;
       match.action = BoosterAction.SEEN;
       return match;
     });
