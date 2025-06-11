@@ -15,11 +15,10 @@ export class BoosterService {
   ) {}
 
   public async getBooster(
-    amount: string,
+    amount: number,
     req: HttpRequestDto,
     type?: RelationshipTypeEnum,
   ) {
-    const parsedAmount = parseInt(amount, 10);
     const user = req.user;
     if (!user) {
       throw new NotFoundException('User not found');
@@ -27,13 +26,13 @@ export class BoosterService {
 
     const profiles = await this.matchService.findMatchesForUser(
       user.userId,
-      parsedAmount,
+      amount,
       type,
     );
 
     const extraProfiles: Profile[] = profiles;
 
-    if (profiles.length < parsedAmount) {
+    if (profiles.length < amount) {
       extraProfiles.push(
         ...(await this.matchService.findBroadMatches(
           user.userId,

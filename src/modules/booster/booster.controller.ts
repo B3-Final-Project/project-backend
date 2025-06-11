@@ -4,6 +4,7 @@ import {
   Get,
   Param,
   ParseEnumPipe,
+  ParseIntPipe,
   Post,
   Query,
   Req,
@@ -34,15 +35,10 @@ export class BoosterController {
     return this.boosterService.createBooster(req, body);
   }
 
-  @Get(':count?:type')
+  @Get(':count')
   public getBooster(
-    @Param('count') amount: string,
-    @Query(
-      'type',
-      new ParseEnumPipe({
-        enum: RelationshipTypeEnum,
-      }),
-    )
+    @Param('count', ParseIntPipe) amount: number,
+    @Query('type', new ParseEnumPipe(RelationshipTypeEnum, { optional: true }))
     type: RelationshipTypeEnum,
     @Req() req: HttpRequestDto,
   ) {
