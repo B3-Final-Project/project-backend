@@ -16,29 +16,38 @@ import {
   SmokingEnum,
   ZodiacEnum,
 } from '../enums';
+import { ApiProperty } from '@nestjs/swagger';
+import {Type} from "class-transformer";
 
 class PersonalInfo {
   @IsString()
+  @ApiProperty()
   name: string;
 
   @IsString()
+  @ApiProperty()
   surname: string;
 
   @IsNumber()
+  @ApiProperty()
   age: number;
 
   @IsEnum(GenderEnum)
+  @ApiProperty()
   gender: GenderEnum;
 
   @IsEnum(OrientationEnum)
+  @ApiProperty()
   orientation: OrientationEnum;
 }
 
 class LocationWorkInfo {
   @IsString()
+  @ApiProperty()
   city: string;
 
   @IsString()
+  @ApiProperty()
   work: string;
 
   @IsString({ each: true })
@@ -47,12 +56,15 @@ class LocationWorkInfo {
 
 class PreferenceInfo {
   @IsNumber()
+  @ApiProperty()
   min_age: number;
 
   @IsNumber()
+  @ApiProperty()
   max_age: number;
 
   @IsNumber()
+  @ApiProperty()
   max_distance: number;
 
   @IsEnum(RelationshipTypeEnum)
@@ -61,17 +73,21 @@ class PreferenceInfo {
 
 class LifestyleInfo {
   @IsEnum(SmokingEnum)
+  @ApiProperty()
   smoking: SmokingEnum;
 
   @IsEnum(DrinkingEnum)
+  @ApiProperty()
   drinking: DrinkingEnum;
 
   @IsOptional()
   @IsEnum(ReligionEnum)
+  @ApiProperty()
   religion: ReligionEnum;
 
   @IsOptional()
   @IsEnum(PoliticsEnum)
+  @ApiProperty()
   politics: PoliticsEnum;
 
   @IsOptional()
@@ -81,19 +97,28 @@ class LifestyleInfo {
 
 export class UpdateProfileDto {
   @ValidateNested()
+  @Type(() => PersonalInfo)
+  @ApiProperty({ type: PersonalInfo })
   personalInfo: PersonalInfo;
 
   @ValidateNested()
+  @Type(() => PreferenceInfo)
+  @ApiProperty({ type: PreferenceInfo })
   preferenceInfo: PreferenceInfo;
 
   @ValidateNested()
+  @Type(() => LocationWorkInfo)
+  @ApiProperty({ type: LocationWorkInfo })
   locationWork: LocationWorkInfo;
 
   @ValidateNested()
+  @Type(() => LifestyleInfo)
+  @ApiProperty({ type: LifestyleInfo })
   lifestyleInfo: LifestyleInfo;
 
   @IsOptional()
-  @IsString()
+  @IsString({ each: true })
+  @ApiProperty({ type: [String], required: false })
   interests?: string[];
 }
 

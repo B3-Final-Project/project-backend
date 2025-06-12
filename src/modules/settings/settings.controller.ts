@@ -1,9 +1,14 @@
 import { Controller, Get } from '@nestjs/common';
 import { AuthSettingsDto } from './dto/auth-settings.dto';
+import {ApiOkResponse, ApiOperation, ApiTags} from "@nestjs/swagger";
 
+@ApiTags('settings')
 @Controller('settings')
 export class SettingsController {
   @Get('auth')
+  @ApiOperation({ summary: 'Récupère la configuration d’authentification Cognito' })
+  @ApiOkResponse({ description: 'Configuration renvoyée avec succès' })
+
   public getAuthConfig(): AuthSettingsDto {
     return {
       userPool: process.env.COGNITO_USER_POOL,
