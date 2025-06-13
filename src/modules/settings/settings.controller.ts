@@ -1,6 +1,6 @@
 import { Controller, Get } from '@nestjs/common';
 import { AuthSettingsDto } from './dto/auth-settings.dto';
-import {ApiOkResponse, ApiOperation, ApiTags} from "@nestjs/swagger";
+import {ApiOkResponse, ApiOperation, ApiTags} from '@nestjs/swagger';
 
 @ApiTags('settings')
 @Controller('settings')
