@@ -17,6 +17,7 @@ import {
 } from '../../modules/profile/enums';
 
 import { Interest } from './interest.entity';
+import { RarityEnum } from '../../modules/profile/enums/rarity.enum';
 import { User } from './user.entity';
 
 @Entity('profiles')
@@ -89,4 +90,10 @@ export class Profile {
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   updated_at: Date;
+
+  @Column({ type: 'int', nullable: true })
+  rarity: RarityEnum;
+
+  @Column('simple-json', { nullable: true })
+  rareMatchesCache?: { [key in RarityEnum]?: number[] };
 }

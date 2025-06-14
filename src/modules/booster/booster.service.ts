@@ -42,6 +42,18 @@ export class BoosterService {
       );
     }
 
+    if (extraProfiles.length < amount) {
+      // panic mode
+      extraProfiles.push(
+        ...(await this.matchService.findBroadMatches(
+          user.userId,
+          profiles.map((p) => p.id),
+          10 - extraProfiles.length,
+          false, // don't exclude seen profiles
+        )),
+      );
+    }
+
     await this.matchService.createMatches(profiles, user.userId);
 
     return profiles;
