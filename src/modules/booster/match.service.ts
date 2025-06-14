@@ -159,49 +159,8 @@ export class MatchService {
         ),
     );
 
-    // --- RARE CACHE LOGIC ---
-    if (!profile.rareMatchesCache) profile.rareMatchesCache = {};
-    // Update cache with new rare user IDs
-    [RarityEnum.RARE, RarityEnum.EPIC, RarityEnum.LEGENDARY].forEach(
-      (rarity) => {
-        const ids = rare.filter((m) => m.rarity === rarity).map((m) => m.id);
-        if (ids.length > 0) {
-          profile.rareMatchesCache[rarity] = Array.from(
-            new Set([...(profile.rareMatchesCache[rarity] || []), ...ids]),
-          );
-        }
-      },
-    );
-    // Save cache if updated
-    await this.profileRepository.save(profile);
-
-    // Try to use cache for rare+ users
-    const rareFromCache: Profile[] = [];
-    for (const rarity of [
-      RarityEnum.LEGENDARY,
-      RarityEnum.EPIC,
-      RarityEnum.RARE,
-    ]) {
-      const cached = profile.rareMatchesCache[rarity];
-      if (cached && cached.length > 0) {
-        // Pick a random id from cache
-        const randomId = cached[Math.floor(Math.random() * cached.length)];
-        const cachedProfile = await this.profileRepository.findByProfileId(
-          randomId,
-          ['interests'],
-        );
-        if (cachedProfile) {
-          rareFromCache.push({ ...cachedProfile, rarity } as Profile & {
-            rarity: RarityEnum;
-          });
-        }
-        break; // Only one rare from cache per call
-      }
-    }
-
-    // Always include at least 2 rare users if possible (from cache or fresh)
+    // Always include at least 2 rare users if possible
     const result: (Profile & { rarity: RarityEnum })[] = [];
-    result.push(...rareFromCache.slice(0, 1));
     result.push(...rare.slice(0, 2 - result.length));
     // Fill the rest with common/uncommon, then more rare if needed
     result.push(...common.slice(0, maxResults - result.length));
@@ -219,11 +178,12 @@ export class MatchService {
     excludeSeen = true,
   ) {
     // 1. Load user and their profile
-    const { qb } = await this.baseQuery(userId);
+    const { qb } = await this.baseQuery(userId, excludeSeen);
 
     if (excludeIds.length > 0) {
       qb.andWhere('p.id NOT IN (:...excludeIds)', { excludeIds });
     }
+
     // 7. Limit
     qb.limit(maxResults);
 
