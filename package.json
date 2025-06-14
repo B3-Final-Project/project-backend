@@ -20,7 +20,8 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "sops:decrypt": "AWS_PROFILE=b3 sops --decrypt --input-type dotenv --output-type dotenv .env.enc > .env",
     "sops:encrypt": "AWS_PROFILE=b3 sops --encrypt --input-type dotenv --kms arn:aws:kms:eu-west-3:989418411786:key/mrk-aab2b8d1dcaa4886a120afd58f023fcf .env > .env.enc",
-    "seed:users": "ts-node -r tsconfig-paths/register src/seed/index.ts"
+    "seed:users": "ts-node -r tsconfig-paths/register src/seed/index.ts",
+    "seed:boosters": "ts-node -r tsconfig-paths/register src/seed/boosters.ts
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",
