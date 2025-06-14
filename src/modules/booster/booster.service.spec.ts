@@ -1,12 +1,15 @@
-import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+
+import { BoosterRepository } from '../../common/repository/booster.repository';
 import { BoosterService } from './booster.service';
-import { MatchService } from './match.service';
 import { HttpRequestDto } from '../../common/dto/http-request.dto';
+import { MatchService } from './match.service';
+import { NotFoundException } from '@nestjs/common';
 
 describe('BoosterService', () => {
   let boosterService: BoosterService;
   let matchService: jest.Mocked<MatchService>;
+  let boosterRepository: jest.Mocked<BoosterRepository>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -19,12 +22,21 @@ describe('BoosterService', () => {
             createMatches: jest.fn(),
           },
         },
+        {
+          provide: BoosterRepository,
+          useValue: {
+            save: jest.fn(),
+            find: jest.fn(),
+            findOne: jest.fn(),
+          },
+        },
         BoosterService,
       ],
     }).compile();
 
     boosterService = module.get(BoosterService);
     matchService = module.get(MatchService);
+    boosterRepository = module.get(BoosterRepository);
   });
 
   describe('getBooster', () => {
@@ -70,6 +82,7 @@ describe('BoosterService', () => {
       expect(matchService.findMatchesForUser).toHaveBeenCalledWith(
         userId,
         parsedAmount,
+        undefined, // relationship type parameter
       );
       expect(matchService.findBroadMatches).not.toHaveBeenCalled();
       expect(matchService.createMatches).toHaveBeenCalledWith(matches, userId);
@@ -144,6 +157,7 @@ describe('BoosterService', () => {
       expect(matchService.findMatchesForUser).toHaveBeenCalledWith(
         userId,
         parsedAmount,
+        undefined, // relationship type parameter
       );
       expect(matchService.findBroadMatches).toHaveBeenCalledWith(
         userId,
