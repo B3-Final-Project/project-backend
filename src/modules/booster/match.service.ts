@@ -4,15 +4,15 @@ import {
   RelationshipTypeEnum,
 } from '../profile/enums';
 
-import { BoosterAction } from './enums/action.enum';
 import { Injectable } from '@nestjs/common';
-import { MatchRepository } from '../../common/repository/matches.repository';
-import { Profile } from '../../common/entities/profile.entity';
-import { ProfileRepository } from '../../common/repository/profile.repository';
-import { RarityEnum } from '../profile/enums/rarity.enum';
-import { UserMatches } from '../../common/entities/user-matches.entity';
-import { UserRepository } from '../../common/repository/user.repository';
 import { shuffle } from 'lodash';
+import { Profile } from '../../common/entities/profile.entity';
+import { UserMatches } from '../../common/entities/user-matches.entity';
+import { MatchRepository } from '../../common/repository/matches.repository';
+import { ProfileRepository } from '../../common/repository/profile.repository';
+import { UserRepository } from '../../common/repository/user.repository';
+import { RarityEnum } from '../profile/enums/rarity.enum';
+import { BoosterAction } from './enums/action.enum';
 
 @Injectable()
 export class MatchService {
