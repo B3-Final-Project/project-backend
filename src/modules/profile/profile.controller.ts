@@ -38,18 +38,17 @@ import {
 export class ProfileController {
   constructor(private readonly profileService: ProfileService) {}
 
-  @Get()
   @ApiOperation({ summary: 'Récupère le profil de l’utilisateur connecté' })
   @ApiResponse({ status: 200, description: 'Profil récupéré avec succès' })
   @ApiResponse({
     status: 401,
     description: 'Unauthorized - jeton JWT manquant ou invalide',
   })
+  @Get()
   public async getProfile(@Req() req: HttpRequestDto) {
     return this.profileService.getProfile(req);
   }
 
-  @Put()
   @ApiOperation({ summary: 'Met à jour le profil complet de l’utilisateur' })
   @ApiBody({ type: UpdateProfileDto })
   @ApiResponse({ status: 200, description: 'Profil mis à jour avec succès' })
@@ -57,6 +56,7 @@ export class ProfileController {
     status: 401,
     description: 'Unauthorized - jeton JWT manquant ou invalide',
   })
+  @Put()
   public async updateProfile(
     @Req() req: HttpRequestDto,
     @Body() body: UpdateProfileDto,
@@ -64,9 +64,14 @@ export class ProfileController {
     return this.profileService.updateProfile(body, req);
   }
 
-  @Put(':userId/interests')
-  @ApiOperation({ summary: 'Met à jour les centres d’intérêt d’un utilisateur' })
-  @ApiParam({ name: 'userId', type: String, description: 'ID de l’utilisateur' })
+  @ApiOperation({
+    summary: 'Met à jour les centres d’intérêt d’un utilisateur',
+  })
+  @ApiParam({
+    name: 'userId',
+    type: String,
+    description: 'ID de l’utilisateur',
+  })
   @ApiBody({
     schema: {
       type: 'object',
@@ -79,11 +84,16 @@ export class ProfileController {
       required: ['data'],
     },
   })
-  @ApiResponse({ status: 200, description: 'Intérêts mis à jour avec succès', type: Profile })
+  @ApiResponse({
+    status: 200,
+    description: 'Intérêts mis à jour avec succès',
+    type: Profile,
+  })
   @ApiResponse({
     status: 401,
     description: 'Unauthorized - jeton JWT manquant ou invalide',
   })
+  @Put(':userId/interests')
   public async updateProfileInterests(
     @Param('userId') userId: string,
     @Body() body: { data: string[] },
@@ -91,14 +101,16 @@ export class ProfileController {
     return this.profileService.updateProfileInterests(userId, body.data);
   }
 
-  @Post()
-  @ApiOperation({ summary: 'Crée un nouveau profil pour l’utilisateur connecté' })
+  @ApiOperation({
+    summary: 'Crée un nouveau profil pour l’utilisateur connecté',
+  })
   @ApiBody({ type: UpdateProfileDto })
   @ApiResponse({ status: 201, description: 'Profil créé avec succès' })
   @ApiResponse({
     status: 401,
     description: 'Unauthorized - jeton JWT manquant ou invalide',
   })
+  @Post()
   public async createProfile(
     @Req() req: HttpRequestDto,
     @Body() body: UpdateProfileDto,
@@ -116,8 +128,6 @@ export class ProfileController {
 
   // Image goes through S3 interceptor and automatically uploads to S3
   // returning only the object URL
-  @Put('image/:index')
-  @UseInterceptors(FileInterceptor('image'))
   @ApiOperation({ summary: 'Upload une image de profil à un index donné' })
   @ApiParam({
     name: 'index',
@@ -141,6 +151,8 @@ export class ProfileController {
     status: 401,
     description: 'Unauthorized - jeton JWT manquant ou invalide',
   })
+  @Put('image/:index')
+  @UseInterceptors(FileInterceptor('image'))
   public async uploadImage(
     @Param(
       'index',
@@ -159,7 +171,6 @@ export class ProfileController {
     return this.profileService.uploadImage(file, req, index);
   }
 
-  @Delete('image/:index')
   @ApiOperation({ summary: 'Supprime une image de profil à un index donné' })
   @ApiParam({
     name: 'index',
@@ -171,6 +182,7 @@ export class ProfileController {
     status: 401,
     description: 'Unauthorized - jeton JWT manquant ou invalide',
   })
+  @Delete('image/:index')
   public async deleteImage(
     @Param(
       'index',

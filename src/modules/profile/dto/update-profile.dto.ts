@@ -17,37 +17,37 @@ import {
   ZodiacEnum,
 } from '../enums';
 import { ApiProperty } from '@nestjs/swagger';
-import {Type} from "class-transformer";
+import { Type } from 'class-transformer';
 
 class PersonalInfo {
-  @IsString()
   @ApiProperty()
+  @IsString()
   name: string;
 
-  @IsString()
   @ApiProperty()
+  @IsString()
   surname: string;
 
-  @IsNumber()
   @ApiProperty()
+  @IsNumber()
   age: number;
 
-  @IsEnum(GenderEnum)
   @ApiProperty()
+  @IsEnum(GenderEnum)
   gender: GenderEnum;
 
-  @IsEnum(OrientationEnum)
   @ApiProperty()
+  @IsEnum(OrientationEnum)
   orientation: OrientationEnum;
 }
 
 class LocationWorkInfo {
-  @IsString()
   @ApiProperty()
+  @IsString()
   city: string;
 
-  @IsString()
   @ApiProperty()
+  @IsString()
   work: string;
 
   @IsString({ each: true })
@@ -55,16 +55,16 @@ class LocationWorkInfo {
 }
 
 class PreferenceInfo {
-  @IsNumber()
   @ApiProperty()
+  @IsNumber()
   min_age: number;
 
-  @IsNumber()
   @ApiProperty()
+  @IsNumber()
   max_age: number;
 
-  @IsNumber()
   @ApiProperty()
+  @IsNumber()
   max_distance: number;
 
   @IsEnum(RelationshipTypeEnum)
@@ -72,53 +72,54 @@ class PreferenceInfo {
 }
 
 class LifestyleInfo {
-  @IsEnum(SmokingEnum)
   @ApiProperty()
+  @IsEnum(SmokingEnum)
   smoking: SmokingEnum;
 
-  @IsEnum(DrinkingEnum)
   @ApiProperty()
+  @IsEnum(DrinkingEnum)
   drinking: DrinkingEnum;
 
+  @ApiProperty()
   @IsOptional()
   @IsEnum(ReligionEnum)
-  @ApiProperty()
   religion: ReligionEnum;
 
+  @ApiProperty()
   @IsOptional()
   @IsEnum(PoliticsEnum)
-  @ApiProperty()
   politics: PoliticsEnum;
 
+  @ApiProperty()
   @IsOptional()
   @IsEnum(ZodiacEnum)
   zodiac: ZodiacEnum;
 }
 
 export class UpdateProfileDto {
+  @ApiProperty({ type: PersonalInfo })
   @ValidateNested()
   @Type(() => PersonalInfo)
-  @ApiProperty({ type: PersonalInfo })
   personalInfo: PersonalInfo;
 
+  @ApiProperty({ type: PreferenceInfo })
   @ValidateNested()
   @Type(() => PreferenceInfo)
-  @ApiProperty({ type: PreferenceInfo })
   preferenceInfo: PreferenceInfo;
 
+  @ApiProperty({ type: LocationWorkInfo })
   @ValidateNested()
   @Type(() => LocationWorkInfo)
-  @ApiProperty({ type: LocationWorkInfo })
   locationWork: LocationWorkInfo;
 
+  @ApiProperty({ type: LifestyleInfo })
   @ValidateNested()
   @Type(() => LifestyleInfo)
-  @ApiProperty({ type: LifestyleInfo })
   lifestyleInfo: LifestyleInfo;
 
+  @ApiProperty({ type: [String], required: false })
   @IsOptional()
   @IsString({ each: true })
-  @ApiProperty({ type: [String], required: false })
   interests?: string[];
 }
 

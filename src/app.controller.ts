@@ -13,19 +13,19 @@ import {
 export class AppController {
   constructor(private readonly appService: AppService) {}
 
-  @Get('health-check')
-  @ApiOperation({ summary: 'Vérifie que l\'application est en ligne' })
+  @ApiOperation({ summary: "Vérifie que l'application est en ligne" })
   @ApiResponse({ status: 200, description: 'Application en ligne' })
+  @Get('health-check')
   getHello(): string {
     return this.appService.getHello();
   }
 
-  @UseGuards(AuthGuard('jwt'))
-  @Get('ping')
   @ApiBearerAuth('jwt-auth')
   @ApiOperation({ summary: 'Endpoint ping sécurisé' })
   @ApiResponse({ status: 200, description: 'Réponse Pong si authentifié' })
   @ApiResponse({ status: 401, description: 'Non autorisé' })
+  @UseGuards(AuthGuard('jwt'))
+  @Get('ping')
   ping(): string {
     return 'Pong';
   }

@@ -17,7 +17,6 @@ import {
 export class BoosterController {
   public constructor(private readonly boosterService: BoosterService) {}
 
-  @Get(':count')
   @ApiOperation({ summary: 'Récupère un booster avec un nombre donné' })
   @ApiParam({
     name: 'count',
@@ -26,6 +25,7 @@ export class BoosterController {
   })
   @ApiResponse({ status: 200, description: 'Booster récupéré avec succès' })
   @ApiResponse({ status: 400, description: 'Paramètre count invalide' })
+  @Get(':count')
   public getBooster(
     @Param('count') amount: string,
     @Req() req: HttpRequestDto,
