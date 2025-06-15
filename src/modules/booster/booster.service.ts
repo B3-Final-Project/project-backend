@@ -7,6 +7,9 @@ import { HttpRequestDto } from '../../common/dto/http-request.dto';
 import { MatchService } from './match.service';
 import { Profile } from '../../common/entities/profile.entity';
 import { RelationshipTypeEnum } from '../profile/enums';
+import { RarityEnum } from '../profile/enums/rarity.enum';
+import { UserCardDto } from '../../common/dto/user-card.dto';
+import { mapProfileToCard } from '../../common/utils/card-utils';
 
 @Injectable()
 export class BoosterService {
@@ -19,7 +22,7 @@ export class BoosterService {
     amount: number,
     req: HttpRequestDto,
     type?: RelationshipTypeEnum,
-  ) {
+  ): Promise<UserCardDto[]> {
     const user = req.user;
     if (!user) {
       throw new NotFoundException('User not found');
@@ -34,11 +37,11 @@ export class BoosterService {
     if (profiles.length >= amount) {
       // We have enough matches
       await this.matchService.createMatches(profiles, user.userId);
-      return profiles;
+      return profiles.map(mapProfileToCard);
     }
 
     // We need more matches
-    const finalProfiles: Profile[] = [...profiles];
+    const finalProfiles: (Profile & { rarity: RarityEnum })[] = [...profiles];
 
     const additionalProfiles = await this.matchService.findBroadMatches(
       user.userId,
@@ -59,7 +62,7 @@ export class BoosterService {
     }
 
     await this.matchService.createMatches(finalProfiles, user.userId);
-    return finalProfiles;
+    return finalProfiles.map(mapProfileToCard);
   }
 
   public async getAvailablePacks(): Promise<AvailablePackDto> {

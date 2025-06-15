@@ -156,9 +156,10 @@ export class MatchService {
     excludeIds: number[],
     maxResults = 10,
     excludeSeen = true,
-  ) {
+  ): Promise<(Profile & { rarity: RarityEnum })[]> {
     // 1. Load user and their profile
-    const { qb } = await this.baseQuery(userId, excludeSeen);
+    const { qb, user } = await this.baseQuery(userId, excludeSeen);
+    const profile = user.profile;
 
     if (excludeIds.length > 0) {
       qb.andWhere('p.id NOT IN (:...excludeIds)', { excludeIds });
@@ -168,7 +169,14 @@ export class MatchService {
     qb.limit(maxResults);
 
     // 8. Execute
-    return qb.getMany();
+    const matches: Profile[] = await qb.getMany();
+
+    // Calculate rarity for each match and add it to the original objects
+    matches.forEach((m) => {
+      (m as any).rarity = this.calculateRarity(profile, m);
+    });
+
+    return matches as (Profile & { rarity: RarityEnum })[];
   }
 
   public async createMatches(

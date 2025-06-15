@@ -4,6 +4,7 @@ import {
   SmokingEnum,
   ZodiacEnum,
 } from '../../modules/profile/enums';
+import { RarityEnum } from '../../modules/profile/enums/rarity.enum';
 
 export interface UserCardDto {
   id: number;
@@ -17,4 +18,5 @@ export interface UserCardDto {
   drinking?: DrinkingEnum;
   zodiac?: ZodiacEnum;
   interests?: Interest[];
+  rarity: RarityEnum;
 }
