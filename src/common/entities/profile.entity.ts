@@ -93,7 +93,4 @@ export class Profile {
 
   @Column({ type: 'int', nullable: true })
   rarity: RarityEnum;
-
-  @Column('simple-json', { nullable: true })
-  rareMatchesCache?: { [key in RarityEnum]?: number[] };
 }
