@@ -18,7 +18,6 @@ import {
 
 import { ApiProperty } from '@nestjs/swagger';
 import { Interest } from './interest.entity';
-import { RarityEnum } from '../../modules/profile/enums/rarity.enum';
 import { User } from './user.entity';
 
 @Entity('profiles')
@@ -111,8 +110,4 @@ export class Profile {
   @ApiProperty({ type: String })
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   updated_at: Date;
-
-  @ApiProperty({ enum: RarityEnum, required: false })
-  @Column({ type: 'int', nullable: true })
-  rarity: RarityEnum;
 }

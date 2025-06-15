@@ -32,7 +32,11 @@ describe('MatchService', () => {
 
   beforeEach(async () => {
     userRepo = { findUserWithProfile: jest.fn() } as any;
-    matchRepo = { getSeenRows: jest.fn(), save: jest.fn(), getUserLikes: jest.fn() } as any;
+    matchRepo = {
+      getSeenRows: jest.fn(),
+      save: jest.fn(),
+      getUserLikes: jest.fn(),
+    } as any;
     profileRepo = { createUserMatchQueryBuilder: jest.fn() } as any;
 
     const module: TestingModule = await Test.createTestingModule({

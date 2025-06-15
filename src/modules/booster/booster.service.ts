@@ -46,16 +46,16 @@ export class BoosterService {
     const additionalProfiles = await this.matchService.findBroadMatches(
       user.userId,
       profiles.map((p) => p.id),
-      10 - profiles.length,
+      amount - profiles.length,
     );
     finalProfiles.push(...additionalProfiles);
 
-    if (finalProfiles.length < 10) {
+    if (finalProfiles.length < amount) {
       // panic mode
       const moreProfiles = await this.matchService.findBroadMatches(
         user.userId,
         profiles.map((p) => p.id),
-        10 - finalProfiles.length,
+        amount - finalProfiles.length,
         false, // don't exclude seen profiles
       );
       finalProfiles.push(...moreProfiles);

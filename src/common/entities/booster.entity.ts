@@ -17,7 +17,7 @@ export class BoosterPack {
     example: 'https://example.com/image.png',
     description: "URL de l'image du booster",
   })
-  @Column({ type: 'varchar', length: 255 })
+  @Column({ type: 'varchar', length: 255, nullable: true })
   imageUrl: string;
 
   @ApiProperty({
