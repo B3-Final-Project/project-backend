@@ -40,7 +40,7 @@ export class MatchRepository {
       where: {
         from_profile_id: profileId1,
         to_profile_id: profileId2,
-        action: 1, // BoosterAction.LIKE
+        action: BoosterAction.LIKE,
       },
     });
 
@@ -48,7 +48,7 @@ export class MatchRepository {
       where: {
         from_profile_id: profileId2,
         to_profile_id: profileId1,
-        action: 1, // BoosterAction.LIKE
+        action: BoosterAction.LIKE,
       },
     });
 
