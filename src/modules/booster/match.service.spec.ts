@@ -114,7 +114,7 @@ describe('MatchService', () => {
     it('excludes given IDs and uses default limit', async () => {
       const qb = makeQB();
       profileRepo.createUserMatchQueryBuilder.mockReturnValue(qb);
-      // stub baseQuery user/prefs 
+      // stub baseQuery user/prefs
       const fakeUser = { profile: { id: 'profileX' } } as any;
       userRepo.findUserWithProfile.mockResolvedValue(fakeUser);
       matchRepo.getSeenRows.mockResolvedValue([]);
@@ -159,10 +159,10 @@ describe('MatchService', () => {
       const profiles: Profile[] = [{ id: 7 } as any, { id: 13 } as any];
       const saved: UserMatches[] = [];
       matchRepo.save.mockResolvedValue(saved);
-      
+
       // Mock the user with profile
       const fakeUser = {
-        profile: { id: 'profile123' }
+        profile: { id: 'profile123' },
       } as any;
       userRepo.findUserWithProfile.mockResolvedValue(fakeUser);
 

@@ -84,9 +84,12 @@ export class MatchService {
           lat: user.location.coordinates[1],
           lng: user.location.coordinates[0],
         })
-        .having('ST_Distance(u.location, ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)) / 1000 <= :maxDist', {
-          maxDist: prefs.max_distance ?? 100,
-        })
+        .having(
+          'ST_Distance(u.location, ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)) / 1000 <= :maxDist',
+          {
+            maxDist: prefs.max_distance ?? 100,
+          },
+        )
         .groupBy('p.id, u.id')
         .orderBy('distance_km', 'ASC');
     }

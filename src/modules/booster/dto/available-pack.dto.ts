@@ -1,5 +1,7 @@
+import { ApiProperty } from '@nestjs/swagger';
 import { BoosterPack } from '../../../common/entities/booster.entity';
 
-export interface AvailablePackDto {
+export class AvailablePackDto {
+  @ApiProperty({ type: [BoosterPack] })
   data: BoosterPack[];
 }
