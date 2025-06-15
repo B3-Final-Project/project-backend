@@ -31,7 +31,7 @@ export const ormConfig: PostgresConnectionOptions = {
   entities: [Interest, Profile, User, UserMatches, BoosterPack],
   database: Constants.DATABASE_NAME,
   synchronize: true,
-  ssl: false,
+  ssl: process.env.NODE_ENV === 'production',
   extra: {
     connectionTimeoutMillis: 30000,
   },
