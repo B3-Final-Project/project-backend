@@ -92,7 +92,6 @@ export async function seedUsers(dataSource: DataSource, count = 50) {
       gender,
       age,
       location: location as Point,
-      rarity: faker.number.int({ min: 1, max: 10 }),
       currency: faker.number.int({ min: 0, max: 1000 }),
       profile,
     });
