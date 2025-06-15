@@ -27,7 +27,7 @@ export class MatchRepository {
     return await this.userMatches.find({
       where: {
         from_profile_id: fromProfileId,
-        action: 1, // BoosterAction.LIKE
+        action: BoosterAction.LIKE,
       },
     });
   }
