@@ -4,15 +4,14 @@ import {
   RelationshipTypeEnum,
 } from '../profile/enums';
 
-import { Injectable } from '@nestjs/common';
-import { shuffle } from 'lodash';
-import { Profile } from '../../common/entities/profile.entity';
-import { UserMatches } from '../../common/entities/user-matches.entity';
-import { MatchRepository } from '../../common/repository/matches.repository';
-import { ProfileRepository } from '../../common/repository/profile.repository';
-import { UserRepository } from '../../common/repository/user.repository';
-import { RarityEnum } from '../profile/enums/rarity.enum';
 import { BoosterAction } from './enums/action.enum';
+import { Injectable } from '@nestjs/common';
+import { MatchRepository } from '../../common/repository/matches.repository';
+import { Profile } from '../../common/entities/profile.entity';
+import { ProfileRepository } from '../../common/repository/profile.repository';
+import { RarityEnum } from '../profile/enums/rarity.enum';
+import { UserMatches } from '../../common/entities/user-matches.entity';
+import { UserRepository } from '../../common/repository/user.repository';
 
 @Injectable()
 export class MatchService {
@@ -128,7 +127,7 @@ export class MatchService {
     relationshipType?: RelationshipTypeEnum,
   ): Promise<(Profile & { rarity: RarityEnum })[]> {
     // 1. Load user and their profile
-    const { qb, prefs, user } = await this.baseQuery(userId);
+    const { qb, prefs, user } = await this.baseQuery(userId, true);
     const profile = user.profile;
 
     // 5. Relationship type
@@ -138,41 +137,18 @@ export class MatchService {
       });
     }
 
-    // 7. Limit (fetch more to allow for rarity selection)
-    qb.limit(maxResults * 3);
+    // 7. Limit
+    qb.limit(maxResults);
 
     // 8. Execute
     const matches: Profile[] = await qb.getMany();
 
-    // Calculate rarity for each match
-    const matchesWithRarity = matches.map((m) => ({
-      ...m,
-      rarity: this.calculateRarity(profile, m),
-    }));
+    // Calculate rarity for each match and add it to the original objects
+    matches.forEach((m) => {
+      (m as any).rarity = this.calculateRarity(profile, m);
+    });
 
-    // Prioritize rare users, but always fill up to maxResults
-    const rare = matchesWithRarity.filter((m) =>
-      [RarityEnum.RARE, RarityEnum.EPIC, RarityEnum.LEGENDARY].includes(
-        m.rarity,
-      ),
-    );
-    const common = matchesWithRarity.filter(
-      (m) =>
-        ![RarityEnum.RARE, RarityEnum.EPIC, RarityEnum.LEGENDARY].includes(
-          m.rarity,
-        ),
-    );
-
-    // Always include at least 2 rare users if possible
-    const result: (Profile & { rarity: RarityEnum })[] = [];
-    result.push(...rare.slice(0, 2 - result.length));
-    // Fill the rest with common/uncommon, then more rare if needed
-    result.push(...common.slice(0, maxResults - result.length));
-    if (result.length < maxResults) {
-      result.push(...rare.slice(2, maxResults - result.length + 2));
-    }
-    // Shuffle the result for randomness
-    return shuffle(result.slice(0, maxResults));
+    return matches as (Profile & { rarity: RarityEnum })[];
   }
 
   public async findBroadMatches(

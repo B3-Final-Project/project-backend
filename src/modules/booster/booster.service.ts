@@ -1,12 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+
+import { AvailablePackDto } from './dto/available-pack.dto';
+import { BoosterRepository } from '../../common/repository/booster.repository';
+import { CreateBoosterDto } from './dto/create-booster.dto';
 import { HttpRequestDto } from '../../common/dto/http-request.dto';
 import { MatchService } from './match.service';
 import { Profile } from '../../common/entities/profile.entity';
 import { RelationshipTypeEnum } from '../profile/enums';
-import { AvailablePackDto } from './dto/available-pack.dto';
-import { BoosterRepository } from '../../common/repository/booster.repository';
-import { CreateBoosterDto } from './dto/create-booster.dto';
-import { mapProfileToCard } from '../../common/utils/card-utils';
 
 @Injectable()
 export class BoosterService {
@@ -31,33 +31,35 @@ export class BoosterService {
       type,
     );
 
-    const extraProfiles: Profile[] = profiles;
-
-    if (profiles.length < amount) {
-      extraProfiles.push(
-        ...(await this.matchService.findBroadMatches(
-          user.userId,
-          profiles.map((p) => p.id),
-          10 - extraProfiles.length,
-        )),
-      );
+    if (profiles.length >= amount) {
+      // We have enough matches
+      await this.matchService.createMatches(profiles, user.userId);
+      return profiles;
     }
 
-    if (extraProfiles.length < amount) {
+    // We need more matches
+    const finalProfiles: Profile[] = [...profiles];
+
+    const additionalProfiles = await this.matchService.findBroadMatches(
+      user.userId,
+      profiles.map((p) => p.id),
+      10 - profiles.length,
+    );
+    finalProfiles.push(...additionalProfiles);
+
+    if (finalProfiles.length < 10) {
       // panic mode
-      extraProfiles.push(
-        ...(await this.matchService.findBroadMatches(
-          user.userId,
-          profiles.map((p) => p.id),
-          10 - extraProfiles.length,
-          false, // don't exclude seen profiles
-        )),
+      const moreProfiles = await this.matchService.findBroadMatches(
+        user.userId,
+        profiles.map((p) => p.id),
+        10 - finalProfiles.length,
+        false, // don't exclude seen profiles
       );
+      finalProfiles.push(...moreProfiles);
     }
 
-    await this.matchService.createMatches(profiles, user.userId);
-
-    return profiles.map(mapProfileToCard);
+    await this.matchService.createMatches(finalProfiles, user.userId);
+    return finalProfiles;
   }
 
   public async getAvailablePacks(): Promise<AvailablePackDto> {

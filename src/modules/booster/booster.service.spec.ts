@@ -5,11 +5,11 @@ import { BoosterService } from './booster.service';
 import { HttpRequestDto } from '../../common/dto/http-request.dto';
 import { MatchService } from './match.service';
 import { NotFoundException } from '@nestjs/common';
+import { RarityEnum } from '../profile/enums/rarity.enum';
 
 describe('BoosterService', () => {
   let boosterService: BoosterService;
   let matchService: jest.Mocked<MatchService>;
-  let boosterRepository: jest.Mocked<BoosterRepository>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -36,7 +36,6 @@ describe('BoosterService', () => {
 
     boosterService = module.get(BoosterService);
     matchService = module.get(MatchService);
-    boosterRepository = module.get(BoosterRepository);
   });
 
   describe('getBooster', () => {
@@ -59,18 +58,21 @@ describe('BoosterService', () => {
           userProfile: null,
           created_at: new Date(),
           updated_at: new Date(),
+          rarity: RarityEnum.COMMON,
         },
         {
           id: 2,
           userProfile: null,
           created_at: new Date(),
           updated_at: new Date(),
+          rarity: RarityEnum.UNCOMMON,
         },
         {
           id: 3,
           userProfile: null,
           created_at: new Date(),
           updated_at: new Date(),
+          rarity: RarityEnum.RARE,
         },
       ];
 
@@ -101,12 +103,14 @@ describe('BoosterService', () => {
           userProfile: null,
           created_at: new Date(),
           updated_at: new Date(),
+          rarity: RarityEnum.COMMON,
         },
         {
           id: 2,
           userProfile: null,
           created_at: new Date(),
           updated_at: new Date(),
+          rarity: RarityEnum.UNCOMMON,
         },
       ];
       // extra 8 profiles
@@ -115,6 +119,7 @@ describe('BoosterService', () => {
         userProfile: null,
         created_at: new Date(),
         updated_at: new Date(),
+        rarity: RarityEnum.COMMON,
       }));
 
       // snapshot before any mutation

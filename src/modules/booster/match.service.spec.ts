@@ -32,7 +32,7 @@ describe('MatchService', () => {
 
   beforeEach(async () => {
     userRepo = { findUserWithProfile: jest.fn() } as any;
-    matchRepo = { getSeenRows: jest.fn(), save: jest.fn() } as any;
+    matchRepo = { getSeenRows: jest.fn(), save: jest.fn(), getUserLikes: jest.fn() } as any;
     profileRepo = { createUserMatchQueryBuilder: jest.fn() } as any;
 
     const module: TestingModule = await Test.createTestingModule({
@@ -67,6 +67,7 @@ describe('MatchService', () => {
       } as any;
       userRepo.findUserWithProfile.mockResolvedValue(fakeUser);
       matchRepo.getSeenRows.mockResolvedValue([42]);
+      matchRepo.getUserLikes.mockResolvedValue([]);
 
       const expected: Profile[] = [{ id: 1 } as any];
       qb.getMany.mockResolvedValue(expected);
@@ -118,6 +119,7 @@ describe('MatchService', () => {
       const fakeUser = { profile: { id: 'profileX' } } as any;
       userRepo.findUserWithProfile.mockResolvedValue(fakeUser);
       matchRepo.getSeenRows.mockResolvedValue([]);
+      matchRepo.getUserLikes.mockResolvedValue([]);
 
       const broad: Profile[] = [{ id: 99 } as any];
       qb.getMany.mockResolvedValue(broad);
@@ -140,6 +142,7 @@ describe('MatchService', () => {
       const fakeUser = { profile: { id: 'profileY' } } as any;
       userRepo.findUserWithProfile.mockResolvedValue(fakeUser);
       matchRepo.getSeenRows.mockResolvedValue([]);
+      matchRepo.getUserLikes.mockResolvedValue([]);
 
       qb.getMany.mockResolvedValue([]);
 
@@ -170,7 +173,7 @@ describe('MatchService', () => {
 
       // it should build two UserMatches with profile-based structure
       expect(matchRepo.save).toHaveBeenCalledTimes(1);
-      const toSave = matchRepo.save.mock.calls[0][0] as UserMatches[];
+      const toSave = matchRepo.save.mock.calls[0][0];
       expect(toSave.length).toBe(2);
       expect(toSave[0]).toMatchObject({
         from_profile_id: 'profile123',
