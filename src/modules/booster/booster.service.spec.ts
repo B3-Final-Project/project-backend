@@ -41,7 +41,7 @@ describe('BoosterService', () => {
 
   describe('getBooster', () => {
     it('throws if there is no user in the request', async () => {
-      const amount = '5';
+      const amount = 5;
       const request = { user: null } as unknown as HttpRequestDto;
       await expect(boosterService.getBooster(amount, request)).rejects.toThrow(
         NotFoundException,
@@ -49,7 +49,7 @@ describe('BoosterService', () => {
     });
 
     it('returns the exact matches when there are enough', async () => {
-      const amount = '3';
+      const amount = 3;
       const parsedAmount = 3;
       const userId = 'user-1';
       const request = { user: { userId } } as HttpRequestDto;
@@ -90,7 +90,7 @@ describe('BoosterService', () => {
     });
 
     it('falls back to broadMatches when there aren’t enough', async () => {
-      const amount = '5';
+      const amount = 5;
       const userId = 'user-2';
       const request = { user: { userId } } as HttpRequestDto;
 
@@ -143,7 +143,7 @@ describe('BoosterService', () => {
     });
 
     it('gracefully handles “no matches” by still calling broad with 10', async () => {
-      const amount = '2';
+      const amount = 2;
       const parsedAmount = 2;
       const userId = 'user-3';
       const request = { user: { userId } } as HttpRequestDto;

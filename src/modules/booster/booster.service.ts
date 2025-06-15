@@ -6,6 +6,7 @@ import { RelationshipTypeEnum } from '../profile/enums';
 import { AvailablePackDto } from './dto/available-pack.dto';
 import { BoosterRepository } from '../../common/repository/booster.repository';
 import { CreateBoosterDto } from './dto/create-booster.dto';
+import { mapProfileToCard } from '../../common/utils/card-utils';
 
 @Injectable()
 export class BoosterService {
@@ -56,7 +57,7 @@ export class BoosterService {
 
     await this.matchService.createMatches(profiles, user.userId);
 
-    return profiles;
+    return profiles.map(mapProfileToCard);
   }
 
   public async getAvailablePacks(): Promise<AvailablePackDto> {

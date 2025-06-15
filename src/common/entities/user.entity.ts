@@ -60,10 +60,6 @@ export class User {
   })
   location: Point;
 
-  @ApiProperty({ example: 2, required: false })
-  @Column({ type: 'int', nullable: true })
-  rarity: number;
-
   @ApiProperty({ example: 100, required: false })
   @Column({ type: 'int', nullable: true })
   currency: number;
