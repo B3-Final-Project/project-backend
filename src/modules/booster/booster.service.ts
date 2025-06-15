@@ -6,8 +6,8 @@ import { CreateBoosterDto } from './dto/create-booster.dto';
 import { HttpRequestDto } from '../../common/dto/http-request.dto';
 import { MatchService } from './match.service';
 import { Profile } from '../../common/entities/profile.entity';
-import { RelationshipTypeEnum } from '../profile/enums';
 import { RarityEnum } from '../profile/enums/rarity.enum';
+import { RelationshipTypeEnum } from '../profile/enums';
 import { UserCardDto } from '../../common/dto/user-card.dto';
 import { mapProfileToCard } from '../../common/utils/card-utils';
 

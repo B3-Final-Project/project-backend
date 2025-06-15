@@ -1,9 +1,10 @@
-import { Interest } from '../entities/interest.entity';
 import {
   DrinkingEnum,
   SmokingEnum,
   ZodiacEnum,
 } from '../../modules/profile/enums';
+
+import { Interest } from '../entities/interest.entity';
 import { RarityEnum } from '../../modules/profile/enums/rarity.enum';
 
 export interface UserCardDto {

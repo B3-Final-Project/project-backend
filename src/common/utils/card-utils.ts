@@ -1,6 +1,6 @@
 import { Profile } from '../entities/profile.entity';
-import { UserCardDto } from '../dto/user-card.dto';
 import { RarityEnum } from '../../modules/profile/enums/rarity.enum';
+import { UserCardDto } from '../dto/user-card.dto';
 
 export function mapProfileToCard(
   profile: Profile & { rarity: RarityEnum },

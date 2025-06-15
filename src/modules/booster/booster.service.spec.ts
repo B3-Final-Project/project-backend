@@ -169,7 +169,7 @@ describe('BoosterService', () => {
 
       const initialSnapshot = [...initialMatches];
       const seenIds = initialSnapshot.map((p) => p.id);
-      const expectedBroadCount = 10 - initialSnapshot.length;
+      const expectedBroadCount = amount - initialSnapshot.length;
 
       matchService.findMatchesForUser.mockResolvedValue(initialMatches);
       matchService.findBroadMatches.mockResolvedValue(extraMatches);
@@ -236,7 +236,7 @@ describe('BoosterService', () => {
       expect(result).toEqual(expectedResult);
     });
 
-    it('gracefully handles no matches by still calling broad with 10', async () => {
+    it('gracefully handles no matches by still calling broad with amount', async () => {
       const amount = 2;
       const parsedAmount = 2;
       const userId = 'user-3';
@@ -253,10 +253,20 @@ describe('BoosterService', () => {
         parsedAmount,
         undefined,
       );
-      expect(matchService.findBroadMatches).toHaveBeenCalledWith(
+      // First call to findBroadMatches with amount (since profiles is empty)
+      expect(matchService.findBroadMatches).toHaveBeenNthCalledWith(
+        1,
         userId,
         [],
-        10,
+        amount,
+      );
+      // Second call to findBroadMatches in panic mode with excludeSeen: false
+      expect(matchService.findBroadMatches).toHaveBeenNthCalledWith(
+        2,
+        userId,
+        [],
+        amount,
+        false,
       );
       expect(matchService.createMatches).toHaveBeenCalledWith([], userId);
       expect(result).toEqual([]);
