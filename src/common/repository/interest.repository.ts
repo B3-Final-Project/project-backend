@@ -1,7 +1,7 @@
-import { InjectRepository } from '@nestjs/typeorm';
-import { Interest } from '../entities/interest.entity';
-import { In, Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository, In } from 'typeorm';
+import { Interest } from '../entities/interest.entity';
 
 @Injectable()
 export class InterestRepository {
@@ -10,19 +10,26 @@ export class InterestRepository {
     private readonly interestRepository: Repository<Interest>,
   ) {}
 
-  public async saveNewInterest(interestDescriptions: string[]) {
-    const existing = await this.interestRepository.find({
-      where: { description: In(interestDescriptions) },
+  public async saveNewInterests(
+    items: Array<{ prompt: string; answer: string }>,
+  ): Promise<Interest[]> {
+    const interests = items.map((item) =>
+      this.interestRepository.create({
+        prompt: item.prompt,
+        answer: item.answer,
+      }),
+    );
+
+    return await this.interestRepository.save(interests);
+  }
+
+  public async findByIds(ids: number[]): Promise<Interest[]> {
+    return await this.interestRepository.find({
+      where: { id: In(ids) },
     });
-    const existingSet = new Set(existing.map((i) => i.description));
+  }
 
-    const toCreate = interestDescriptions
-      .filter((d) => !existingSet.has(d))
-      .map((d) => this.interestRepository.create({ description: d }));
-
-    // save all and reassign
-    const savedNew = await this.interestRepository.save(toCreate);
-
-    return [...existing, ...savedNew];
+  public async findAll(): Promise<Interest[]> {
+    return await this.interestRepository.find();
   }
 }

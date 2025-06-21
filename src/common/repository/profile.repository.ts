@@ -14,7 +14,7 @@ export class ProfileRepository {
   public createUserMatchQueryBuilder(userId: string) {
     return this.profileRepository
       .createQueryBuilder('p')
-      .innerJoin('p.userProfile', 'u')
+      .leftJoinAndSelect('p.userProfile', 'u')
       .where('u.user_id != :me', { me: userId });
   }
 

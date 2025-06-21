@@ -32,7 +32,10 @@ export async function seedInterests(dataSource: DataSource) {
   ];
 
   const interestEntities = interests.map((description) =>
-    interestRepo.create({ description }),
+    interestRepo.create({
+      prompt: 'What is your favorite hobby?',
+      answer: description,
+    }),
   );
 
   await interestRepo.save(interestEntities);
@@ -92,7 +95,6 @@ export async function seedUsers(dataSource: DataSource, count = 50) {
       gender,
       age,
       location: location as Point,
-      rarity: faker.number.int({ min: 1, max: 10 }),
       currency: faker.number.int({ min: 0, max: 1000 }),
       profile,
     });

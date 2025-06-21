@@ -42,7 +42,7 @@ export const ormConfig: PostgresConnectionOptions = {
   ],
   database: Constants.DATABASE_NAME,
   synchronize: true,
-  ssl: false,
+  ssl: process.env.NODE_ENV === 'production',
   extra: {
     connectionTimeoutMillis: 30000,
   },

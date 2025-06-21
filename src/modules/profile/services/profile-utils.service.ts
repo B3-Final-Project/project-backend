@@ -27,4 +27,15 @@ export class ProfileUtils {
 
     return entity;
   }
+
+  public static extractInterestItems(
+    dto: Partial<UpdateProfileDto>,
+  ): Array<{ prompt: string; answer: string }> {
+    if (!dto.interestInfo?.interests) {
+      return [];
+    }
+
+    // Extract the full interest items (prompt and answer)
+    return dto.interestInfo.interests;
+  }
 }

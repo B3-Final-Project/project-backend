@@ -20,7 +20,8 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "sops:decrypt": "AWS_PROFILE=b3 sops --decrypt --input-type dotenv --output-type dotenv .env.enc > .env",
     "sops:encrypt": "AWS_PROFILE=b3 sops --encrypt --input-type dotenv --kms arn:aws:kms:eu-west-3:989418411786:key/mrk-aab2b8d1dcaa4886a120afd58f023fcf .env > .env.enc",
-    "seed:users": "ts-node -r tsconfig-paths/register src/seed/index.ts"
+    "seed:users": "ts-node -r tsconfig-paths/register src/seed/index.ts",
+    "seed:boosters": "ts-node -r tsconfig-paths/register src/seed/boosters.ts"
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",
@@ -29,6 +30,7 @@
     "@nestjs/mapped-types": "^2.1.0",
     "@nestjs/passport": "^10.0.3",
     "@nestjs/platform-express": "^10.4.17",
+    "@nestjs/swagger": "^7.4.2",
     "@nestjs/typeorm": "^11.0.0",
     "@types/passport-jwt": "^4.0.1",
     "aws-sdk": "^2.1692.0",
@@ -50,6 +52,7 @@
     "pg": "^8.13.2",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1",
+    "swagger-ui-express": "^5.0.1",
     "typeorm": "^0.3.20"
   },
   "devDependencies": {
