@@ -9,11 +9,29 @@ export class Interest {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ApiProperty({ example: 'Musique', description: "Description de l'intérêt" })
-  @Column({ type: 'varchar', length: 255 })
-  description: string;
+  @ApiProperty({
+    example: 'What do you enjoy doing in your free time?',
+    description: "Question/prompt pour l'intérêt",
+  })
+  @Column({ type: 'varchar', length: 500, nullable: true })
+  prompt: string;
+
+  @ApiProperty({
+    example: 'Reading books',
+    description: 'Réponse à la question',
+  })
+  @Column({ type: 'varchar', length: 500, nullable: true })
+  answer: string;
 
   @ApiProperty({ type: () => [Profile], required: false })
   @ManyToMany(() => Profile, (profile) => profile.interests)
   profiles: Profile[];
+
+  @ApiProperty({ type: String })
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  created_at: Date;
+
+  @ApiProperty({ type: String })
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  updated_at: Date;
 }

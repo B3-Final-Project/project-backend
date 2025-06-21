@@ -1,17 +1,18 @@
-import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { Profile } from '../../common/entities/profile.entity';
+import * as multerS3 from 'multer-s3';
+
 import { Interest } from '../../common/entities/interest.entity';
+import { InterestRepository } from '../../common/repository/interest.repository';
+import { Module } from '@nestjs/common';
+import { MulterModule } from '@nestjs/platform-express';
+import { Profile } from '../../common/entities/profile.entity';
 import { ProfileController } from './profile.controller';
+import { ProfileRepository } from '../../common/repository/profile.repository';
 import { ProfileService } from './services/profile.service';
+import { S3Client } from '@aws-sdk/client-s3';
+import { S3Service } from './services/s3.service';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from '../../common/entities/user.entity';
 import { UserRepository } from '../../common/repository/user.repository';
-import { ProfileRepository } from '../../common/repository/profile.repository';
-import { InterestRepository } from '../../common/repository/interest.repository';
-import { MulterModule } from '@nestjs/platform-express';
-import { S3Client } from '@aws-sdk/client-s3';
-import * as multerS3 from 'multer-s3';
-import { S3Service } from './services/s3.service';
 
 @Module({
   imports: [

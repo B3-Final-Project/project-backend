@@ -1,12 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ProfileController } from './profile.controller';
-import { ProfileService } from './services/profile.service';
+
 import { APP_GUARD } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
 import { HttpRequestDto } from '../../common/dto/http-request.dto';
-import { UpdateProfileDto } from './dto/update-profile.dto';
-import { Profile } from '../../common/entities/profile.entity';
 import { OrientationEnum } from './enums';
+import { Profile } from '../../common/entities/profile.entity';
+import { ProfileController } from './profile.controller';
+import { ProfileService } from './services/profile.service';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 
 describe('ProfileController', () => {
   let controller: ProfileController;
@@ -43,7 +44,15 @@ describe('ProfileController', () => {
       politics: undefined,
       zodiac: undefined,
     },
-    interests: ['a', 'b'],
+    interestInfo: {
+      interests: [
+        {
+          prompt: 'What do you enjoy doing in your free time?',
+          answer: 'Reading books',
+        },
+        { prompt: 'What is your favorite hobby?', answer: 'Cooking' },
+      ],
+    },
   };
 
   beforeEach(async () => {
@@ -114,12 +123,20 @@ describe('ProfileController', () => {
       jest
         .spyOn(service, 'updateProfileInterests')
         .mockResolvedValue(mockProfile);
-      const body = { data: ['x', 'y'] };
-      const result = await controller.updateProfileInterests('user1', body);
+      const req = { user: { userId: 'user1' } } as HttpRequestDto;
+      const body = {
+        interestInfo: {
+          interests: [
+            { prompt: 'Hiking', answer: 'I love hiking' },
+            { prompt: 'Cooking', answer: 'I enjoy cooking' },
+          ],
+        },
+      };
+      const result = await controller.updateProfileField(body, req);
       expect(result).toBe(mockProfile);
       expect(service.updateProfileInterests).toHaveBeenCalledWith(
         'user1',
-        body.data,
+        body,
       );
     });
 
@@ -127,9 +144,13 @@ describe('ProfileController', () => {
       jest
         .spyOn(service, 'updateProfileInterests')
         .mockRejectedValue(new Error('interests fail'));
-      await expect(
-        controller.updateProfileInterests('user1', { data: [] }),
-      ).rejects.toThrow('interests fail');
+      const req = { user: { userId: 'user1' } } as HttpRequestDto;
+      const body = {
+        interestInfo: {},
+      } as Partial<UpdateProfileDto>;
+      await expect(controller.updateProfileField(body, req)).rejects.toThrow(
+        'interests fail',
+      );
     });
   });
 
