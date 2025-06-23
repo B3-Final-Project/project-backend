@@ -13,7 +13,6 @@ export class Seed {
     // Seed users and interests
     await seedUsersAndInterests(ds, 100);
 
-<<<<<<< HEAD
     // Seed boosters
     const boosterRepository = new BoosterRepository(
       ds.getRepository(BoosterPack),
@@ -21,8 +20,6 @@ export class Seed {
     const boosterSeed = new BoosterSeed(boosterRepository);
     await boosterSeed.seed();
 
-=======
->>>>>>> main
     await ds.destroy();
     console.log('✅ All seeds completed successfully');
   }

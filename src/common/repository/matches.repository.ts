@@ -27,11 +27,7 @@ export class MatchRepository {
     return await this.userMatches.find({
       where: {
         from_profile_id: fromProfileId,
-<<<<<<< HEAD
         action: 1, // BoosterAction.LIKE
-=======
-        action: BoosterAction.LIKE,
->>>>>>> main
       },
     });
   }
@@ -44,11 +40,7 @@ export class MatchRepository {
       where: {
         from_profile_id: profileId1,
         to_profile_id: profileId2,
-<<<<<<< HEAD
         action: 1, // BoosterAction.LIKE
-=======
-        action: BoosterAction.LIKE,
->>>>>>> main
       },
     });
 
@@ -56,11 +48,7 @@ export class MatchRepository {
       where: {
         from_profile_id: profileId2,
         to_profile_id: profileId1,
-<<<<<<< HEAD
         action: 1, // BoosterAction.LIKE
-=======
-        action: BoosterAction.LIKE,
->>>>>>> main
       },
     });
 
