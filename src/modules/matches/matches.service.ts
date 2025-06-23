@@ -5,6 +5,7 @@ import {
   MatchActionResponseDto,
 } from './dto/match-response.dto';
 
+<<<<<<< HEAD
 import { BoosterAction } from '../booster/enums/action.enum';
 import { HttpRequestDto } from '../../common/dto/http-request.dto';
 import { Injectable } from '@nestjs/common';
@@ -12,6 +13,15 @@ import { MatchRepository } from '../../common/repository/matches.repository';
 import { ProfileRepository } from '../../common/repository/profile.repository';
 import { UserMatches } from '../../common/entities/user-matches.entity';
 import { UserRepository } from '../../common/repository/user.repository';
+=======
+import { Injectable } from '@nestjs/common';
+import { HttpRequestDto } from '../../common/dto/http-request.dto';
+import { UserMatches } from '../../common/entities/user-matches.entity';
+import { MatchRepository } from '../../common/repository/matches.repository';
+import { ProfileRepository } from '../../common/repository/profile.repository';
+import { UserRepository } from '../../common/repository/user.repository';
+import { BoosterAction } from '../booster/enums/action.enum';
+>>>>>>> main
 
 @Injectable()
 export class MatchesService {

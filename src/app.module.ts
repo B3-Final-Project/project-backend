@@ -18,9 +18,12 @@ import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConne
 import { Profile } from './common/entities/profile.entity';
 import { ProfileModule } from './modules/profile/profile.module';
 import { SettingsModule } from './modules/settings/settings.module';
+<<<<<<< HEAD
 import { MessagesModule } from './modules/messages/messages.module';
 import { Message } from './common/entities/message.entity';
 import { Conversation } from './common/entities/conversation.entity';
+=======
+>>>>>>> main
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './common/entities/user.entity';
 import { UserMatches } from './common/entities/user-matches.entity';
@@ -31,6 +34,7 @@ export const ormConfig: PostgresConnectionOptions = {
   port: Constants.DATABASE_PORT,
   username: Constants.DATABASE_USER,
   password: Constants.DATABASE_PASSWORD,
+<<<<<<< HEAD
   entities: [
     Interest,
     Profile,
@@ -43,6 +47,12 @@ export const ormConfig: PostgresConnectionOptions = {
   database: Constants.DATABASE_NAME,
   synchronize: true,
   ssl: false,
+=======
+  entities: [Interest, Profile, User, UserMatches, BoosterPack],
+  database: Constants.DATABASE_NAME,
+  synchronize: true,
+  ssl: process.env.NODE_ENV === 'production',
+>>>>>>> main
   extra: {
     connectionTimeoutMillis: 30000,
   },
@@ -55,7 +65,10 @@ export const ormConfig: PostgresConnectionOptions = {
     BoosterModule,
     SettingsModule,
     MatchesModule,
+<<<<<<< HEAD
     MessagesModule,
+=======
+>>>>>>> main
   ],
   controllers: [AppController],
   providers: [AppService, CognitoStrategy],

@@ -14,7 +14,19 @@ import { UserMatches } from '../../common/entities/user-matches.entity';
 import { UserRepository } from '../../common/repository/user.repository';
 
 @Module({
+<<<<<<< HEAD
   imports: [TypeOrmModule.forFeature([Profile, Interest, User, UserMatches, BoosterPack])],
+=======
+  imports: [
+    TypeOrmModule.forFeature([
+      Profile,
+      Interest,
+      User,
+      UserMatches,
+      BoosterPack,
+    ]),
+  ],
+>>>>>>> main
   controllers: [BoosterController],
   providers: [
     BoosterService,

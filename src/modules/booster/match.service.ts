@@ -9,6 +9,10 @@ import { Injectable } from '@nestjs/common';
 import { MatchRepository } from '../../common/repository/matches.repository';
 import { Profile } from '../../common/entities/profile.entity';
 import { ProfileRepository } from '../../common/repository/profile.repository';
+<<<<<<< HEAD
+=======
+import { RarityEnum } from '../profile/enums/rarity.enum';
+>>>>>>> main
 import { UserMatches } from '../../common/entities/user-matches.entity';
 import { UserRepository } from '../../common/repository/user.repository';
 
@@ -20,7 +24,7 @@ export class MatchService {
     private readonly profileRepository: ProfileRepository,
   ) {}
 
-  private async baseQuery(userId: string) {
+  private async baseQuery(userId: string, excludeSeen?: boolean) {
     const user = await this.userRepo.findUserWithProfile(userId);
     const prefs = user.profile;
 
@@ -79,20 +83,38 @@ export class MatchService {
         'distance_km',
       )
         .setParameters({
-          lat: (user.location as any).coordinates[1],
-          lng: (user.location as any).coordinates[0],
+          lat: user.location.coordinates[1],
+          lng: user.location.coordinates[0],
         })
-        .having('distance_km <= :maxDist', {
-          maxDist: prefs.max_distance ?? 100,
-        })
+        .having(
+          'ST_Distance(u.location, ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)) / 1000 <= :maxDist',
+          {
+            maxDist: prefs.max_distance ?? 100,
+          },
+        )
+        .groupBy('p.id, u.id')
         .orderBy('distance_km', 'ASC');
     }
 
     const seenIds = await this.matchRepository.getSeenRows(user.profile.id);
+<<<<<<< HEAD
+=======
+
+    const matchedIds = await this.matchRepository.getUserLikes(user.profile.id);
+
+    // 7. Exclude already matched users
+    if (matchedIds.length > 0) {
+      qb.andWhere('p.id NOT IN (:...matchedIds)', {
+        matchedIds: matchedIds.map((m) => m.to_profile_id),
+      });
+    }
+>>>>>>> main
 
     // 7b. Exclude them
-    if (seenIds.length > 0) {
-      qb.andWhere('p.id NOT IN (:...seenIds)', { seenIds });
+    if (excludeSeen) {
+      if (seenIds.length > 0) {
+        qb.andWhere('p.id NOT IN (:...seenIds)', { seenIds });
+      }
     }
 
     return {
@@ -109,14 +131,19 @@ export class MatchService {
     userId: string,
     maxResults = 10,
     relationshipType?: RelationshipTypeEnum,
+<<<<<<< HEAD
   ): Promise<Profile[]> {
+=======
+  ): Promise<(Profile & { rarity: RarityEnum })[]> {
+>>>>>>> main
     // 1. Load user and their profile
-    const { qb, prefs } = await this.baseQuery(userId);
+    const { qb, prefs, user } = await this.baseQuery(userId, true);
+    const profile = user.profile;
 
     // 5. Relationship type
-    if (prefs.relationship_type != null) {
+    if (relationshipType || prefs.relationship_type != null) {
       qb.andWhere('p.relationship_type = :relType', {
-        relType: prefs.relationship_type,
+        relType: relationshipType ?? prefs.relationship_type,
       });
     }
 
@@ -124,25 +151,42 @@ export class MatchService {
     qb.limit(maxResults);
 
     // 8. Execute
-    return qb.getMany();
+    const matches: Profile[] = await qb.getMany();
+
+    // Calculate rarity for each match and add it to the original objects
+    matches.forEach((m) => {
+      (m as any).rarity = this.calculateRarity(profile, m);
+    });
+
+    return matches as (Profile & { rarity: RarityEnum })[];
   }
 
   public async findBroadMatches(
     userId: string,
     excludeIds: number[],
     maxResults = 10,
-  ) {
+    excludeSeen = true,
+  ): Promise<(Profile & { rarity: RarityEnum })[]> {
     // 1. Load user and their profile
-    const { qb } = await this.baseQuery(userId);
+    const { qb, user } = await this.baseQuery(userId, excludeSeen);
+    const profile = user.profile;
 
     if (excludeIds.length > 0) {
       qb.andWhere('p.id NOT IN (:...excludeIds)', { excludeIds });
     }
+
     // 7. Limit
     qb.limit(maxResults);
 
     // 8. Execute
-    return qb.getMany();
+    const matches: Profile[] = await qb.getMany();
+
+    // Calculate rarity for each match and add it to the original objects
+    matches.forEach((m) => {
+      (m as any).rarity = this.calculateRarity(profile, m);
+    });
+
+    return matches as (Profile & { rarity: RarityEnum })[];
   }
 
   public async createMatches(
@@ -162,5 +206,83 @@ export class MatchService {
     });
 
     return this.matchRepository.save(userMatches);
+  }
+
+  /**
+   * Calculate rarity score based on shared attributes
+   */
+  private calculateRarity(user: Profile, match: Profile): RarityEnum {
+    let score = 0;
+    // City
+    if (user.city && match.city && user.city === match.city) score += 2;
+    // Orientation
+    if (
+      user.orientation != null &&
+      match.orientation != null &&
+      user.orientation === match.orientation
+    )
+      score += 2;
+    // Relationship type
+    if (
+      user.relationship_type != null &&
+      match.relationship_type != null &&
+      user.relationship_type === match.relationship_type
+    )
+      score += 1;
+    // Zodiac
+    if (
+      user.zodiac != null &&
+      match.zodiac != null &&
+      user.zodiac === match.zodiac
+    )
+      score += 1;
+    // Religion
+    if (
+      user.religion != null &&
+      match.religion != null &&
+      user.religion === match.religion
+    )
+      score += 1;
+    // Politics
+    if (
+      user.politics != null &&
+      match.politics != null &&
+      user.politics === match.politics
+    )
+      score += 1;
+    // Smoking
+    if (
+      user.smoking != null &&
+      match.smoking != null &&
+      user.smoking === match.smoking
+    )
+      score += 1;
+    // Drinking
+    if (
+      user.drinking != null &&
+      match.drinking != null &&
+      user.drinking === match.drinking
+    )
+      score += 1;
+    // Languages (intersection count)
+    if (user.languages && match.languages) {
+      const sharedLangs = user.languages.filter((l) =>
+        match.languages.includes(l),
+      );
+      score += Math.min(sharedLangs.length, 2); // up to 2 points for shared languages
+    }
+    // Interests (intersection count)
+    if (user.interests && match.interests) {
+      const userInterests = user.interests.map((i) => i.id);
+      const matchInterests = match.interests.map((i) => i.id);
+      const shared = userInterests.filter((id) => matchInterests.includes(id));
+      score += Math.min(shared.length, 3); // up to 3 points for shared interests
+    }
+    // Scale score to rarity
+    if (score >= 8) return RarityEnum.LEGENDARY;
+    if (score >= 6) return RarityEnum.EPIC;
+    if (score >= 4) return RarityEnum.RARE;
+    if (score >= 2) return RarityEnum.UNCOMMON;
+    return RarityEnum.COMMON;
   }
 }
