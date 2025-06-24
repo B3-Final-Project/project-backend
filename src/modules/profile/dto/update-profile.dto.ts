@@ -97,7 +97,7 @@ class LifestyleInfo {
   zodiac: ZodiacEnum;
 }
 
-class InterestItem {
+export class InterestItem {
   @ApiProperty()
   @IsString()
   prompt: string;
@@ -107,7 +107,7 @@ class InterestItem {
   answer: string;
 }
 
-class InterestInfo {
+export class InterestInfo {
   @ApiProperty({ type: [InterestItem] })
   @ValidateNested({ each: true })
   @Type(() => InterestItem)

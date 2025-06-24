@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import {
+  InterestInfo,
   PartialUpdateProfileDto,
   UpdateProfileDto,
 } from '../dto/update-profile.dto';
@@ -38,8 +39,7 @@ export class ProfileService {
     if (dto.interestInfo?.interests && dto.interestInfo.interests.length > 0) {
       // Create Interest entities from the interestInfo
       const interestItems = ProfileUtils.extractInterestItems(dto);
-      updated.interests =
-        await this.interestRepository.saveNewInterests(interestItems);
+      updated.interests = await this.interestRepository.save(interestItems);
     }
 
     return this.profileRepository.save(updated);
@@ -57,13 +57,11 @@ export class ProfileService {
 
     // Handle interestInfo section specially
     if (section === 'interestInfo') {
-      // Create Interest entities from the interestInfo
-      const interestItems = ProfileUtils.extractInterestItems({
-        [section]: dto,
-      } as PartialUpdateProfileDto);
-      if (interestItems.length > 0) {
-        profile.interests =
-          await this.interestRepository.saveNewInterests(interestItems);
+      const interestInfo = dto as InterestInfo;
+      if (interestInfo.interests.length > 0) {
+        profile.interests = await this.interestRepository.save(
+          interestInfo.interests,
+        );
       }
 
       return this.profileRepository.save(profile);
@@ -87,8 +85,7 @@ export class ProfileService {
       ['interests'],
     );
 
-    profile.interests =
-      await this.interestRepository.saveNewInterests(interestItems);
+    profile.interests = await this.interestRepository.save(interestItems);
 
     return this.profileRepository.save(profile);
   }
@@ -120,7 +117,7 @@ export class ProfileService {
       // Create Interest entities from the interestInfo
       const interestItems = ProfileUtils.extractInterestItems(dto);
       profileEntity.interests =
-        await this.interestRepository.saveNewInterests(interestItems);
+        await this.interestRepository.save(interestItems);
     }
 
     const savedProfile = await this.profileRepository.save(profileEntity);

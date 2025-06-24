@@ -13,14 +13,14 @@ export class Interest {
     example: 'What do you enjoy doing in your free time?',
     description: "Question/prompt pour l'intérêt",
   })
-  @Column({ type: 'varchar', length: 500, nullable: true })
+  @Column({ type: 'varchar', length: 500 })
   prompt: string;
 
   @ApiProperty({
     example: 'Reading books',
     description: 'Réponse à la question',
   })
-  @Column({ type: 'varchar', length: 500, nullable: true })
+  @Column({ type: 'varchar', length: 500 })
   answer: string;
 
   @ApiProperty({ type: () => [Profile], required: false })
