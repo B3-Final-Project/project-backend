@@ -90,7 +90,9 @@ export class ProfileService {
     return this.profileRepository.save(profile);
   }
 
-  async getProfile(req: HttpRequestDto): Promise<any> {
+  async getProfile(
+    req: HttpRequestDto,
+  ): Promise<{ profile: Profile; user: User }> {
     const profile = await this.userRepository.findProfileOrThrowByUserId(
       req.user.userId,
       ['interests'],

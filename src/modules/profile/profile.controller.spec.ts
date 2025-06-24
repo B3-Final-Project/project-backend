@@ -118,11 +118,9 @@ describe('ProfileController', () => {
     });
   });
 
-  describe('updateProfileInterests', () => {
-    it('calls service.updateProfileInterests and returns result', async () => {
-      jest
-        .spyOn(service, 'updateProfileInterests')
-        .mockResolvedValue(mockProfile);
+  describe('updateProfileField with interests', () => {
+    it('calls service.updateProfileField and returns result for interest updates', async () => {
+      jest.spyOn(service, 'updateProfileField').mockResolvedValue(mockProfile);
       const req = { user: { userId: 'user1' } } as HttpRequestDto;
       const body = {
         interestInfo: {
@@ -134,19 +132,21 @@ describe('ProfileController', () => {
       };
       const result = await controller.updateProfileField(body, req);
       expect(result).toBe(mockProfile);
-      expect(service.updateProfileInterests).toHaveBeenCalledWith(
-        'user1',
+      expect(service.updateProfileField).toHaveBeenCalledWith(
         body,
+        req,
       );
     });
 
-    it('throws if service throws', async () => {
+    it('throws if service throws for interest updates', async () => {
       jest
-        .spyOn(service, 'updateProfileInterests')
+        .spyOn(service, 'updateProfileField')
         .mockRejectedValue(new Error('interests fail'));
       const req = { user: { userId: 'user1' } } as HttpRequestDto;
       const body = {
-        interestInfo: {},
+        interestInfo: {
+          interests: [],
+        },
       } as Partial<UpdateProfileDto>;
       await expect(controller.updateProfileField(body, req)).rejects.toThrow(
         'interests fail',
