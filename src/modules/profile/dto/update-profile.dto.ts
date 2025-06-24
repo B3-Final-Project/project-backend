@@ -1,4 +1,5 @@
 import {
+  IsArray,
   IsEnum,
   IsNumber,
   IsOptional,
@@ -16,8 +17,8 @@ import {
   SmokingEnum,
   ZodiacEnum,
 } from '../enums';
-import { ApiProperty } from '@nestjs/swagger';
-import {Type} from "class-transformer";
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 
 class PersonalInfo {
   @IsString()
@@ -52,6 +53,16 @@ class LocationWorkInfo {
 
   @IsString({ each: true })
   languages: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsNumber({}, { each: true })
+  @ApiPropertyOptional({
+    description: 'Geolocation coordinates [longitude, latitude]',
+    type: [Number],
+    example: [2.3522, 48.8566],
+  })
+  coordinates?: [number, number];
 }
 
 class PreferenceInfo {

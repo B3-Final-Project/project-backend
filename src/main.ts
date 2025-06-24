@@ -37,22 +37,22 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
 
   const config = new DocumentBuilder()
-      .setTitle('API')
-      .setDescription('The routes API description')
-      .setVersion('1.0')
-      .addBearerAuth(
-          {
-            type: 'http',
-            scheme: 'bearer',
-            bearerFormat: 'JWT',
-            name: 'Authorization',
-            in: 'header',
-          },
-          'jwt-auth', // nom du security scheme
-      )
-      .build();
+    .setTitle('API')
+    .setDescription('The routes API description')
+    .setVersion('1.0')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        name: 'Authorization',
+        in: 'header',
+      },
+      'jwt-auth', // nom du security scheme
+    )
+    .build();
   const documentFactory = () => SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, documentFactory);
+  SwaggerModule.setup('docs', app, documentFactory);
 
   await app.listen(8080, '0.0.0.0');
 }

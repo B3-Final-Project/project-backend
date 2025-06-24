@@ -12,15 +12,18 @@ import { ProfileUtils } from './profile-utils.service';
 import { User } from '../../../common/entities/user.entity';
 import { UserRepository } from '../../../common/repository/user.repository';
 import { S3Service } from './s3.service';
+import { GeoService } from './geo.service';
 
 @Injectable()
 export class ProfileService {
   private readonly logger = new Logger(ProfileService.name);
+
   constructor(
     private readonly profileRepository: ProfileRepository,
     private readonly userRepository: UserRepository,
     private readonly interestRepository: InterestRepository,
     private readonly s3Service: S3Service,
+    private readonly geoService: GeoService,
   ) {}
 
   async updateProfile(
@@ -31,7 +34,6 @@ export class ProfileService {
       req.user.userId,
       ['interests'],
     );
-
     const updated = ProfileUtils.mapProfile(dto, profile);
     return this.profileRepository.save(updated);
   }
@@ -50,7 +52,42 @@ export class ProfileService {
       { [section]: dto } as PartialUpdateProfileDto,
       profile,
     );
+    if (section === 'locationWork') {
+      const partial = dto as PartialUpdateProfileDto['locationWork'];
+      await this.updateUserCoordinatesIfPresent(
+        partial?.coordinates,
+        req.user.userId,
+      );
+    }
     return this.profileRepository.save(updated);
+  }
+
+  // Update the city location in User with coordinates
+  private async updateUserCoordinatesIfPresent(
+    coordinates: number[] | undefined,
+    userId: string,
+  ): Promise<void> {
+    if (!coordinates || coordinates.length !== 2) return;
+
+    const [longitude, latitude] = coordinates;
+
+    // Reverse geocode the coordinates
+    const city = await this.geoService.reverseGeocode(latitude, longitude);
+    // 3. Update coordinates in user
+    const user = await this.userRepository.findUserWithProfile(userId);
+
+    // Update user's profile city
+    if (user.profile) {
+      user.profile.city = city;
+      await this.profileRepository.save(user.profile);
+    }
+
+    // Update user's coordinates
+    user.location = {
+      type: 'Point',
+      coordinates: [longitude, latitude],
+    };
+    await this.userRepository.save(user);
   }
 
   /** Replace the authenticated user’s interests */
