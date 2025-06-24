@@ -65,39 +65,6 @@ export class ProfileController {
   }
 
   @ApiOperation({
-    summary: 'Met à jour les centres d’intérêt d’un utilisateur',
-  })
-  @ApiParam({
-    name: 'userId',
-    type: String,
-    description: 'ID de l’utilisateur',
-  })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        data: {
-          type: 'array',
-          items: { type: 'string' },
-        },
-      },
-      required: ['data'],
-    },
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Intérêts mis à jour avec succès',
-    type: Profile,
-  })
-  @Put(':userId/interests')
-  public async updateProfileInterests(
-    @Param('userId') userId: string,
-    @Body() body: { data: string[] },
-  ): Promise<Profile> {
-    return this.profileService.updateProfileInterests(userId, body.data);
-  }
-
-  @ApiOperation({
     summary: 'Crée un nouveau profil pour l’utilisateur connecté',
   })
   @ApiBody({ type: UpdateProfileDto })

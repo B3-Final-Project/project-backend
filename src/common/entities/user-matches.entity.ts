@@ -27,17 +27,17 @@ export class UserMatches {
   @Column({ type: 'int' })
   public to_profile_id: number;
 
-  @ApiProperty({ type: () => Profile, required: false })
+  @ApiProperty({ type: () => Profile })
   @ManyToOne(() => Profile)
   @JoinColumn({ name: 'from_profile_id' })
   public fromProfile: Profile;
 
-  @ApiProperty({ type: () => Profile, required: false })
+  @ApiProperty({ type: () => Profile })
   @ManyToOne(() => Profile)
   @JoinColumn({ name: 'to_profile_id' })
   public toProfile: Profile;
 
-  @ApiProperty({ enum: BoosterAction, required: false })
+  @ApiProperty({ enum: BoosterAction })
   @Column({ type: 'int', nullable: true })
   public action: BoosterAction;
 

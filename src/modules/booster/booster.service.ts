@@ -66,7 +66,7 @@ export class BoosterService {
   }
 
   public async getAvailablePacks(): Promise<AvailablePackDto> {
-    return this.boosterRepository.getAvailablePacks();
+    return { data: await this.boosterRepository.getAvailablePacks() };
   }
 
   public async createBooster(

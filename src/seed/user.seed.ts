@@ -32,7 +32,10 @@ export async function seedInterests(dataSource: DataSource) {
   ];
 
   const interestEntities = interests.map((description) =>
-    interestRepo.create({ description }),
+    interestRepo.create({
+      prompt: 'What is your favorite hobby?',
+      answer: description,
+    }),
   );
 
   await interestRepo.save(interestEntities);
