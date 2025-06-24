@@ -1,17 +1,22 @@
+import { ApiProperty } from '@nestjs/swagger';
 import { Profile } from '../../../common/entities/profile.entity';
 
-export interface GetMatchesResponse {
+export class GetMatchesResponse {
+  @ApiProperty({ type: [Profile] })
   matches: Profile[];
 }
 
-export interface GetPendingMatchesResponse {
+export class GetPendingMatchesResponse {
+  @ApiProperty({ type: [Profile] })
   matches: Profile[];
 }
 
-export interface GetSentMatchesResponse {
+export class GetSentMatchesResponse {
+  @ApiProperty({ type: [Profile] })
   matches: Profile[];
 }
 
-export interface MatchActionResponseDto {
+export class MatchActionResponseDto {
+  @ApiProperty({ example: true, description: 'Indique si un match a eu lieu' })
   matched: boolean;
 }

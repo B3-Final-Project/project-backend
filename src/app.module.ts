@@ -13,17 +13,17 @@ import { CognitoStrategy } from './auth/cognito.strategy';
 import { Constants } from './constants';
 import { Interest } from './common/entities/interest.entity';
 import { LoggerMiddleware } from './middlewares/logger.middleware';
-import { MatchesModule } from './modules/matches/matches.module';
 import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions';
 import { Profile } from './common/entities/profile.entity';
 import { ProfileModule } from './modules/profile/profile.module';
 import { SettingsModule } from './modules/settings/settings.module';
-import { MessagesModule } from './modules/messages/messages.module';
 import { Message } from './common/entities/message.entity';
 import { Conversation } from './common/entities/conversation.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './common/entities/user.entity';
 import { UserMatches } from './common/entities/user-matches.entity';
+import { MatchesModule } from './modules/matches/matches.module';
+import { MessagesModule } from './modules/messages/messages.module';
 
 export const ormConfig: PostgresConnectionOptions = {
   type: 'postgres',
