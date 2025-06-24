@@ -13,14 +13,17 @@ import { CognitoStrategy } from './auth/cognito.strategy';
 import { Constants } from './constants';
 import { Interest } from './common/entities/interest.entity';
 import { LoggerMiddleware } from './middlewares/logger.middleware';
-import { MatchesModule } from './modules/matches/matches.module';
 import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions';
 import { Profile } from './common/entities/profile.entity';
 import { ProfileModule } from './modules/profile/profile.module';
 import { SettingsModule } from './modules/settings/settings.module';
+import { Message } from './common/entities/message.entity';
+import { Conversation } from './common/entities/conversation.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './common/entities/user.entity';
 import { UserMatches } from './common/entities/user-matches.entity';
+import { MatchesModule } from './modules/matches/matches.module';
+import { MessagesModule } from './modules/messages/messages.module';
 
 export const ormConfig: PostgresConnectionOptions = {
   type: 'postgres',
@@ -28,10 +31,18 @@ export const ormConfig: PostgresConnectionOptions = {
   port: Constants.DATABASE_PORT,
   username: Constants.DATABASE_USER,
   password: Constants.DATABASE_PASSWORD,
-  entities: [Interest, Profile, User, UserMatches, BoosterPack],
+  entities: [
+    Interest,
+    Profile,
+    User,
+    UserMatches,
+    BoosterPack,
+    Message,
+    Conversation,
+  ],
   database: Constants.DATABASE_NAME,
   synchronize: true,
-  ssl: process.env.NODE_ENV === 'production',
+  ssl: false,
   extra: {
     connectionTimeoutMillis: 30000,
   },
@@ -44,6 +55,7 @@ export const ormConfig: PostgresConnectionOptions = {
     BoosterModule,
     SettingsModule,
     MatchesModule,
+    MessagesModule,
   ],
   controllers: [AppController],
   providers: [AppService, CognitoStrategy],
