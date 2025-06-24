@@ -5,7 +5,7 @@ import {
   MatchActionResponseDto,
 } from './dto/match-response.dto';
 
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { HttpRequestDto } from '../../common/dto/http-request.dto';
 import { UserMatches } from '../../common/entities/user-matches.entity';
 import { MatchRepository } from '../../common/repository/matches.repository';
@@ -31,8 +31,20 @@ export class MatchesService {
     this.logger.log('Fetching user matches', { userId });
 
     // Get the current user's profile ID
-    const currentUser = await this.userRepository.findUserWithProfile(userId);
-    const profileId = currentUser.profile.id;
+    let profileId: number;
+    try {
+      const currentUser = await this.userRepository.findUserWithProfile(userId);
+      profileId = currentUser.profile.id;
+    } catch (e) {
+      this.logger.error('Error fetching user matches', {
+        userId,
+        error: e.message,
+      });
+      if (e instanceof NotFoundException) {
+        return { matches: [] };
+      }
+      throw e;
+    }
 
     const matches = await this.profileRepository.findMatchedProfiles(profileId);
     this.logger.log('User matches fetched', {
