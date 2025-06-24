@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import {
   InterestInfo,
   PartialUpdateProfileDto,
@@ -100,12 +105,19 @@ export class ProfileService {
 
   async getProfile(
     req: HttpRequestDto,
-  ): Promise<{ profile: Profile; user: User }> {
-    const profile = await this.userRepository.findProfileOrThrowByUserId(
-      req.user.userId,
-      ['interests'],
-    );
-
+  ): Promise<{ profile: Profile; user: User } | null> {
+    let profile: Profile;
+    try {
+      profile = await this.userRepository.findProfileOrThrowByUserId(
+        req.user.userId,
+        ['interests'],
+      );
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        return null;
+      }
+      throw error; // Re-throw unexpected errors
+    }
     const user = await this.userRepository.findById(req.user.userId);
 
     profile.userProfile = undefined;
