@@ -1,12 +1,4 @@
 import {
-  IsEnum,
-  IsNumber,
-  IsOptional,
-  IsString,
-  ValidateNested,
-} from 'class-validator';
-import { PartialType } from '@nestjs/mapped-types';
-import {
   DrinkingEnum,
   GenderEnum,
   OrientationEnum,
@@ -16,7 +8,16 @@ import {
   SmokingEnum,
   ZodiacEnum,
 } from '../enums';
+import {
+  IsEnum,
+  IsNumber,
+  IsOptional,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
+
 import { ApiProperty } from '@nestjs/swagger';
+import { PartialType } from '@nestjs/mapped-types';
 import { Type } from 'class-transformer';
 
 class PersonalInfo {
@@ -96,6 +97,23 @@ class LifestyleInfo {
   zodiac: ZodiacEnum;
 }
 
+export class InterestItem {
+  @ApiProperty()
+  @IsString()
+  prompt: string;
+
+  @ApiProperty()
+  @IsString()
+  answer: string;
+}
+
+export class InterestInfo {
+  @ApiProperty({ type: [InterestItem] })
+  @ValidateNested({ each: true })
+  @Type(() => InterestItem)
+  interests: InterestItem[];
+}
+
 export class UpdateProfileDto {
   @ApiProperty({ type: PersonalInfo })
   @ValidateNested()
@@ -117,10 +135,11 @@ export class UpdateProfileDto {
   @Type(() => LifestyleInfo)
   lifestyleInfo: LifestyleInfo;
 
-  @ApiProperty({ type: [String], required: false })
+  @ApiProperty({ type: InterestInfo, required: false })
   @IsOptional()
-  @IsString({ each: true })
-  interests?: string[];
+  @ValidateNested()
+  @Type(() => InterestInfo)
+  interestInfo?: InterestInfo;
 }
 
 export class PartialUpdateProfileDto extends PartialType(UpdateProfileDto) {}

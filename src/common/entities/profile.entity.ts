@@ -27,38 +27,38 @@ export class Profile {
   id: number;
 
   // Location and Work Info
-  @ApiProperty({ example: 'Paris', required: false })
-  @Column({ type: 'varchar', nullable: true })
-  city?: string;
+  @ApiProperty({ example: 'Paris' })
+  @Column({ type: 'varchar' })
+  city: string;
 
-  @ApiProperty({ example: 'Développeur', required: false })
-  @Column({ type: 'varchar', nullable: true })
-  work?: string;
+  @ApiProperty({ example: 'Développeur' })
+  @Column({ type: 'varchar' })
+  work: string;
 
-  @ApiProperty({ type: [String], required: false })
-  @Column('simple-array', { nullable: true })
-  languages?: string[];
+  @ApiProperty({ type: [String] })
+  @Column('simple-array')
+  languages: string[];
 
   // Preference Info
-  @ApiProperty({ example: 18, required: false })
-  @Column({ type: 'int', nullable: true })
-  min_age?: number;
+  @ApiProperty({ example: 18 })
+  @Column({ type: 'int' })
+  min_age: number;
 
-  @ApiProperty({ example: 30, required: false })
-  @Column({ type: 'int', nullable: true })
-  max_age?: number;
+  @ApiProperty({ example: 30 })
+  @Column({ type: 'int' })
+  max_age: number;
 
-  @ApiProperty({ example: 50, required: false })
-  @Column({ type: 'float', nullable: true })
-  max_distance?: number;
+  @ApiProperty({ example: 50 })
+  @Column({ type: 'float' })
+  max_distance: number;
 
-  @ApiProperty({ enum: OrientationEnum, required: false })
-  @Column({ type: 'int', nullable: true })
-  orientation?: OrientationEnum;
+  @ApiProperty({ enum: OrientationEnum })
+  @Column({ type: 'int' })
+  orientation: OrientationEnum;
 
-  @ApiProperty({ enum: RelationshipTypeEnum, required: false })
-  @Column({ type: 'int', nullable: true })
-  relationship_type?: RelationshipTypeEnum;
+  @ApiProperty({ enum: RelationshipTypeEnum })
+  @Column({ type: 'int' })
+  relationship_type: RelationshipTypeEnum;
 
   // Lifestyle Info
   @ApiProperty({ enum: SmokingEnum, required: false })
@@ -99,7 +99,7 @@ export class Profile {
   })
   interests?: Interest[];
 
-  @ApiProperty({ type: () => User, required: false })
+  @ApiProperty({ type: () => User })
   @OneToOne(() => User, (userProfile) => userProfile.profile)
   userProfile: User;
 

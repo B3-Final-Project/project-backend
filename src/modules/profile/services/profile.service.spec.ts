@@ -1,19 +1,19 @@
+import {
+  PartialUpdateProfileDto,
+  UpdateProfileDto,
+} from '../dto/update-profile.dto';
 import { Test, TestingModule } from '@nestjs/testing';
-import { BadRequestException } from '@nestjs/common';
 
+import { BadRequestException } from '@nestjs/common';
+import { HttpRequestDto } from '../../../common/dto/http-request.dto';
+import { InterestRepository } from '../../../common/repository/interest.repository';
+import { Profile } from '../../../common/entities/profile.entity';
+import { ProfileRepository } from '../../../common/repository/profile.repository';
 import { ProfileService } from './profile.service';
 import { ProfileUtils } from './profile-utils.service';
-import { Profile } from '../../../common/entities/profile.entity';
-import { User } from '../../../common/entities/user.entity';
-import { HttpRequestDto } from '../../../common/dto/http-request.dto';
-import {
-  UpdateProfileDto,
-  PartialUpdateProfileDto,
-} from '../dto/update-profile.dto';
-import { ProfileRepository } from '../../../common/repository/profile.repository';
-import { UserRepository } from '../../../common/repository/user.repository';
-import { InterestRepository } from '../../../common/repository/interest.repository';
 import { S3Service } from './s3.service';
+import { User } from '../../../common/entities/user.entity';
+import { UserRepository } from '../../../common/repository/user.repository';
 
 describe('ProfileService', () => {
   let service: ProfileService;
@@ -47,7 +47,7 @@ describe('ProfileService', () => {
         {
           provide: InterestRepository,
           useValue: {
-            saveNewInterest: jest.fn(),
+            saveNewInterests: jest.fn(),
           },
         },
         {
@@ -88,6 +88,7 @@ describe('ProfileService', () => {
         locationWork: {},
         preferenceInfo: {},
         lifestyleInfo: {},
+        interestInfo: {},
       } as UpdateProfileDto;
       const req = { user: { userId: 'u1' } } as HttpRequestDto;
       const prof = { id: 1, interests: [] } as Profile;
@@ -144,6 +145,7 @@ describe('ProfileService', () => {
       locationWork: {},
       preferenceInfo: {},
       lifestyleInfo: {},
+      interestInfo: {},
     } as unknown as UpdateProfileDto;
     const req = { user: { userId: 'u1' } } as HttpRequestDto;
 
@@ -221,6 +223,19 @@ describe('ProfileService', () => {
       } as any;
       await service.updateProfileField(body, req);
       expect(spy).toHaveBeenCalledWith('personalInfo', body.personalInfo, req);
+    });
+
+    it('handles interestInfo section correctly', async () => {
+      const spy = jest
+        .spyOn(service as any, 'updatePartialProfile')
+        .mockResolvedValue({} as Profile);
+      const body: PartialUpdateProfileDto = {
+        interestInfo: {
+          interests: [{ prompt: 'test', answer: 'test answer' }],
+        },
+      } as any;
+      await service.updateProfileField(body, req);
+      expect(spy).toHaveBeenCalledWith('interestInfo', body.interestInfo, req);
     });
   });
 

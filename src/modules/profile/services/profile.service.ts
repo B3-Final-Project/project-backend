@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import {
+  InterestInfo,
   PartialUpdateProfileDto,
   UpdateProfileDto,
 } from '../dto/update-profile.dto';
@@ -33,6 +34,14 @@ export class ProfileService {
     );
 
     const updated = ProfileUtils.mapProfile(dto, profile);
+
+    // Handle interests if provided
+    if (dto.interestInfo?.interests && dto.interestInfo.interests.length > 0) {
+      // Create Interest entities from the interestInfo
+      const interestItems = ProfileUtils.extractInterestItems(dto);
+      updated.interests = await this.interestRepository.save(interestItems);
+    }
+
     return this.profileRepository.save(updated);
   }
 
@@ -45,7 +54,20 @@ export class ProfileService {
       req.user.userId,
       ['interests'],
     );
-    // Dynamically map only the provided section
+
+    // Handle interestInfo section specially
+    if (section === 'interestInfo') {
+      const interestInfo = dto as InterestInfo;
+      if (interestInfo.interests.length > 0) {
+        profile.interests = await this.interestRepository.save(
+          interestInfo.interests,
+        );
+      }
+
+      return this.profileRepository.save(profile);
+    }
+
+    // Dynamically map only the provided section for other sections
     const updated = ProfileUtils.mapProfile(
       { [section]: dto } as PartialUpdateProfileDto,
       profile,
@@ -53,25 +75,24 @@ export class ProfileService {
     return this.profileRepository.save(updated);
   }
 
-  /** Replace the authenticated user’s interests */
+  /** Replace the authenticated user's interests */
   async updateProfileInterests(
     userId: string,
-    interestDescriptions: string[],
+    interestItems: Array<{ prompt: string; answer: string }>,
   ): Promise<Profile> {
     const profile = await this.userRepository.findProfileOrThrowByUserId(
       userId,
       ['interests'],
     );
 
-    // fetch existing, create the rest
-
-    profile.interests =
-      await this.interestRepository.saveNewInterest(interestDescriptions);
+    profile.interests = await this.interestRepository.save(interestItems);
 
     return this.profileRepository.save(profile);
   }
 
-  async getProfile(req: HttpRequestDto): Promise<any> {
+  async getProfile(
+    req: HttpRequestDto,
+  ): Promise<{ profile: Profile; user: User }> {
     const profile = await this.userRepository.findProfileOrThrowByUserId(
       req.user.userId,
       ['interests'],
@@ -92,6 +113,15 @@ export class ProfileService {
   ): Promise<Profile> {
     // 1) Create the bare Profile
     const profileEntity = ProfileUtils.mapProfile(dto, new Profile());
+
+    // Handle interests if provided
+    if (dto.interestInfo?.interests && dto.interestInfo.interests.length > 0) {
+      // Create Interest entities from the interestInfo
+      const interestItems = ProfileUtils.extractInterestItems(dto);
+      profileEntity.interests =
+        await this.interestRepository.save(interestItems);
+    }
+
     const savedProfile = await this.profileRepository.save(profileEntity);
 
     let user = await this.userRepository.findById(req.user.userId);
@@ -107,7 +137,7 @@ export class ProfileService {
         profile: savedProfile,
       } as User);
     } else {
-      // 4) If it already existed, update their “personalInfo” and attach the new Profile
+      // 4) If it already existed, update their "personalInfo" and attach the new Profile
       Object.assign(user, {
         name: personalInfo.name,
         surname: personalInfo.surname,
@@ -139,6 +169,7 @@ export class ProfileService {
       'preferenceInfo',
       'locationWork',
       'lifestyleInfo',
+      'interestInfo',
     ] as const;
     const providedSections = sections.filter(
       (section) => body[section] !== undefined,
@@ -157,7 +188,7 @@ export class ProfileService {
 
     // Only one section is provided
     const section = providedSections[0];
-    const dto = body[section]!;
+    const dto = body[section];
 
     return this.updatePartialProfile(section, dto, req);
   }
@@ -185,7 +216,7 @@ export class ProfileService {
     const profile = await this.profileRepository.findByUserId(userId);
 
     // If there's already an image at this index, delete the old one from S3
-    if (profile.images && profile.images[index]) {
+    if (profile.images?.[index]) {
       const oldImageUrl = profile.images[index];
       const oldImageKey = this.s3Service.extractKeyFromUrl(oldImageUrl);
 
@@ -219,7 +250,7 @@ export class ProfileService {
     const userId = req.user.userId;
 
     const profile = await this.profileRepository.findByUserId(userId);
-    if (!profile.images || !profile.images[index]) {
+    if (!profile.images?.[index]) {
       throw new BadRequestException(`No image found at index ${index}`);
     }
     const oldImageUrl = profile.images[index];

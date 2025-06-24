@@ -1,5 +1,5 @@
 import { Profile } from '../../../common/entities/profile.entity';
-import { UpdateProfileDto } from '../dto/update-profile.dto';
+import { InterestItem, UpdateProfileDto } from '../dto/update-profile.dto';
 
 export class ProfileUtils {
   public static mapProfile(
@@ -26,5 +26,16 @@ export class ProfileUtils {
     }
 
     return entity;
+  }
+
+  public static extractInterestItems(
+    dto: Partial<UpdateProfileDto>,
+  ): InterestItem[] {
+    if (!dto.interestInfo?.interests) {
+      return [];
+    }
+
+    // Extract the full interest items (prompt and answer)
+    return dto.interestInfo.interests;
   }
 }
