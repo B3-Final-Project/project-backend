@@ -25,19 +25,17 @@ export class BoosterService {
     req: HttpRequestDto,
     type?: RelationshipTypeEnum,
   ): Promise<UserCardDto[]> {
+    const user = req.user;
+    if (!user) {
+      this.logger.error('User not found in getBooster');
+      throw new NotFoundException('User not found');
+    }
+
     this.logger.log('Getting booster', {
-      userId: req.user.userId,
+      userId: user.userId,
       amount,
       type: type || 'any',
     });
-
-    const user = req.user;
-    if (!user) {
-      this.logger.error('User not found in getBooster', {
-        userId: req.user?.userId,
-      });
-      throw new NotFoundException('User not found');
-    }
 
     const profiles = await this.matchService.findMatchesForUser(
       user.userId,
