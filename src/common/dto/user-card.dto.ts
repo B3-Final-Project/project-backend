@@ -14,10 +14,21 @@ export interface UserCardDto {
   city: string;
   work: string;
   images: string[];
+  rarity: RarityEnum;
   languages?: string[];
   smoking?: SmokingEnum;
   drinking?: DrinkingEnum;
   zodiac?: ZodiacEnum;
   interests?: Interest[];
-  rarity: RarityEnum;
+  surname?: string;
+  min_age?: number;
+  max_age?: number;
+  max_distance?: number;
+  orientation?: number;
+  relationship_type?: number;
+  religion?: number;
+  politics?: number;
+  avatarUrl?: string;
+  created_at?: Date; // Rendu optionnel car peut être absent
+  updated_at?: Date; // Rendu optionnel car peut être absent
 }

@@ -42,7 +42,9 @@ export class ProfileService {
       updated.interests = await this.interestRepository.save(interestItems);
     }
 
-    return this.profileRepository.save(updated);
+    const savedProfile = await this.profileRepository.save(updated);
+    this.logger.log('updated profile', { profile_id: profile.id });
+    return savedProfile;
   }
 
   private async updatePartialProfile<K extends keyof PartialUpdateProfileDto>(
@@ -72,7 +74,12 @@ export class ProfileService {
       { [section]: dto } as PartialUpdateProfileDto,
       profile,
     );
-    return this.profileRepository.save(updated);
+    const savedProfile = this.profileRepository.save(updated);
+    this.logger.log(`updated profile section`, {
+      profile_id: profile.id,
+      payload: dto,
+    });
+    return savedProfile;
   }
 
   /** Replace the authenticated user's interests */
@@ -87,6 +94,7 @@ export class ProfileService {
 
     profile.interests = await this.interestRepository.save(interestItems);
 
+    this.logger.log('saved interests', { interests: profile.interests });
     return this.profileRepository.save(profile);
   }
 
@@ -149,6 +157,7 @@ export class ProfileService {
 
     // 5) Persist the User (with its new profile_id FK)
     await this.userRepository.save(user);
+    this.logger.log('profile was created', { profile_id: savedProfile.id });
 
     return savedProfile;
   }
@@ -190,7 +199,13 @@ export class ProfileService {
     const section = providedSections[0];
     const dto = body[section];
 
-    return this.updatePartialProfile(section, dto, req);
+    const profile = this.updatePartialProfile(section, dto, req);
+    this.logger.log(`Profile section updated`, {
+      section,
+      userId: req.user.userId,
+      payload: dto,
+    });
+    return profile;
   }
 
   public async getMatchedProfiles(req: HttpRequestDto): Promise<Profile[]> {
