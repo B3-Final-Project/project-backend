@@ -113,4 +113,18 @@ export class ProfileRepository {
       })
       .getMany();
   }
+
+  public async getLocations(): Promise<{ city: string; count: string }[]> {
+    // Groups unique cities with count, ordered by count descending
+    return this.profileRepository
+      .createQueryBuilder('profile')
+      .select('profile.city', 'city')
+      .addSelect('COUNT(*)', 'count')
+      .where('profile.city IS NOT NULL')
+      .andWhere('profile.city != :empty', { empty: '' })
+      .groupBy('profile.city')
+      .orderBy('COUNT(*)', 'DESC')
+      .limit(10)
+      .getRawMany();
+  }
 }

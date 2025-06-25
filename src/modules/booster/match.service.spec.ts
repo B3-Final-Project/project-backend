@@ -2,6 +2,7 @@ import { GenderEnum, OrientationEnum } from '../profile/enums';
 // match.service.spec.ts
 import { Test, TestingModule } from '@nestjs/testing';
 
+import { AnalyticsService } from '../stats/analytics.service';
 import { BoosterAction } from './enums/action.enum';
 import { MatchRepository } from '../../common/repository/matches.repository';
 import { MatchService } from './match.service';
@@ -45,6 +46,14 @@ describe('MatchService', () => {
         { provide: UserRepository, useValue: userRepo },
         { provide: MatchRepository, useValue: matchRepo },
         { provide: ProfileRepository, useValue: profileRepo },
+        {
+          provide: AnalyticsService,
+          useValue: {
+            trackBoosterUsage: jest.fn(),
+            trackMatchAction: jest.fn(),
+            trackUserAction: jest.fn(),
+          },
+        },
       ],
     }).compile();
 

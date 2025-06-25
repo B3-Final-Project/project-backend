@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
+import { AnalyticsService } from '../stats/analytics.service';
 import { BoosterRepository } from '../../common/repository/booster.repository';
 import { BoosterService } from './booster.service';
 import { HttpRequestDto } from '../../common/dto/http-request.dto';
@@ -7,6 +8,7 @@ import { MatchService } from './match.service';
 import { NotFoundException } from '@nestjs/common';
 import { RarityEnum } from '../profile/enums/rarity.enum';
 import { UserCardDto } from '../../common/dto/user-card.dto';
+import { UserRepository } from '../../common/repository/user.repository';
 
 describe('BoosterService', () => {
   let boosterService: BoosterService;
@@ -29,6 +31,19 @@ describe('BoosterService', () => {
             save: jest.fn(),
             find: jest.fn(),
             findOne: jest.fn(),
+          },
+        },
+        {
+          provide: AnalyticsService,
+          useValue: {
+            trackBoosterUsage: jest.fn(),
+          },
+        },
+        {
+          provide: UserRepository,
+          useValue: {
+            findById: jest.fn(),
+            findUserWithProfile: jest.fn(),
           },
         },
         BoosterService,

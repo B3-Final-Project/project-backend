@@ -18,4 +18,8 @@ export class BoosterRepository {
   public async createBooster(booster: CreateBoosterDto): Promise<BoosterPack> {
     return this.boosters.save(booster);
   }
+
+  public async findAll(): Promise<BoosterPack[]> {
+    return this.boosters.find();
+  }
 }

@@ -132,10 +132,7 @@ describe('ProfileController', () => {
       };
       const result = await controller.updateProfileField(body, req);
       expect(result).toBe(mockProfile);
-      expect(service.updateProfileField).toHaveBeenCalledWith(
-        body,
-        req,
-      );
+      expect(service.updateProfileField).toHaveBeenCalledWith(body, req);
     });
 
     it('throws if service throws for interest updates', async () => {

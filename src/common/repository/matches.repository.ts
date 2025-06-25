@@ -136,4 +136,22 @@ export class MatchRepository {
     const theirMatch = await this.getMatchRows(profileId2, profileId1);
     return theirMatch.some((m) => m.action === BoosterAction.LIKE);
   }
+
+  public async count(options?: any): Promise<number> {
+    return this.userMatches.count(options);
+  }
+
+  public createQueryBuilder(alias?: string) {
+    return this.userMatches.createQueryBuilder(alias);
+  }
+
+  public async getActiveUsersCount(since: Date): Promise<number> {
+    const result = await this.userMatches
+      .createQueryBuilder('match')
+      .select('COUNT(DISTINCT match.from_profile_id)', 'count')
+      .where('match.created_at >= :since', { since })
+      .getRawOne();
+
+    return parseInt(result?.count) || 0;
+  }
 }
