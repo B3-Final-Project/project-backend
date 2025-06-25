@@ -237,13 +237,15 @@ export class MatchService {
     });
 
     // Track analytics for each profile shown
-    for (const profile of profiles) {
-      await this.analyticsService.trackUserAction(
-        fromProfileId,
-        profile.id,
-        BoosterAction.SEEN,
-      );
-    }
+    await Promise.all(
+      profiles.map((profile) =>
+        this.analyticsService.trackUserAction(
+          fromProfileId,
+          profile.id,
+          BoosterAction.SEEN,
+        )
+      )
+    );
 
     return savedMatches;
   }
