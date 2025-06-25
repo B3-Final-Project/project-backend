@@ -52,4 +52,12 @@ export class UserRepository {
   public async save(user: User): Promise<User> {
     return await this.userRepository.save(user);
   }
+
+  public async count(options?: any): Promise<number> {
+    return this.userRepository.count(options);
+  }
+
+  public createQueryBuilder(alias?: string) {
+    return this.userRepository.createQueryBuilder(alias);
+  }
 }

@@ -1,5 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 
+import { AnalyticsService } from '../stats/analytics.service';
 import { AvailablePackDto } from './dto/available-pack.dto';
 import { BoosterRepository } from '../../common/repository/booster.repository';
 import { CreateBoosterDto } from './dto/create-booster.dto';
@@ -9,6 +10,7 @@ import { Profile } from '../../common/entities/profile.entity';
 import { RarityEnum } from '../profile/enums/rarity.enum';
 import { RelationshipTypeEnum } from '../profile/enums';
 import { UserCardDto } from '../../common/dto/user-card.dto';
+import { UserRepository } from '../../common/repository/user.repository';
 import { mapProfileToCard } from '../../common/utils/card-utils';
 
 @Injectable()
@@ -18,6 +20,8 @@ export class BoosterService {
   public constructor(
     private readonly matchService: MatchService,
     private readonly boosterRepository: BoosterRepository,
+    private readonly analyticsService: AnalyticsService,
+    private readonly userRepository: UserRepository,
   ) {}
 
   public async getBooster(
@@ -36,6 +40,19 @@ export class BoosterService {
       amount,
       type: type || 'any',
     });
+
+    // Find the current user to get their ID for tracking
+    const currentUser = await this.userRepository.findUserWithProfile(
+      user.userId,
+    );
+
+    // Track booster usage - using a default booster pack ID of 1 for now
+    // In a real implementation, you'd determine which booster pack is being opened
+    const boosterPackId = type ? this.getBoosterPackIdByType(type) : 1;
+    await this.analyticsService.trackBoosterUsage(
+      currentUser?.id ?? 0,
+      boosterPackId,
+    );
 
     const profiles = await this.matchService.findMatchesForUser(
       user.userId,
@@ -123,5 +140,26 @@ export class BoosterService {
       userId: user.userId,
       body,
     });
+  }
+
+  /**
+   * Helper method to map relationship types to booster pack IDs
+   * This is a simplified implementation - you'd want to maintain this mapping in the database
+   */
+  private getBoosterPackIdByType(type: RelationshipTypeEnum): number {
+    switch (type) {
+      case RelationshipTypeEnum.CASUAL:
+        return 1;
+      case RelationshipTypeEnum.LONG_TERM:
+        return 2;
+      case RelationshipTypeEnum.MARRIAGE:
+        return 3;
+      case RelationshipTypeEnum.FRIENDSHIP:
+        return 4;
+      case RelationshipTypeEnum.UNSURE:
+        return 5;
+      default:
+        return 1;
+    }
   }
 }

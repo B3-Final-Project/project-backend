@@ -5,6 +5,7 @@ import {
 } from '../profile/enums';
 import { Injectable, Logger } from '@nestjs/common';
 
+import { AnalyticsService } from '../stats/analytics.service';
 import { BoosterAction } from './enums/action.enum';
 import { MatchRepository } from '../../common/repository/matches.repository';
 import { Profile } from '../../common/entities/profile.entity';
@@ -21,6 +22,7 @@ export class MatchService {
     private readonly userRepo: UserRepository,
     private readonly matchRepository: MatchRepository,
     private readonly profileRepository: ProfileRepository,
+    private readonly analyticsService: AnalyticsService,
   ) {}
 
   private async baseQuery(userId: string, excludeSeen?: boolean) {
@@ -233,6 +235,15 @@ export class MatchService {
       fromProfileId,
       createdCount: savedMatches.length,
     });
+
+    // Track analytics for each profile shown
+    for (const profile of profiles) {
+      await this.analyticsService.trackUserAction(
+        fromProfileId,
+        profile.id,
+        BoosterAction.SEEN,
+      );
+    }
 
     return savedMatches;
   }

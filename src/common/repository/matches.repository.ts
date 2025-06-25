@@ -136,4 +136,12 @@ export class MatchRepository {
     const theirMatch = await this.getMatchRows(profileId2, profileId1);
     return theirMatch.some((m) => m.action === BoosterAction.LIKE);
   }
+
+  public async count(options?: any): Promise<number> {
+    return this.userMatches.count(options);
+  }
+
+  public createQueryBuilder(alias?: string) {
+    return this.userMatches.createQueryBuilder(alias);
+  }
 }
