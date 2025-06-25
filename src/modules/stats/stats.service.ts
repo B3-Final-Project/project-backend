@@ -18,6 +18,7 @@ import { BoosterUsageRepository } from '../../common/repository/booster-usage.re
 import { Injectable } from '@nestjs/common';
 import { MatchRepository } from '../../common/repository/matches.repository';
 import { MoreThanOrEqual } from 'typeorm';
+import { ProfileRepository } from '../../common/repository/profile.repository';
 import { UserRepository } from '../../common/repository/user.repository';
 
 @Injectable()
@@ -27,16 +28,18 @@ export class StatsService {
     private readonly matchRepository: MatchRepository,
     private readonly boosterRepository: BoosterRepository,
     private readonly boosterUsageRepository: BoosterUsageRepository,
+    private readonly profileRepository: ProfileRepository,
   ) {}
 
   async getAppStats(): Promise<AppStatsDto> {
     // Get total users count
-    const [totalUsers, totalMatches, totalPasses, totalLikes] = await Promise.all([
-      this.userRepository.count(),
-      this.matchRepository.count({ where: { action: BoosterAction.MATCH } }),
-      this.matchRepository.count({ where: { action: BoosterAction.SEEN } }),
-      this.matchRepository.count({ where: { action: BoosterAction.LIKE } }),
-    ]);
+    const [totalUsers, totalMatches, totalPasses, totalLikes] =
+      await Promise.all([
+        this.userRepository.count(),
+        this.matchRepository.count({ where: { action: BoosterAction.MATCH } }),
+        this.matchRepository.count({ where: { action: BoosterAction.SEEN } }),
+        this.matchRepository.count({ where: { action: BoosterAction.LIKE } }),
+      ]);
     return {
       totalUsers,
       totalMatches,
@@ -46,20 +49,22 @@ export class StatsService {
   }
 
   async getBoosterStats(): Promise<BoosterStatsDto[]> {
-    // Get all booster packs
-    const boosterPacks = await this.boosterRepository.findAll();
+    // Get booster usage stats by relationship type from user profiles
+    const relationshipStats =
+      await this.userRepository.getBoosterUsageByRelationshipType();
 
-    const boosterStats: BoosterStatsDto[] = [];
+    const boosterStats: BoosterStatsDto[] = [
+      RelationshipTypeEnum.CASUAL,
+      RelationshipTypeEnum.LONG_TERM,
+      RelationshipTypeEnum.MARRIAGE,
+      RelationshipTypeEnum.FRIENDSHIP,
+      RelationshipTypeEnum.UNSURE,
+    ].map((type) => {
+      const stat = relationshipStats.find((s) => parseInt(s.type) === type);
+      const timesOpened = stat ? parseInt(stat.timesOpened) : 0;
 
-    for (const booster of boosterPacks) {
-      // Count how many times this specific booster was used
-      const timesOpened = await this.boosterUsageRepository.count({
-        where: { boosterPackId: booster.id },
-      });
-
-      // Convert enum to string
       let boosterType: string;
-      switch (booster.type) {
+      switch (type) {
         case RelationshipTypeEnum.CASUAL:
           boosterType = 'CASUAL';
           break;
@@ -79,13 +84,13 @@ export class StatsService {
           boosterType = 'UNKNOWN';
       }
 
-      boosterStats.push({
-        boosterId: booster.id,
-        boosterName: booster.name,
+      return {
+        boosterId: type, // Use the enum value as ID
+        boosterName: boosterType,
         boosterType,
         timesOpened,
-      });
-    }
+      };
+    });
 
     return boosterStats;
   }
@@ -132,10 +137,10 @@ export class StatsService {
     // Get gender distribution
     const maleCount = await this.userRepository.count({
       where: { gender: GenderEnum.MALE },
-    }); // Assuming 1 = male
+    });
     const femaleCount = await this.userRepository.count({
       where: { gender: GenderEnum.FEMALE },
-    }); // Assuming 2 = female
+    });
     const nonBinaryCount = await this.userRepository.count({
       where: { gender: GenderEnum.NON_BINARY },
     });
@@ -153,30 +158,10 @@ export class StatsService {
       totalUsers > 0 ? Math.round((otherCount / totalUsers) * 100) : 0;
 
     // Get average age
-    const result = await this.userRepository
-      .createQueryBuilder('user')
-      .select('AVG(user.age)', 'averageAge')
-      .getRawOne();
-
-    const averageAge = parseFloat(result?.averageAge) || 0;
+    const averageAge = await this.userRepository.getAverageAge();
 
     // Get age distribution
-    const ageRanges = await this.userRepository
-      .createQueryBuilder('user')
-      .select([
-        `SUM(CASE WHEN age BETWEEN 18 AND 25 THEN 1 ELSE 0 END) as "range18_25"`,
-        `SUM(CASE WHEN age BETWEEN 26 AND 35 THEN 1 ELSE 0 END) as "range26_35"`,
-        `SUM(CASE WHEN age BETWEEN 36 AND 45 THEN 1 ELSE 0 END) as "range36_45"`,
-        `SUM(CASE WHEN age > 45 THEN 1 ELSE 0 END) as "range45Plus"`,
-      ])
-      .getRawOne();
-
-    const ageDistribution = {
-      '18-25': parseInt(ageRanges?.range18_25) || 0,
-      '26-35': parseInt(ageRanges?.range26_35) || 0,
-      '36-45': parseInt(ageRanges?.range36_45) || 0,
-      '45+': parseInt(ageRanges?.range45Plus) || 0,
-    };
+    const ageDistribution = await this.userRepository.getAgeDistribution();
 
     return {
       malePercentage,
@@ -212,26 +197,12 @@ export class StatsService {
     const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-    const dailyActiveUsers = await this.matchRepository
-      .createQueryBuilder('match')
-      .select('COUNT(DISTINCT match.from_profile_id)', 'count')
-      .where('match.created_at >= :yesterday', { yesterday })
-      .getRawOne()
-      .then((result) => parseInt(result?.count) || 0);
-
-    const weeklyActiveUsers = await this.matchRepository
-      .createQueryBuilder('match')
-      .select('COUNT(DISTINCT match.from_profile_id)', 'count')
-      .where('match.created_at >= :weekAgo', { weekAgo })
-      .getRawOne()
-      .then((result) => parseInt(result?.count) || 0);
-
-    const monthlyActiveUsers = await this.matchRepository
-      .createQueryBuilder('match')
-      .select('COUNT(DISTINCT match.from_profile_id)', 'count')
-      .where('match.created_at >= :monthAgo', { monthAgo })
-      .getRawOne()
-      .then((result) => parseInt(result?.count) || 0);
+    const dailyActiveUsers =
+      await this.matchRepository.getActiveUsersCount(yesterday);
+    const weeklyActiveUsers =
+      await this.matchRepository.getActiveUsersCount(weekAgo);
+    const monthlyActiveUsers =
+      await this.matchRepository.getActiveUsersCount(monthAgo);
 
     return {
       averageLikesPerUser,
@@ -287,17 +258,7 @@ export class StatsService {
 
   async getGeographicStats(): Promise<GeographicStatsDto> {
     // Get city statistics from user profiles
-    const cityStats = await this.userRepository
-      .createQueryBuilder('user')
-      .leftJoin('user.profile', 'profile')
-      .select('profile.city', 'city')
-      .addSelect('COUNT(*)', 'count')
-      .where('profile.city IS NOT NULL')
-      .andWhere('profile.city != :empty', { empty: '' })
-      .groupBy('profile.city')
-      .orderBy('COUNT(*)', 'DESC')
-      .limit(10)
-      .getRawMany();
+    const cityStats = await this.profileRepository.getLocations();
 
     if (cityStats.length === 0) {
       return {
@@ -368,11 +329,8 @@ export class StatsService {
   private async getRelationshipGoalsDistribution(): Promise<
     Record<string, number>
   > {
-    const totalProfiles = await this.userRepository
-      .createQueryBuilder('user')
-      .leftJoin('user.profile', 'profile')
-      .where('profile.id IS NOT NULL')
-      .getCount();
+    const totalProfiles =
+      await this.userRepository.getProfilesCountWithRelationshipType();
 
     if (totalProfiles === 0) {
       return {
@@ -385,18 +343,8 @@ export class StatsService {
     }
 
     // Get counts for each relationship type
-    const relationshipCounts = await this.userRepository
-      .createQueryBuilder('user')
-      .leftJoin('user.profile', 'profile')
-      .select([
-        `SUM(CASE WHEN profile.relationship_type = ${RelationshipTypeEnum.CASUAL} THEN 1 ELSE 0 END) as "casual"`,
-        `SUM(CASE WHEN profile.relationship_type = ${RelationshipTypeEnum.LONG_TERM} THEN 1 ELSE 0 END) as "longTerm"`,
-        `SUM(CASE WHEN profile.relationship_type = ${RelationshipTypeEnum.MARRIAGE} THEN 1 ELSE 0 END) as "marriage"`,
-        `SUM(CASE WHEN profile.relationship_type = ${RelationshipTypeEnum.FRIENDSHIP} THEN 1 ELSE 0 END) as "friendship"`,
-        `SUM(CASE WHEN profile.relationship_type = ${RelationshipTypeEnum.UNSURE} THEN 1 ELSE 0 END) as "unsure"`,
-      ])
-      .where('profile.id IS NOT NULL')
-      .getRawOne();
+    const relationshipCounts =
+      await this.userRepository.getRelationshipTypeDistribution();
 
     return {
       CASUAL: Math.round(

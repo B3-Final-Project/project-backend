@@ -60,4 +60,68 @@ export class UserRepository {
   public createQueryBuilder(alias?: string) {
     return this.userRepository.createQueryBuilder(alias);
   }
+
+  public async getAverageAge(): Promise<number> {
+    const result = await this.userRepository
+      .createQueryBuilder('user')
+      .select('AVG(user.age)', 'averageAge')
+      .getRawOne();
+
+    return parseFloat(result?.averageAge) || 0;
+  }
+
+  public async getAgeDistribution(): Promise<Record<string, number>> {
+    const ageRanges = await this.userRepository
+      .createQueryBuilder('user')
+      .select([
+        `SUM(CASE WHEN age BETWEEN 18 AND 25 THEN 1 ELSE 0 END) as "range18_25"`,
+        `SUM(CASE WHEN age BETWEEN 26 AND 35 THEN 1 ELSE 0 END) as "range26_35"`,
+        `SUM(CASE WHEN age BETWEEN 36 AND 45 THEN 1 ELSE 0 END) as "range36_45"`,
+        `SUM(CASE WHEN age > 45 THEN 1 ELSE 0 END) as "range45Plus"`,
+      ])
+      .getRawOne();
+
+    return {
+      '18-25': parseInt(ageRanges?.range18_25) || 0,
+      '26-35': parseInt(ageRanges?.range26_35) || 0,
+      '36-45': parseInt(ageRanges?.range36_45) || 0,
+      '45+': parseInt(ageRanges?.range45Plus) || 0,
+    };
+  }
+
+  public async getBoosterUsageByRelationshipType(): Promise<any[]> {
+    return this.userRepository
+      .createQueryBuilder('user')
+      .leftJoin('user.profile', 'profile')
+      .leftJoin('booster_usage', 'usage', 'usage.userId = user.id')
+      .select('profile.relationship_type', 'type')
+      .addSelect('COUNT(usage.id)', 'timesOpened')
+      .where('profile.relationship_type IS NOT NULL')
+      .andWhere('usage.id IS NOT NULL')
+      .groupBy('profile.relationship_type')
+      .getRawMany();
+  }
+
+  public async getProfilesCountWithRelationshipType(): Promise<number> {
+    return this.userRepository
+      .createQueryBuilder('user')
+      .leftJoin('user.profile', 'profile')
+      .where('profile.id IS NOT NULL')
+      .getCount();
+  }
+
+  public async getRelationshipTypeDistribution(): Promise<any> {
+    return this.userRepository
+      .createQueryBuilder('user')
+      .leftJoin('user.profile', 'profile')
+      .select([
+        `SUM(CASE WHEN profile.relationship_type = 1 THEN 1 ELSE 0 END) as "casual"`,
+        `SUM(CASE WHEN profile.relationship_type = 2 THEN 1 ELSE 0 END) as "longTerm"`,
+        `SUM(CASE WHEN profile.relationship_type = 3 THEN 1 ELSE 0 END) as "marriage"`,
+        `SUM(CASE WHEN profile.relationship_type = 4 THEN 1 ELSE 0 END) as "friendship"`,
+        `SUM(CASE WHEN profile.relationship_type = 5 THEN 1 ELSE 0 END) as "unsure"`,
+      ])
+      .where('profile.id IS NOT NULL')
+      .getRawOne();
+  }
 }

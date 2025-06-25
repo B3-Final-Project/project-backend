@@ -144,4 +144,14 @@ export class MatchRepository {
   public createQueryBuilder(alias?: string) {
     return this.userMatches.createQueryBuilder(alias);
   }
+
+  public async getActiveUsersCount(since: Date): Promise<number> {
+    const result = await this.userMatches
+      .createQueryBuilder('match')
+      .select('COUNT(DISTINCT match.from_profile_id)', 'count')
+      .where('match.created_at >= :since', { since })
+      .getRawOne();
+
+    return parseInt(result?.count) || 0;
+  }
 }

@@ -133,7 +133,7 @@ export class MatchService {
     this.logger.log('Finding matches for user', {
       userId,
       maxResults,
-      relationshipType: relationshipType || 'any',
+      relationshipType: relationshipType,
     });
 
     // 1. Load user and their profile

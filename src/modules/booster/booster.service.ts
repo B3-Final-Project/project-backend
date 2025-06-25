@@ -38,7 +38,7 @@ export class BoosterService {
     this.logger.log('Getting booster', {
       userId: user.userId,
       amount,
-      type: type || 'any',
+      type: type,
     });
 
     // Find the current user to get their ID for tracking
@@ -48,7 +48,9 @@ export class BoosterService {
 
     // Track booster usage - using a default booster pack ID of 1 for now
     // In a real implementation, you'd determine which booster pack is being opened
-    const boosterPackId = type ? this.getBoosterPackIdByType(type) : 1;
+    const boosterPackId = type
+      ? this.getBoosterPackIdByType(type)
+      : RelationshipTypeEnum.ANY;
     await this.analyticsService.trackBoosterUsage(
       currentUser?.id ?? 0,
       boosterPackId,
