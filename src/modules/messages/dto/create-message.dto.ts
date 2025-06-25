@@ -1,9 +1,9 @@
-import { IsNotEmpty, IsString, IsNumber } from 'class-validator';
+import { IsNotEmpty, IsString, IsUUID } from 'class-validator';
 
 export class CreateMessageDto {
   @IsNotEmpty()
-  @IsNumber()
-  conversation_id: number;
+  @IsUUID()
+  conversation_id: string;
 
   @IsNotEmpty()
   @IsString()

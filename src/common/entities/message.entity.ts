@@ -11,14 +11,14 @@ import { Conversation } from './conversation.entity';
 
 @Entity('messages')
 export class Message {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column({ type: 'varchar' })
   sender_id: string;
 
-  @Column({ type: 'int' })
-  conversation_id: number;
+  @Column({ type: 'varchar' })
+  conversation_id: string;
 
   @Column({ type: 'text' })
   content: string;
@@ -27,7 +27,7 @@ export class Message {
   is_read: boolean;
 
   @ManyToOne(() => User)
-  @JoinColumn({ name: 'sender_id' })
+  @JoinColumn({ name: 'sender_id', referencedColumnName: 'user_id' })
   sender: User;
 
   @ManyToOne(() => Conversation, (conversation) => conversation.messages)

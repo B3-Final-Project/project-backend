@@ -1,4 +1,6 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import {
   InterestInfo,
   PartialUpdateProfileDto,
@@ -19,6 +21,10 @@ export class ProfileService {
   private readonly logger = new Logger(ProfileService.name);
   constructor(
     private readonly profileRepository: ProfileRepository,
+    @InjectRepository(Profile)
+    private readonly profileTypeOrmRepository: Repository<Profile>,
+    @InjectRepository(User)
+    private readonly userTypeOrmRepository: Repository<User>,
     private readonly userRepository: UserRepository,
     private readonly interestRepository: InterestRepository,
     private readonly s3Service: S3Service,
@@ -201,6 +207,34 @@ export class ProfileService {
     const profileId = currentUser.profile.id;
 
     return this.profileRepository.findMatchedProfiles(profileId);
+  }
+
+  public async getAllProfiles(req: HttpRequestDto): Promise<any[]> {
+    const userId = req.user.userId;
+
+    // Récupérer tous les utilisateurs avec leurs profils, sauf l'utilisateur connecté
+    const users = await this.userTypeOrmRepository
+      .createQueryBuilder('user')
+      .leftJoinAndSelect('user.profile', 'profile')
+      .leftJoinAndSelect('profile.interests', 'interests')
+      .where('user.user_id != :userId', { userId })
+      .andWhere('profile.id IS NOT NULL')
+      .getMany();
+
+    return users.map(user => ({
+      id: user.user_id,
+      name: user.name,
+      surname: user.surname,
+      age: user.age,
+      gender: user.gender,
+      profile: {
+        id: user.profile.id,
+        avatarUrl: user.profile.avatarUrl,
+        images: user.profile.images,
+        interests: user.profile.interests,
+        // Ajouter d'autres champs du profil si nécessaire
+      }
+    }));
   }
 
   public async uploadImage(

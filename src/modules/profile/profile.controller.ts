@@ -38,7 +38,7 @@ import { Profile } from '../../common/entities/profile.entity';
 export class ProfileController {
   constructor(private readonly profileService: ProfileService) {}
 
-  @ApiOperation({ summary: 'Récupère le profil de l’utilisateur connecté' })
+  @ApiOperation({ summary: 'Récupère le profil de l\'utilisateur connecté' })
   @ApiResponse({
     status: 200,
     description: 'Profil récupéré avec succès',
@@ -49,7 +49,18 @@ export class ProfileController {
     return this.profileService.getProfile(req);
   }
 
-  @ApiOperation({ summary: 'Met à jour le profil complet de l’utilisateur' })
+  @ApiOperation({ summary: 'Récupère tous les profils sauf celui de l\'utilisateur connecté' })
+  @ApiResponse({
+    status: 200,
+    description: 'Liste des profils récupérée avec succès',
+    type: [Profile],
+  })
+  @Get('all')
+  public async getAllProfiles(@Req() req: HttpRequestDto) {
+    return this.profileService.getAllProfiles(req);
+  }
+
+  @ApiOperation({ summary: 'Met à jour le profil complet de l\'utilisateur' })
   @ApiBody({ type: UpdateProfileDto })
   @ApiResponse({
     status: 200,
@@ -65,7 +76,7 @@ export class ProfileController {
   }
 
   @ApiOperation({
-    summary: 'Crée un nouveau profil pour l’utilisateur connecté',
+    summary: 'Crée un nouveau profil pour l\'utilisateur connecté',
   })
   @ApiBody({ type: UpdateProfileDto })
   @ApiResponse({
@@ -105,7 +116,7 @@ export class ProfileController {
   @ApiParam({
     name: 'index',
     type: Number,
-    description: 'Index de l’image (0 à 5)',
+    description: 'Index de l\'image (0 à 5)',
   })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
@@ -144,7 +155,7 @@ export class ProfileController {
   @ApiParam({
     name: 'index',
     type: Number,
-    description: 'Index de l’image (0 à 5)',
+    description: 'Index de l\'image (0 à 5)',
   })
   @ApiResponse({ status: 200, description: 'Image supprimée avec succès' })
   @Delete('image/:index')

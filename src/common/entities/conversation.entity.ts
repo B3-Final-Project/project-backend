@@ -13,8 +13,8 @@ import { Message } from './message.entity';
 
 @Entity('conversations')
 export class Conversation {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column({ type: 'varchar' })
   user1_id: string;
@@ -23,11 +23,11 @@ export class Conversation {
   user2_id: string;
 
   @ManyToOne(() => User)
-  @JoinColumn({ name: 'user1_id' })
+  @JoinColumn({ name: 'user1_id', referencedColumnName: 'user_id' })
   user1: User;
 
   @ManyToOne(() => User)
-  @JoinColumn({ name: 'user2_id' })
+  @JoinColumn({ name: 'user2_id', referencedColumnName: 'user_id' })
   user2: User;
 
   @OneToMany(() => Message, (message) => message.conversation)

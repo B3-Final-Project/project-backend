@@ -62,7 +62,6 @@ describe('ProfileController', () => {
         {
           provide: ProfileService,
           useValue: {
-            getAllProfiles: jest.fn(),
             getProfile: jest.fn(),
             updateProfile: jest.fn(),
             updateProfileInterests: jest.fn(),

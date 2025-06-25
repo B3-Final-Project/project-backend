@@ -6,7 +6,6 @@ import {
   Param,
   UseGuards,
   Req,
-  ParseIntPipe,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { MessagesService } from './messages.service';
@@ -42,7 +41,7 @@ export class MessagesController {
 
   @Get('conversations/:id')
   async getMessages(
-    @Param('id', ParseIntPipe) conversationId: number,
+    @Param('id') conversationId: string,
     @Req() req: HttpRequestDto,
   ) {
     return this.messagesService.getMessages(conversationId, req);
@@ -50,7 +49,7 @@ export class MessagesController {
 
   @Post('conversations/:id/read')
   async markMessagesAsRead(
-    @Param('id', ParseIntPipe) conversationId: number,
+    @Param('id') conversationId: string,
     @Req() req: HttpRequestDto,
   ) {
     return this.messagesService.markMessagesAsRead(conversationId, req);
