@@ -33,8 +33,8 @@ export async function seedBoosterUsage(
       userId: randomUser.id,
       boosterPackId: randomBoosterPack.id,
       usedAt: new Date(
-        Date.now() - Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000),
-      ), //NOSONAR Random date within last 30 days
+        Date.now() - Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000), //NOSONAR Random date within last 30 days
+      ),
     });
 
     boosterUsages.push(boosterUsage);
