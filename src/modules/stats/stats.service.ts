@@ -31,23 +31,12 @@ export class StatsService {
 
   async getAppStats(): Promise<AppStatsDto> {
     // Get total users count
-    const totalUsers = await this.userRepository.count();
-
-    // Get total matches count (only actual matches, not likes or passes)
-    const totalMatches = await this.matchRepository.count({
-      where: { action: BoosterAction.MATCH },
-    });
-
-    // Get total passes count (seen but not liked)
-    const totalPasses = await this.matchRepository.count({
-      where: { action: BoosterAction.SEEN },
-    });
-
-    // Get total likes count
-    const totalLikes = await this.matchRepository.count({
-      where: { action: BoosterAction.LIKE },
-    });
-
+    const [totalUsers, totalMatches, totalPasses, totalLikes] = await Promise.all([
+      this.userRepository.count(),
+      this.matchRepository.count({ where: { action: BoosterAction.MATCH } }),
+      this.matchRepository.count({ where: { action: BoosterAction.SEEN } }),
+      this.matchRepository.count({ where: { action: BoosterAction.LIKE } }),
+    ]);
     return {
       totalUsers,
       totalMatches,
