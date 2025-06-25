@@ -25,16 +25,16 @@ export async function seedBoosterUsage(
   const boosterUsages: BoosterUsage[] = [];
 
   for (let i = 0; i < count; i++) {
-    const randomUser = users[Math.floor(Math.random() * users.length)];
+    const randomUser = users[Math.floor(Math.random() * users.length)]; //NOSONAR
     const randomBoosterPack =
-      boosterPacks[Math.floor(Math.random() * boosterPacks.length)];
+      boosterPacks[Math.floor(Math.random() * boosterPacks.length)]; //NOSONAR
 
     const boosterUsage = boosterUsageRepository.create({
       userId: randomUser.id,
       boosterPackId: randomBoosterPack.id,
       usedAt: new Date(
         Date.now() - Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000),
-      ), // Random date within last 30 days
+      ), //NOSONAR Random date within last 30 days
     });
 
     boosterUsages.push(boosterUsage);
