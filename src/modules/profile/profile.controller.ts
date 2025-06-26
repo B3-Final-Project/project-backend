@@ -14,6 +14,7 @@ import {
   UseGuards,
   UseInterceptors,
   BadRequestException,
+  Query,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -30,6 +31,12 @@ import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ProfileService } from './services/profile.service';
 import { HttpRequestDto } from '../../common/dto/http-request.dto';
 import { Profile } from '../../common/entities/profile.entity';
+import { UserManagementResponseDto } from './dto/user-management.dto';
+import { IsAdmin } from '../../auth/admin.guard';
+import {
+  ReportUserResponseDto,
+  BanUserResponseDto,
+} from './dto/admin-actions.dto';
 
 @ApiTags('profiles')
 @ApiBearerAuth('jwt-auth')
@@ -37,6 +44,39 @@ import { Profile } from '../../common/entities/profile.entity';
 @Controller('profiles')
 export class ProfileController {
   constructor(private readonly profileService: ProfileService) {}
+  @ApiOperation({ summary: 'Récupère tous les profils' })
+  @ApiResponse({
+    status: 200,
+    description: 'Profils récupérés avec succès',
+    type: [Profile],
+  })
+  @Get('all')
+  @UseGuards(IsAdmin)
+  public async getAllProfiles(
+    @Query('offset', ParseIntPipe) offset: number,
+    @Query('limit', ParseIntPipe) limit: number,
+    @Query('sortBy') sortBy?: 'reportCount' | 'createdAt', // Optional sort field
+    @Query('sortOrder') sortOrder?: 'asc' | 'desc',
+  ): Promise<UserManagementResponseDto> {
+    return this.profileService.getAllProfiles(offset, limit, sortBy, sortOrder);
+  }
+
+  @ApiOperation({ summary: 'Récupère un profil par son ID' })
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    description: 'ID du profil à récupérer',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Profil récupéré avec succès',
+    type: Profile,
+  })
+  @UseGuards(IsAdmin)
+  @Get(':id')
+  public async getProfileById(@Param('id') id: string) {
+    return this.profileService.getProfileById(id);
+  }
 
   @ApiOperation({ summary: 'Récupère le profil de l’utilisateur connecté' })
   @ApiResponse({
@@ -167,5 +207,63 @@ export class ProfileController {
     }
 
     return this.profileService.removeImage(req, index);
+  }
+
+  // Regular user report endpoint
+  @ApiOperation({ summary: 'Report a user' })
+  @ApiParam({
+    name: 'userId',
+    type: String,
+    description: 'ID of the user to report',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'User reported successfully',
+    type: ReportUserResponseDto,
+  })
+  @Post(':userId/report')
+  public async reportUserByUser(
+    @Param('userId') reportedUserId: string,
+    @Req() req: HttpRequestDto,
+  ): Promise<ReportUserResponseDto> {
+    return this.profileService.reportUser(reportedUserId, req.user.userId);
+  }
+
+  @ApiOperation({ summary: 'Ban a user' })
+  @ApiParam({
+    name: 'userId',
+    type: String,
+    description: 'ID of the user to ban',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'User banned successfully',
+    type: BanUserResponseDto,
+  })
+  @Post(':userId/ban')
+  @UseGuards(IsAdmin)
+  public async banUser(
+    @Param('userId') userId: string,
+  ): Promise<BanUserResponseDto> {
+    return this.profileService.banUser(userId);
+  }
+
+  @ApiOperation({ summary: 'Unban a user' })
+  @ApiParam({
+    name: 'userId',
+    type: String,
+    description: 'ID of the user to unban',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'User unbanned successfully',
+    type: BanUserResponseDto,
+  })
+  @Post(':userId/unban')
+  @UseGuards(IsAdmin)
+  public async unbanUser(
+    @Param('userId') userId: string,
+  ): Promise<BanUserResponseDto> {
+    return this.profileService.unbanUser(userId);
   }
 }

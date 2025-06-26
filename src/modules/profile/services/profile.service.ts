@@ -9,6 +9,10 @@ import {
   PartialUpdateProfileDto,
   UpdateProfileDto,
 } from '../dto/update-profile.dto';
+import {
+  UserManagementDto,
+  UserManagementResponseDto,
+} from '../dto/user-management.dto';
 
 import { HttpRequestDto } from '../../../common/dto/http-request.dto';
 import { InterestRepository } from '../../../common/repository/interest.repository';
@@ -18,6 +22,7 @@ import { ProfileUtils } from './profile-utils.service';
 import { S3Service } from './s3.service';
 import { User } from '../../../common/entities/user.entity';
 import { UserRepository } from '../../../common/repository/user.repository';
+import { BanUserResponseDto } from '../dto/admin-actions.dto';
 
 @Injectable()
 export class ProfileService {
@@ -124,6 +129,59 @@ export class ProfileService {
     return {
       profile,
       user,
+    };
+  }
+
+  async getProfileById(id: string): Promise<{ profile: Profile; user: User }> {
+    // returns a profile by its ID with optional extra relations
+    const profile = await this.profileRepository.findByUserId(id, [
+      'interests',
+      'userProfile',
+    ]);
+    if (!profile) {
+      throw new NotFoundException(`Profile with ID ${id} not found`);
+    }
+    this.logger.log(`Retrieved profile by ID`, { profileId: id });
+    return {
+      profile,
+      user: profile.userProfile,
+    };
+  }
+
+  async getAllProfiles(
+    offset = 0,
+    limit = 10,
+    sortBy?: 'reportCount' | 'createdAt',
+    sortOrder?: 'asc' | 'desc',
+  ): Promise<UserManagementResponseDto> {
+    // returns a list of all profiles with user information and count
+    const profiles = await this.profileRepository.getAllProfiles(
+      offset,
+      limit,
+      sortBy,
+      sortOrder,
+    );
+    const mappedProfiles = profiles.map((profile) => {
+      const user = profile.userProfile;
+      return {
+        id: profile.id,
+        userId: user.user_id,
+        name: user.name,
+        surname: user.surname,
+        profileId: profile.id,
+        reportCount: profile.reportCount,
+        createdAt: profile.created_at,
+        isBanned: user.banned,
+      } as UserManagementDto;
+    });
+
+    this.logger.log('Retrieved all profiles', {
+      count: mappedProfiles.length,
+    });
+
+    return {
+      profiles: mappedProfiles,
+      totalCount: mappedProfiles.length,
     };
   }
 
@@ -294,5 +352,84 @@ export class ProfileService {
     await this.profileRepository.save(profile);
 
     return { images: profile.images };
+  }
+
+  async reportUser(
+    reportedUserId: string,
+    reporterUserId: string,
+  ): Promise<{ message: string; reportCount: number }> {
+    // Find the reported user's profile
+    const reportedProfile =
+      await this.profileRepository.findByUserId(reportedUserId);
+
+    if (!reportedProfile) {
+      throw new NotFoundException(`User with ID ${reportedUserId} not found`);
+    }
+
+    // Increment the report count
+    await this.profileRepository.incrementReportCount(reportedProfile.id);
+
+    // Get updated profile to return current report count
+    const updatedProfile = await this.profileRepository.findByProfileId(
+      reportedProfile.id,
+    );
+
+    this.logger.log(`User reported`, {
+      reportedUserId,
+      reporterUserId,
+      newReportCount: updatedProfile.reportCount,
+    });
+
+    // Auto-ban if report count exceeds threshold
+    if (updatedProfile.reportCount >= 5) {
+      await this.banUser(reportedUserId);
+      return {
+        message: `User reported successfully. User has been automatically banned due to ${updatedProfile.reportCount} reports.`,
+        reportCount: updatedProfile.reportCount,
+      };
+    }
+
+    return {
+      message: 'User reported successfully',
+      reportCount: updatedProfile.reportCount,
+    };
+  }
+
+  async banUser(userId: string): Promise<BanUserResponseDto> {
+    const user = await this.userRepository.findById(userId);
+
+    if (!user) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
+
+    if (user.banned) {
+      return { success: true, message: 'User is already banned' };
+    }
+
+    user.banned = true;
+    await this.userRepository.save(user);
+
+    this.logger.log(`User banned`, { userId });
+
+    return { success: true, message: 'User banned successfully' };
+  }
+
+  async unbanUser(userId: string): Promise<BanUserResponseDto> {
+    const user = await this.userRepository.findById(userId);
+
+    if (!user) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
+
+    if (!user.banned) {
+      return { success: true, message: 'User is not banned' };
+    }
+
+    user.banned = false;
+    await this.userRepository.save(user);
+
+    this.logger.log(`User unbanned`, { userId });
+
+    return { success: true, message: 'User unbanned successfully' };
   }
 }

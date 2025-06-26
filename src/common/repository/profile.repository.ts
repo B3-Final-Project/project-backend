@@ -35,6 +35,29 @@ export class ProfileRepository {
     return profile;
   }
 
+  public async getAllProfiles(
+    offset: number,
+    limit: number,
+    sortBy?: 'reportCount' | 'createdAt',
+    sortOrder?: 'asc' | 'desc',
+  ): Promise<Profile[]> {
+    let actualSortColumn = 'p.id'; // default
+    if (sortBy === 'reportCount') {
+      actualSortColumn = 'p.reportCount';
+    } else if (sortBy === 'createdAt') {
+      actualSortColumn = 'p.created_at';
+    }
+
+    return this.profileRepository
+      .createQueryBuilder('p')
+      .leftJoinAndSelect('p.userProfile', 'u')
+      .orderBy(actualSortColumn, sortOrder === 'desc' ? 'DESC' : 'ASC')
+      .addOrderBy('p.id', 'ASC')
+      .skip(offset)
+      .take(limit)
+      .getMany();
+  }
+
   public async findByProfileIds(profileIds: number[]): Promise<Profile[]> {
     return this.profileRepository
       .createQueryBuilder('p')
@@ -91,6 +114,15 @@ export class ProfileRepository {
     }
     await this.save(profile);
     return { images: profile.images };
+  }
+
+  public async incrementReportCount(profileId: number): Promise<void> {
+    await this.profileRepository
+      .createQueryBuilder()
+      .update(Profile)
+      .set({ reportCount: () => 'reportCount + 1' })
+      .where('id = :profileId', { profileId })
+      .execute();
   }
 
   public async findMatchedProfiles(profileId: number): Promise<Profile[]> {

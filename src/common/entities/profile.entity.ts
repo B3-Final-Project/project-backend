@@ -99,6 +99,10 @@ export class Profile {
   })
   interests?: Interest[];
 
+  @ApiProperty({ example: 0, description: 'Number of reports received' })
+  @Column({ type: 'int', default: 0 })
+  reportCount: number;
+
   @ApiProperty({ type: () => User })
   @OneToOne(() => User, (userProfile) => userProfile.profile)
   userProfile: User;
