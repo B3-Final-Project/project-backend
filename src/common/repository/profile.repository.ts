@@ -57,7 +57,7 @@ export class ProfileRepository {
       .orderBy(actualSortColumn, sortOrder || 'ASC');
     if (search && search.trim() !== '') {
       // search by name or surname
-      query.where(
+      query.andWhere(
         'LOWER(u.name) LIKE LOWER(:search) OR LOWER(u.surname) LIKE LOWER(:search)',
         { search: `%${search.trim()}%` },
       );
