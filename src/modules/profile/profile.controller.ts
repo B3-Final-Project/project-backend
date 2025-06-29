@@ -37,6 +37,7 @@ import {
   ReportUserResponseDto,
   BanUserResponseDto,
 } from './dto/admin-actions.dto';
+import { ReportDto } from './dto/report.dto';
 
 @ApiTags('profiles')
 @ApiBearerAuth('jwt-auth')
@@ -56,9 +57,16 @@ export class ProfileController {
     @Query('offset', ParseIntPipe) offset: number,
     @Query('limit', ParseIntPipe) limit: number,
     @Query('sortBy') sortBy?: 'reportCount' | 'createdAt', // Optional sort field
-    @Query('sortOrder') sortOrder?: 'asc' | 'desc',
+    @Query('sortOrder') sortOrder?: 'ASC' | 'DESC',
+    @Query('search') search?: string, // Optional search term
   ): Promise<UserManagementResponseDto> {
-    return this.profileService.getAllProfiles(offset, limit, sortBy, sortOrder);
+    return this.profileService.getAllProfiles(
+      offset,
+      limit,
+      sortBy,
+      sortOrder,
+      search,
+    );
   }
 
   @ApiOperation({ summary: 'Récupère un profil par son ID' })
@@ -221,12 +229,17 @@ export class ProfileController {
     description: 'User reported successfully',
     type: ReportUserResponseDto,
   })
-  @Post(':userId/report')
+  @Post(':profileId/report')
   public async reportUserByUser(
-    @Param('userId') reportedUserId: string,
+    @Param('profileId', ParseIntPipe) reportedProfileId: number,
     @Req() req: HttpRequestDto,
+    @Body() body: ReportDto,
   ): Promise<ReportUserResponseDto> {
-    return this.profileService.reportUser(reportedUserId, req.user.userId);
+    return this.profileService.reportUser(
+      reportedProfileId,
+      req.user.userId,
+      body,
+    );
   }
 
   @ApiOperation({ summary: 'Ban a user' })
@@ -265,5 +278,54 @@ export class ProfileController {
     @Param('userId') userId: string,
   ): Promise<BanUserResponseDto> {
     return this.profileService.unbanUser(userId);
+  }
+
+  // Admin endpoints for report management
+  @ApiOperation({ summary: 'Get all reports (Admin only)' })
+  @ApiResponse({
+    status: 200,
+    description: 'Reports retrieved successfully',
+  })
+  @UseGuards(IsAdmin)
+  @Get('reports')
+  public async getAllReports(
+    @Query('offset', ParseIntPipe) offset: number = 0,
+    @Query('limit', ParseIntPipe) limit: number = 10,
+  ) {
+    return this.profileService.getAllReports(offset, limit);
+  }
+
+  @ApiOperation({ summary: 'Get reports for a specific profile (Admin only)' })
+  @ApiParam({
+    name: 'profileId',
+    type: Number,
+    description: 'ID of the profile to get reports for',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Profile reports retrieved successfully',
+  })
+  @UseGuards(IsAdmin)
+  @Get(':profileId/reports')
+  public async getReportsForProfile(
+    @Param('profileId', ParseIntPipe) profileId: number,
+  ) {
+    return this.profileService.getReportsForProfile(profileId);
+  }
+
+  @ApiOperation({ summary: 'Delete a report (Admin only)' })
+  @ApiParam({
+    name: 'reportId',
+    type: Number,
+    description: 'ID of the report to delete',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Report deleted successfully',
+  })
+  @UseGuards(IsAdmin)
+  @Delete('reports/:reportId')
+  public async deleteReport(@Param('reportId', ParseIntPipe) reportId: number) {
+    return this.profileService.deleteReport(reportId);
   }
 }

@@ -14,15 +14,17 @@ import {
   UserManagementResponseDto,
 } from '../dto/user-management.dto';
 
+import { BanUserResponseDto } from '../dto/admin-actions.dto';
 import { HttpRequestDto } from '../../../common/dto/http-request.dto';
 import { InterestRepository } from '../../../common/repository/interest.repository';
 import { Profile } from '../../../common/entities/profile.entity';
 import { ProfileRepository } from '../../../common/repository/profile.repository';
 import { ProfileUtils } from './profile-utils.service';
+import { ReportDto } from '../dto/report.dto';
+import { ReportRepository } from '../../../common/repository/report.repository';
 import { S3Service } from './s3.service';
 import { User } from '../../../common/entities/user.entity';
 import { UserRepository } from '../../../common/repository/user.repository';
-import { BanUserResponseDto } from '../dto/admin-actions.dto';
 
 @Injectable()
 export class ProfileService {
@@ -31,6 +33,7 @@ export class ProfileService {
     private readonly profileRepository: ProfileRepository,
     private readonly userRepository: UserRepository,
     private readonly interestRepository: InterestRepository,
+    private readonly reportRepository: ReportRepository,
     private readonly s3Service: S3Service,
   ) {}
 
@@ -152,7 +155,8 @@ export class ProfileService {
     offset = 0,
     limit = 10,
     sortBy?: 'reportCount' | 'createdAt',
-    sortOrder?: 'asc' | 'desc',
+    sortOrder?: 'ASC' | 'DESC',
+    search?: string,
   ): Promise<UserManagementResponseDto> {
     // returns a list of all profiles with user information and count
     const profiles = await this.profileRepository.getAllProfiles(
@@ -160,6 +164,7 @@ export class ProfileService {
       limit,
       sortBy,
       sortOrder,
+      search,
     );
     const mappedProfiles = profiles.map((profile) => {
       const user = profile.userProfile;
@@ -355,43 +360,51 @@ export class ProfileService {
   }
 
   async reportUser(
-    reportedUserId: string,
+    reportedProfileId: number,
     reporterUserId: string,
+    body: ReportDto,
   ): Promise<{ message: string; reportCount: number }> {
     // Find the reported user's profile
     const reportedProfile =
-      await this.profileRepository.findByUserId(reportedUserId);
+      await this.profileRepository.findByProfileId(reportedProfileId);
 
     if (!reportedProfile) {
-      throw new NotFoundException(`User with ID ${reportedUserId} not found`);
+      throw new NotFoundException(
+        `User with Profile ID ${reportedProfileId} not found`,
+      );
     }
 
-    // Increment the report count
-    await this.profileRepository.incrementReportCount(reportedProfile.id);
+    // Create the report record
+    await this.reportRepository.create(reportedProfileId, reporterUserId, body);
 
-    // Get updated profile to return current report count
-    const updatedProfile = await this.profileRepository.findByProfileId(
-      reportedProfile.id,
-    );
+    // Update the report count by counting actual reports
+    const reportCount =
+      await this.reportRepository.countByProfileId(reportedProfileId);
+
+    // Update the profile's report count
+    reportedProfile.reportCount = reportCount;
+    await this.profileRepository.save(reportedProfile);
 
     this.logger.log(`User reported`, {
-      reportedUserId,
+      reportedProfileId,
       reporterUserId,
-      newReportCount: updatedProfile.reportCount,
+      newReportCount: reportCount,
+      reason: body.reason,
+      message: body.message,
     });
 
     // Auto-ban if report count exceeds threshold
-    if (updatedProfile.reportCount >= 5) {
-      await this.banUser(reportedUserId);
+    if (reportCount >= 5) {
+      await this.banUser(reportedProfile.userProfile.user_id);
       return {
-        message: `User reported successfully. User has been automatically banned due to ${updatedProfile.reportCount} reports.`,
-        reportCount: updatedProfile.reportCount,
+        message: `User reported successfully. User has been automatically banned due to ${reportCount} reports.`,
+        reportCount,
       };
     }
 
     return {
       message: 'User reported successfully',
-      reportCount: updatedProfile.reportCount,
+      reportCount,
     };
   }
 
@@ -431,5 +444,46 @@ export class ProfileService {
     this.logger.log(`User unbanned`, { userId });
 
     return { success: true, message: 'User unbanned successfully' };
+  }
+
+  async getReportsForProfile(profileId: number) {
+    return await this.reportRepository.findByProfileId(profileId);
+  }
+
+  async getAllReports(offset = 0, limit = 10) {
+    return this.reportRepository.findAll(offset, limit);
+  }
+
+  async deleteReport(reportId: number) {
+    const report = await this.reportRepository.findById(reportId);
+    if (!report) {
+      throw new NotFoundException(`Report with ID ${reportId} not found`);
+    }
+
+    await this.reportRepository.deleteById(reportId);
+
+    // Recalculate report count for the profile
+    const newCount = await this.reportRepository.countByProfileId(
+      report.reported_profile_id,
+    );
+    const profile = await this.profileRepository.findByProfileId(
+      report.reported_profile_id,
+    );
+    if (profile) {
+      profile.reportCount = newCount;
+      await this.profileRepository.save(profile);
+    }
+
+    this.logger.log(`Report deleted`, {
+      reportId,
+      profileId: report.reported_profile_id,
+      newCount,
+    });
+
+    return {
+      success: true,
+      message: 'Report deleted successfully',
+      newReportCount: newCount,
+    };
   }
 }

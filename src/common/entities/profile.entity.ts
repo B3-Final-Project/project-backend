@@ -3,6 +3,7 @@ import {
   Entity,
   JoinTable,
   ManyToMany,
+  OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
@@ -18,6 +19,7 @@ import {
 
 import { ApiProperty } from '@nestjs/swagger';
 import { Interest } from './interest.entity';
+import { Report } from './report.entity';
 import { User } from './user.entity';
 
 @Entity('profiles')
@@ -102,6 +104,10 @@ export class Profile {
   @ApiProperty({ example: 0, description: 'Number of reports received' })
   @Column({ type: 'int', default: 0 })
   reportCount: number;
+
+  @ApiProperty({ type: () => [Object], required: false })
+  @OneToMany(() => Report, (report) => report.reportedProfile)
+  reports?: Report[];
 
   @ApiProperty({ type: () => User })
   @OneToOne(() => User, (userProfile) => userProfile.profile)

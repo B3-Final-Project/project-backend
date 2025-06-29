@@ -39,37 +39,36 @@ export class ProfileRepository {
     offset: number,
     limit: number,
     sortBy?: 'reportCount' | 'createdAt',
-    sortOrder?: 'asc' | 'desc',
+    sortOrder?: 'ASC' | 'DESC',
+    search?: string,
   ): Promise<Profile[]> {
-    let actualSortColumn = 'p.id'; // default
+    let actualSortColumn = 'p.id';
     if (sortBy === 'reportCount') {
       actualSortColumn = 'p.reportCount';
     } else if (sortBy === 'createdAt') {
       actualSortColumn = 'p.created_at';
     }
 
-    return this.profileRepository
+    const query = this.profileRepository
       .createQueryBuilder('p')
       .leftJoinAndSelect('p.userProfile', 'u')
-      .orderBy(actualSortColumn, sortOrder === 'desc' ? 'DESC' : 'ASC')
-      .addOrderBy('p.id', 'ASC')
       .skip(offset)
       .take(limit)
-      .getMany();
+      .orderBy(actualSortColumn, sortOrder || 'ASC');
+    if (search && search.trim() !== '') {
+      // search by name or surname
+      query.where(
+        'LOWER(u.name) LIKE LOWER(:search) OR LOWER(u.surname) LIKE LOWER(:search)',
+        { search: `%${search.trim()}%` },
+      );
+    }
+    return await query.getMany();
   }
 
   public async findByProfileIds(profileIds: number[]): Promise<Profile[]> {
     return this.profileRepository
       .createQueryBuilder('p')
       .where('p.id IN (:...profileIds)', { profileIds })
-      .getMany();
-  }
-
-  public async findByUserIds(userIds: string[]): Promise<Profile[]> {
-    return await this.profileRepository
-      .createQueryBuilder('p')
-      .innerJoin('p.userProfile', 'u')
-      .where('u.user_id IN (:...userIds)', { userIds })
       .getMany();
   }
 
