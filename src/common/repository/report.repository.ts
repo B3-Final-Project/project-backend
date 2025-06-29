@@ -63,4 +63,42 @@ export class ReportRepository {
       relations: ['reportedProfile', 'reportedProfile.userProfile'],
     });
   }
+
+  public async findAllWithFilters(filters: {
+    offset: number;
+    limit: number;
+    profileId?: number;
+    reporterId?: string;
+    status?: string;
+  }): Promise<{ reports: Report[]; total: number }> {
+    const queryBuilder = this.reportRepository
+      .createQueryBuilder('report')
+      .leftJoinAndSelect('report.reportedProfile', 'profile')
+      .leftJoinAndSelect('profile.userProfile', 'user')
+      .orderBy('report.created_at', 'DESC')
+      .skip(filters.offset)
+      .take(filters.limit);
+
+    if (filters.profileId) {
+      queryBuilder.andWhere('report.reported_profile_id = :profileId', {
+        profileId: filters.profileId,
+      });
+    }
+
+    if (filters.reporterId) {
+      queryBuilder.andWhere('report.reporterUserId = :reporterId', {
+        reporterId: filters.reporterId,
+      });
+    }
+
+    // Note: Add status filter when status column exists in the entity
+    // if (filters.status) {
+    //   queryBuilder.andWhere('report.status = :status', {
+    //     status: filters.status,
+    //   });
+    // }
+
+    const [reports, total] = await queryBuilder.getManyAndCount();
+    return { reports, total };
+  }
 }
