@@ -394,7 +394,7 @@ export class ProfileService {
     });
 
     // Auto-ban if report count exceeds threshold
-    if (reportCount >= 5) {
+    if (reportCount >= ProfileService.AUTO_BAN_THRESHOLD) {
       await this.banUser(reportedProfile.userProfile.user_id);
       return {
         message: `User reported successfully. User has been automatically banned due to ${reportCount} reports.`,
