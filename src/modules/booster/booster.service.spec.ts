@@ -76,6 +76,7 @@ describe('BoosterService', () => {
           images: [],
           avatarUrl: undefined,
           interests: [],
+          reportCount: 0,
         },
         {
           id: 2,
@@ -99,6 +100,7 @@ describe('BoosterService', () => {
           images: [],
           avatarUrl: undefined,
           interests: [],
+          reportCount: 0,
         },
         {
           id: 3,
@@ -122,6 +124,7 @@ describe('BoosterService', () => {
           images: [],
           avatarUrl: undefined,
           interests: [],
+          reportCount: 0,
         },
       ];
 
@@ -147,12 +150,12 @@ describe('BoosterService', () => {
           work: '',
           images: [],
           avatarUrl: '/vintage.png',
+          rarity: RarityEnum.COMMON,
           languages: [],
           smoking: undefined,
           drinking: undefined,
           zodiac: undefined,
           interests: [],
-          rarity: RarityEnum.COMMON,
           surname: '',
           min_age: 18,
           max_age: 30,
@@ -246,6 +249,7 @@ describe('BoosterService', () => {
           images: [],
           avatarUrl: undefined,
           interests: [],
+          reportCount: 0,
         },
         {
           id: 2,
@@ -269,6 +273,7 @@ describe('BoosterService', () => {
           images: [],
           avatarUrl: undefined,
           interests: [],
+          reportCount: 0,
         },
       ];
 
@@ -294,6 +299,7 @@ describe('BoosterService', () => {
         images: [],
         avatarUrl: undefined,
         interests: [],
+        reportCount: 0,
       }));
 
       const initialSnapshot = [...initialMatches];

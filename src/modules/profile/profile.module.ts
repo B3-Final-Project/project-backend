@@ -8,6 +8,8 @@ import { Profile } from '../../common/entities/profile.entity';
 import { ProfileController } from './profile.controller';
 import { ProfileRepository } from '../../common/repository/profile.repository';
 import { ProfileService } from './services/profile.service';
+import { Report } from '../../common/entities/report.entity';
+import { ReportRepository } from '../../common/repository/report.repository';
 import { S3Client } from '@aws-sdk/client-s3';
 import { S3Service } from './services/s3.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -16,7 +18,7 @@ import { UserRepository } from '../../common/repository/user.repository';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Profile, Interest, User]),
+    TypeOrmModule.forFeature([Profile, Interest, User, Report]),
     MulterModule.registerAsync({
       useFactory: () => ({
         storage: multerS3({
@@ -74,6 +76,7 @@ import { UserRepository } from '../../common/repository/user.repository';
     UserRepository,
     ProfileRepository,
     InterestRepository,
+    ReportRepository,
     S3Service,
     {
       provide: S3Client,

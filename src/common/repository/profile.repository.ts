@@ -35,18 +35,40 @@ export class ProfileRepository {
     return profile;
   }
 
+  public async getAllProfiles(
+    offset: number,
+    limit: number,
+    sortBy?: 'reportCount' | 'createdAt',
+    sortOrder?: 'ASC' | 'DESC',
+    search?: string,
+  ): Promise<Profile[]> {
+    let actualSortColumn = 'p.id';
+    if (sortBy === 'reportCount') {
+      actualSortColumn = 'p.reportCount';
+    } else if (sortBy === 'createdAt') {
+      actualSortColumn = 'p.created_at';
+    }
+
+    const query = this.profileRepository
+      .createQueryBuilder('p')
+      .leftJoinAndSelect('p.userProfile', 'u')
+      .skip(offset)
+      .take(limit)
+      .orderBy(actualSortColumn, sortOrder || 'ASC');
+    if (search && search.trim() !== '') {
+      // search by name or surname
+      query.andWhere(
+        'LOWER(u.name) LIKE LOWER(:search) OR LOWER(u.surname) LIKE LOWER(:search)',
+        { search: `%${search.trim()}%` },
+      );
+    }
+    return await query.getMany();
+  }
+
   public async findByProfileIds(profileIds: number[]): Promise<Profile[]> {
     return this.profileRepository
       .createQueryBuilder('p')
       .where('p.id IN (:...profileIds)', { profileIds })
-      .getMany();
-  }
-
-  public async findByUserIds(userIds: string[]): Promise<Profile[]> {
-    return await this.profileRepository
-      .createQueryBuilder('p')
-      .innerJoin('p.userProfile', 'u')
-      .where('u.user_id IN (:...userIds)', { userIds })
       .getMany();
   }
 
@@ -91,6 +113,15 @@ export class ProfileRepository {
     }
     await this.save(profile);
     return { images: profile.images };
+  }
+
+  public async incrementReportCount(profileId: number): Promise<void> {
+    await this.profileRepository
+      .createQueryBuilder()
+      .update(Profile)
+      .set({ reportCount: () => 'reportCount + 1' })
+      .where('id = :profileId', { profileId })
+      .execute();
   }
 
   public async findMatchedProfiles(profileId: number): Promise<Profile[]> {
