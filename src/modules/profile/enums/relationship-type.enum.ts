@@ -4,4 +4,5 @@ export enum RelationshipTypeEnum {
   MARRIAGE,
   FRIENDSHIP,
   UNSURE,
+  ANY,
 }
