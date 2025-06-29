@@ -29,6 +29,7 @@ import { UserRepository } from '../../../common/repository/user.repository';
 @Injectable()
 export class ProfileService {
   private readonly logger = new Logger(ProfileService.name);
+  private static readonly AUTO_BAN_THRESHOLD = 5;
   constructor(
     private readonly profileRepository: ProfileRepository,
     private readonly userRepository: UserRepository,
