@@ -9,6 +9,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { BoosterModule } from './modules/booster/booster.module';
 import { BoosterPack } from './common/entities/booster.entity';
+import { BoosterUsage } from './common/entities/booster-usage.entity';
 import { CognitoStrategy } from './auth/cognito.strategy';
 import { Constants } from './constants';
 import { Interest } from './common/entities/interest.entity';
@@ -18,6 +19,7 @@ import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConne
 import { Profile } from './common/entities/profile.entity';
 import { ProfileModule } from './modules/profile/profile.module';
 import { SettingsModule } from './modules/settings/settings.module';
+import { StatsModule } from './modules/stats/stats.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './common/entities/user.entity';
 import { UserMatches } from './common/entities/user-matches.entity';
@@ -28,7 +30,7 @@ export const ormConfig: PostgresConnectionOptions = {
   port: Constants.DATABASE_PORT,
   username: Constants.DATABASE_USER,
   password: Constants.DATABASE_PASSWORD,
-  entities: [Interest, Profile, User, UserMatches, BoosterPack],
+  entities: [Interest, Profile, User, UserMatches, BoosterPack, BoosterUsage],
   database: Constants.DATABASE_NAME,
   synchronize: true,
   // ssl: {
@@ -47,6 +49,7 @@ export const ormConfig: PostgresConnectionOptions = {
     BoosterModule,
     SettingsModule,
     MatchesModule,
+    StatsModule,
   ],
   controllers: [AppController],
   providers: [AppService, CognitoStrategy],

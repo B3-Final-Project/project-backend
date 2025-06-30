@@ -4,14 +4,15 @@ import {
   GetSentMatchesResponse,
   MatchActionResponseDto,
 } from './dto/match-response.dto';
-
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+
+import { AnalyticsService } from '../stats/analytics.service';
+import { BoosterAction } from '../booster/enums/action.enum';
 import { HttpRequestDto } from '../../common/dto/http-request.dto';
-import { UserMatches } from '../../common/entities/user-matches.entity';
 import { MatchRepository } from '../../common/repository/matches.repository';
 import { ProfileRepository } from '../../common/repository/profile.repository';
+import { UserMatches } from '../../common/entities/user-matches.entity';
 import { UserRepository } from '../../common/repository/user.repository';
-import { BoosterAction } from '../booster/enums/action.enum';
 
 @Injectable()
 export class MatchesService {
@@ -21,6 +22,7 @@ export class MatchesService {
     private readonly matchRepository: MatchRepository,
     private readonly profileRepository: ProfileRepository,
     private readonly userRepository: UserRepository,
+    private readonly analyticsService: AnalyticsService,
   ) {}
 
   /**
@@ -230,6 +232,13 @@ export class MatchesService {
       targetProfileId: profileId,
     });
 
+    // Track the like action for analytics
+    await this.analyticsService.trackUserAction(
+      ourProfileId,
+      profileId,
+      BoosterAction.LIKE,
+    );
+
     // Check if it's a mutual match
     const hasLikedUsBack = await this.matchRepository.checkMutualLike(
       ourProfileId,
@@ -259,6 +268,19 @@ export class MatchesService {
         ourProfileId,
         targetProfileId: profileId,
       });
+
+      // Track the match actions for analytics
+      await this.analyticsService.trackUserAction(
+        ourProfileId,
+        profileId,
+        BoosterAction.MATCH,
+      );
+      await this.analyticsService.trackUserAction(
+        profileId,
+        ourProfileId,
+        BoosterAction.MATCH,
+      );
+
       return { matched: true };
     }
 
@@ -308,5 +330,12 @@ export class MatchesService {
       ourProfileId,
       targetProfileId: profileId,
     });
+
+    // Track the pass action for analytics
+    await this.analyticsService.trackUserAction(
+      ourProfileId,
+      profileId,
+      BoosterAction.SEEN,
+    );
   }
 }
