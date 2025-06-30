@@ -64,6 +64,10 @@ export class User {
   @Column({ type: 'int', nullable: true })
   currency: number;
 
+  @ApiProperty({ example: false, description: 'Whether the user is banned' })
+  @Column({ type: 'boolean', default: false })
+  banned: boolean;
+
   @ApiProperty({ type: () => Profile, required: false })
   @OneToOne(() => Profile, { eager: true })
   @JoinColumn({ name: 'profile_id' })

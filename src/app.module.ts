@@ -18,6 +18,7 @@ import { MatchesModule } from './modules/matches/matches.module';
 import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions';
 import { Profile } from './common/entities/profile.entity';
 import { ProfileModule } from './modules/profile/profile.module';
+import { Report } from './common/entities/report.entity';
 import { SettingsModule } from './modules/settings/settings.module';
 import { StatsModule } from './modules/stats/stats.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -30,7 +31,7 @@ export const ormConfig: PostgresConnectionOptions = {
   port: Constants.DATABASE_PORT,
   username: Constants.DATABASE_USER,
   password: Constants.DATABASE_PASSWORD,
-  entities: [Interest, Profile, User, UserMatches, BoosterPack, BoosterUsage],
+  entities: [Interest, Profile, User, UserMatches, BoosterPack, BoosterUsage, Report],
   database: Constants.DATABASE_NAME,
   synchronize: true,
   // ssl: {
