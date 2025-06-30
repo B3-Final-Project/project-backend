@@ -13,14 +13,18 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Controller, Get, UseGuards, UseInterceptors } from '@nestjs/common';
 
+import { AppLinkBuilders } from '../../common/utils/hateoas-links.util';
 import { AuthGuard } from '@nestjs/passport';
+import { HateoasInterceptor } from '../../common/interceptors/hateoas.interceptor';
+import { HateoasLinks } from '../../common/decorators/hateoas.decorator';
 import { StatsService } from './stats.service';
 
 @ApiTags('stats')
 @ApiBearerAuth('jwt-auth')
 @UseGuards(AuthGuard('jwt'))
+@UseInterceptors(HateoasInterceptor)
 @Controller('stats')
 export class StatsController {
   constructor(private readonly statsService: StatsService) {}
@@ -32,6 +36,7 @@ export class StatsController {
     type: AppStatsDto,
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @HateoasLinks('stats', AppLinkBuilders.statsLinks())
   @Get('app')
   async getAppStats(): Promise<AppStatsDto> {
     return this.statsService.getAppStats();
@@ -44,6 +49,7 @@ export class StatsController {
     type: [BoosterStatsDto],
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @HateoasLinks('stats', AppLinkBuilders.statsLinks())
   @Get('boosters')
   async getBoosterStats(): Promise<BoosterStatsDto[]> {
     return this.statsService.getBoosterStats();
@@ -58,6 +64,7 @@ export class StatsController {
     type: DetailedStatsDto,
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @HateoasLinks('stats', AppLinkBuilders.statsLinks())
   @Get('detailed')
   async getDetailedStats(): Promise<DetailedStatsDto> {
     return this.statsService.getDetailedStats();
@@ -168,6 +175,7 @@ export class StatsController {
     type: ComprehensiveStatsDto,
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @HateoasLinks('stats', AppLinkBuilders.statsLinks())
   @Get('comprehensive')
   async getComprehensiveStats(): Promise<ComprehensiveStatsDto> {
     return this.statsService.getComprehensiveStats();

@@ -9,6 +9,7 @@ import {
   Query,
   Req,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import {
@@ -28,10 +29,14 @@ import {
   ReportResponseDto,
   ReportsListResponseDto,
 } from './dto/report-response.dto';
+import { HateoasInterceptor } from '../../common/interceptors/hateoas.interceptor';
+import { HateoasLinks } from '../../common/decorators/hateoas.decorator';
+import { AppLinkBuilders } from '../../common/utils/hateoas-links.util';
 
 @ApiTags('reports')
 @ApiBearerAuth('jwt-auth')
 @UseGuards(AuthGuard('jwt'))
+@UseInterceptors(HateoasInterceptor)
 @Controller('reports')
 export class ReportsController {
   constructor(private readonly reportsService: ReportsService) {}
@@ -47,12 +52,13 @@ export class ReportsController {
     status: 400,
     description: 'Bad request - Invalid report data',
   })
+  @HateoasLinks('report', AppLinkBuilders.reportLinks())
   @Post()
   public async createReport(
     @Req() req: HttpRequestDto,
     @Body() createReportDto: CreateReportDto,
-  ): Promise<ReportResponseDto> {
-    return this.reportsService.createReport(req.user.userId, createReportDto);
+  ) {
+    return this.reportsService.reportUser(req.user.userId, createReportDto);
   }
 
   @ApiOperation({ summary: 'Get all reports (Admin only)' })

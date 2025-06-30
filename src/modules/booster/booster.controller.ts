@@ -9,6 +9,7 @@ import {
   Query,
   Req,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { BoosterService } from './booster.service';
 import { AuthGuard } from '@nestjs/passport';
@@ -25,11 +26,18 @@ import {
   ApiBody,
   ApiQuery,
 } from '@nestjs/swagger';
+import { HateoasInterceptor } from '../../common/interceptors/hateoas.interceptor';
+import {
+  HateoasCollectionOnly,
+  HateoasLinks,
+} from '../../common/decorators/hateoas.decorator';
+import { AppLinkBuilders } from '../../common/utils/hateoas-links.util';
 
 @ApiTags('booster')
 @ApiBearerAuth('jwt-auth')
 @Controller('booster')
 @UseGuards(AuthGuard('jwt'))
+@UseInterceptors(HateoasInterceptor)
 export class BoosterController {
   public constructor(private readonly boosterService: BoosterService) {}
 
@@ -39,8 +47,9 @@ export class BoosterController {
     description: 'Liste des packs disponibles',
     type: AvailablePackDto,
   })
+  @HateoasCollectionOnly('booster', AppLinkBuilders.boosterCollectionLinks())
   @Get('list')
-  public getAvailablePacks(): Promise<AvailablePackDto> {
+  public getAvailablePacks() {
     return this.boosterService.getAvailablePacks();
   }
 
@@ -51,6 +60,7 @@ export class BoosterController {
     status: 404,
     description: 'Utilisateur non trouvé ou non admin',
   })
+  @HateoasLinks('booster', AppLinkBuilders.boosterLinks())
   @Post()
   public async createBooster(
     @Req() req: HttpRequestDto,
@@ -77,6 +87,7 @@ export class BoosterController {
     type: [Object],
   })
   @ApiResponse({ status: 400, description: 'Paramètre count invalide' })
+  @HateoasLinks('booster', AppLinkBuilders.boosterLinks())
   @Get(':count')
   public getBooster(
     @Param('count', ParseIntPipe) amount: number,

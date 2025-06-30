@@ -5,6 +5,7 @@ import {
   Param,
   Post,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import {
@@ -17,10 +18,14 @@ import {
 import { IsAdmin } from '../../auth/admin.guard';
 import { UsersService } from './users.service';
 import { BanResponseDto, BanStatusResponseDto } from './dto/ban-response.dto';
+import { HateoasInterceptor } from '../../common/interceptors/hateoas.interceptor';
+import { HateoasLinks } from '../../common/decorators/hateoas.decorator';
+import { AppLinkBuilders } from '../../common/utils/hateoas-links.util';
 
 @ApiTags('users')
 @ApiBearerAuth('jwt-auth')
 @UseGuards(AuthGuard('jwt'))
+@UseInterceptors(HateoasInterceptor)
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
@@ -45,6 +50,7 @@ export class UsersController {
     description: 'User is already banned',
   })
   @UseGuards(IsAdmin)
+  @HateoasLinks('user', AppLinkBuilders.userLinks())
   @Post(':userId/bans')
   public async banUser(
     @Param('userId') userId: string,
@@ -68,6 +74,7 @@ export class UsersController {
     description: 'User not found or not banned',
   })
   @UseGuards(IsAdmin)
+  @HateoasLinks('user', AppLinkBuilders.userLinks())
   @Delete(':userId/bans')
   public async unbanUser(
     @Param('userId') userId: string,
@@ -91,6 +98,7 @@ export class UsersController {
     description: 'User not found',
   })
   @UseGuards(IsAdmin)
+  @HateoasLinks('user', AppLinkBuilders.userLinks())
   @Get(':userId/bans')
   public async getUserBanStatus(
     @Param('userId') userId: string,

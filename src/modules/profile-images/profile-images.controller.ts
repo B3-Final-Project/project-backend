@@ -24,10 +24,14 @@ import {
 import { HttpRequestDto } from '../../common/dto/http-request.dto';
 import { ProfileImagesService } from './profile-images.service';
 import { ImageResponseDto } from './dto/image-response.dto';
+import { HateoasInterceptor } from '../../common/interceptors/hateoas.interceptor';
+import { HateoasLinks } from '../../common/decorators/hateoas.decorator';
+import { AppLinkBuilders } from '../../common/utils/hateoas-links.util';
 
 @ApiTags('profile-images')
 @ApiBearerAuth('jwt-auth')
 @UseGuards(AuthGuard('jwt'))
+@UseInterceptors(HateoasInterceptor)
 @Controller('profiles/:profileId/images')
 export class ProfileImagesController {
   constructor(private readonly profileImagesService: ProfileImagesService) {}
@@ -59,6 +63,7 @@ export class ProfileImagesController {
     description: 'Image uploaded successfully',
     type: ImageResponseDto,
   })
+  @HateoasLinks('profileImage', AppLinkBuilders.profileImageLinks())
   @Post()
   @UseInterceptors(FileInterceptor('image'))
   public async uploadImage(
@@ -97,6 +102,7 @@ export class ProfileImagesController {
     description: 'Image replaced successfully',
     type: ImageResponseDto,
   })
+  @HateoasLinks('profileImage', AppLinkBuilders.profileImageLinks())
   @Put(':index')
   @UseInterceptors(FileInterceptor('image'))
   public async replaceImage(
@@ -123,6 +129,7 @@ export class ProfileImagesController {
     status: 200,
     description: 'Image deleted successfully',
   })
+  @HateoasLinks('profileImage', AppLinkBuilders.profileImageLinks())
   @Delete(':index')
   public async deleteImage(
     @Param('profileId', ParseIntPipe) profileId: number,

@@ -134,7 +134,7 @@ export class UserRepository {
       { user_id: userId },
       {
         banned: isBanned,
-        updated_at: isBanned ? new Date() : null,
+        updated_at: new Date(),
       },
     );
 

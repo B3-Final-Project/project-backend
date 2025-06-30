@@ -10,6 +10,7 @@ import {
   Req,
   UseGuards,
   Query,
+  UseInterceptors,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import {
@@ -26,10 +27,14 @@ import { HttpRequestDto } from '../../common/dto/http-request.dto';
 import { Profile } from '../../common/entities/profile.entity';
 import { UserManagementResponseDto } from './dto/user-management.dto';
 import { IsAdmin } from '../../auth/admin.guard';
+import { HateoasInterceptor } from '../../common/interceptors/hateoas.interceptor';
+import { HateoasLinks } from '../../common/decorators/hateoas.decorator';
+import { AppLinkBuilders } from '../../common/utils/hateoas-links.util';
 
 @ApiTags('profiles')
 @ApiBearerAuth('jwt-auth')
 @UseGuards(AuthGuard('jwt'))
+@UseInterceptors(HateoasInterceptor)
 @Controller('profiles')
 export class ProfileController {
   constructor(private readonly profileService: ProfileService) {}
@@ -41,6 +46,7 @@ export class ProfileController {
   })
   @Get('all')
   @UseGuards(IsAdmin)
+  @HateoasLinks('profile', AppLinkBuilders.profileLinks())
   public async getAllProfiles(
     @Query('offset', ParseIntPipe) offset: number,
     @Query('limit', ParseIntPipe) limit: number,
@@ -69,6 +75,7 @@ export class ProfileController {
     type: Profile,
   })
   @UseGuards(IsAdmin)
+  @HateoasLinks('profile', AppLinkBuilders.profileLinks())
   @Get(':id')
   public async getProfileById(@Param('id') id: string) {
     return this.profileService.getProfileById(id);
@@ -80,6 +87,7 @@ export class ProfileController {
     description: 'Profil récupéré avec succès',
     type: Profile,
   })
+  @HateoasLinks('profile', AppLinkBuilders.profileLinks())
   @Get()
   public async getProfile(@Req() req: HttpRequestDto) {
     return this.profileService.getProfile(req);
@@ -92,6 +100,7 @@ export class ProfileController {
     description: 'Profil mis à jour avec succès',
     type: Profile,
   })
+  @HateoasLinks('profile', AppLinkBuilders.profileLinks())
   @Put()
   public async updateProfile(
     @Req() req: HttpRequestDto,
@@ -109,6 +118,7 @@ export class ProfileController {
     description: 'Profil créé avec succès',
     type: Profile,
   })
+  @HateoasLinks('profile', AppLinkBuilders.profileLinks())
   @Post()
   public async createProfile(
     @Req() req: HttpRequestDto,
@@ -127,6 +137,7 @@ export class ProfileController {
     description: 'Profil patché avec succès',
     type: Profile,
   })
+  @HateoasLinks('profile', AppLinkBuilders.profileLinks())
   @Patch()
   public async updateProfileField(
     @Body() body: Partial<UpdateProfileDto>,

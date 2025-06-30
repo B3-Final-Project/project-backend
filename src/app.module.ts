@@ -12,6 +12,7 @@ import { BoosterPack } from './common/entities/booster.entity';
 import { BoosterUsage } from './common/entities/booster-usage.entity';
 import { CognitoStrategy } from './auth/cognito.strategy';
 import { Constants } from './constants';
+import { HateoasModule } from './common/hateoas.module';
 import { Interest } from './common/entities/interest.entity';
 import { LoggerMiddleware } from './middlewares/logger.middleware';
 import { MatchesModule } from './modules/matches/matches.module';
@@ -57,6 +58,7 @@ export const ormConfig: PostgresConnectionOptions = {
 @Module({
   imports: [
     TypeOrmModule.forRoot(ormConfig),
+    HateoasModule,
     ProfileModule,
     BoosterModule,
     SettingsModule,
