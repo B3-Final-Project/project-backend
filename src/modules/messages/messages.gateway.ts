@@ -22,25 +22,62 @@ import { WsRequestDto } from '../../common/dto/ws-request.dto';
   },
   namespace: '/messages',
 })
-@UseGuards(WsJwtGuard)
 export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 
   private connectedUsers = new Map<string, Socket>();
 
-  constructor(private readonly messagesService: MessagesService) {}
+  constructor(
+    private readonly messagesService: MessagesService,
+    private readonly wsJwtGuard: WsJwtGuard
+  ) {}
 
   async handleConnection(client: Socket) {
+    console.log('🚀 handleConnection appelé !', {
+      socketId: client.id,
+      auth: client.handshake.auth,
+      userId: client.handshake.auth.userId
+    });
+    
     try {
+      // Appliquer le guard manuellement
+      const context = {
+        switchToWs: () => ({
+          getClient: () => client
+        })
+      };
+      
+      const isAuthenticated = this.wsJwtGuard.canActivate(context);
+      console.log('🔐 Résultat de l\'authentification:', isAuthenticated);
+      
+      if (!isAuthenticated) {
+        console.error('❌ Authentification échouée, déconnexion du client');
+        client.disconnect();
+        return;
+      }
+      
       const userId = client.handshake.auth.userId;
+      console.log('🔌 Nouvelle connexion WebSocket:', { 
+        socketId: client.id, 
+        userId, 
+        auth: client.handshake.auth 
+      });
+      
       if (userId) {
         this.connectedUsers.set(userId, client);
         client.join(`user:${userId}`);
-        console.log(`User ${userId} connected to messages`);
+        console.log(`✅ User ${userId} connecté à messages (${this.connectedUsers.size} utilisateurs connectés)`);
+        
+        // Notifier les autres utilisateurs que cet utilisateur est en ligne
+        console.log(`📡 Émission userOnline pour ${userId}`);
+        client.broadcast.emit('userOnline', { userId });
+        
+      } else {
+        console.error('❌ Pas d\'userId dans l\'auth:', client.handshake.auth);
       }
     } catch (error) {
-      console.error('Connection error:', error);
+      console.error('❌ Erreur de connexion WebSocket:', error);
       client.disconnect();
     }
   }
@@ -50,6 +87,10 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
     if (userId) {
       this.connectedUsers.delete(userId);
       console.log(`User ${userId} disconnected from messages`);
+      
+      // Notifier les autres utilisateurs que cet utilisateur est hors ligne
+      console.log(`📡 Émission userOffline pour ${userId}`);
+      client.broadcast.emit('userOffline', { userId });
     }
   }
 
@@ -58,6 +99,7 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
     @ConnectedSocket() client: Socket,
     @MessageBody() conversationId: string,
   ) {
+    console.log('📨 Événement joinConversation reçu:', { socketId: client.id, conversationId });
     const userId = client.handshake.auth.userId;
     client.join(`conversation:${conversationId}`);
     console.log(`User ${userId} joined conversation ${conversationId}`);
@@ -68,6 +110,7 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
     @ConnectedSocket() client: Socket,
     @MessageBody() conversationId: string,
   ) {
+    console.log('📨 Événement leaveConversation reçu:', { socketId: client.id, conversationId });
     const userId = client.handshake.auth.userId;
     client.leave(`conversation:${conversationId}`);
     console.log(`User ${userId} left conversation ${conversationId}`);
@@ -78,8 +121,16 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
     @ConnectedSocket() client: Socket,
     @MessageBody() data: CreateMessageDto,
   ) {
+    console.log('📨 Événement sendMessage reçu:', { socketId: client.id, data });
     try {
       const userId = client.handshake.auth.userId;
+      console.log('📤 Message reçu via WebSocket:', { 
+        userId, 
+        conversationId: data.conversation_id, 
+        content: data.content,
+        socketId: client.id 
+      });
+      
       const message = await this.messagesService.sendMessage(data, { 
         user: { 
           userId,
@@ -87,20 +138,29 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
         } 
       } as WsRequestDto);
       
+      console.log('✅ Message traité par le service:', message);
+      
       // Émettre le message à tous les utilisateurs de la conversation
       this.server.to(`conversation:${data.conversation_id}`).emit('newMessage', message);
+      console.log(`📡 Message émis à la conversation ${data.conversation_id}`);
       
-      // Émettre une notification de nouvelle conversation si c'est le premier message
+      // Émettre une notification de nouveau message non lu
       const conversation = await this.messagesService.getConversationById(data.conversation_id);
       if (conversation) {
         const otherUserId = conversation.user1_id === userId ? conversation.user2_id : conversation.user1_id;
-        this.server.to(`user:${otherUserId}`).emit('conversationUpdated', {
+        console.log(`🔔 Envoi notification à l'utilisateur ${otherUserId}`);
+        this.server.to(`user:${otherUserId}`).emit('unreadMessage', {
           conversationId: data.conversation_id,
-          lastMessage: message,
+          messageCount: 1,
+          timestamp: new Date(),
         });
       }
+      
+      // Confirmer l'envoi au client
+      client.emit('messageSent', { success: true, messageId: message.id });
+      
     } catch (error) {
-      console.error('Error sending message:', error);
+      console.error('❌ Erreur lors de l\'envoi du message:', error);
       client.emit('error', { message: 'Failed to send message' });
     }
   }
@@ -136,6 +196,7 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
   ) {
     try {
       const userId = client.handshake.auth.userId;
+      
       await this.messagesService.markMessagesAsRead(conversationId, { 
         user: { 
           userId,
@@ -147,9 +208,11 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
       this.server.to(`conversation:${conversationId}`).emit('messagesRead', {
         conversationId,
         readBy: userId,
+        timestamp: new Date(),
       });
+      
     } catch (error) {
-      console.error('Error marking messages as read:', error);
+      console.error('❌ Erreur lors du marquage comme lu:', error);
       client.emit('error', { message: 'Failed to mark messages as read' });
     }
   }
@@ -160,11 +223,32 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
     @MessageBody() data: { conversationId: string; isTyping: boolean },
   ) {
     const userId = client.handshake.auth.userId;
+    
+    // Émettre l'événement de frappe aux autres utilisateurs de la conversation
     client.to(`conversation:${data.conversationId}`).emit('userTyping', {
       userId,
       conversationId: data.conversationId,
       isTyping: data.isTyping,
     });
+
+    // Si l'utilisateur arrête de taper, on peut nettoyer les timers
+    if (!data.isTyping) {
+      // Arrêter l'indicateur de frappe immédiatement
+      client.to(`conversation:${data.conversationId}`).emit('userTyping', {
+        userId,
+        conversationId: data.conversationId,
+        isTyping: false,
+      });
+    }
+  }
+
+  @SubscribeMessage('getOnlineUsers')
+  async handleGetOnlineUsers(@ConnectedSocket() client: Socket) {
+    console.log('📨 Événement getOnlineUsers reçu:', { socketId: client.id });
+    const onlineUsers = Array.from(this.connectedUsers.keys());
+    console.log('📋 Utilisateurs en ligne:', onlineUsers);
+    client.emit('onlineUsers', { users: onlineUsers });
+    console.log('📡 Liste des utilisateurs en ligne envoyée au client');
   }
 
   // Méthode pour émettre des messages depuis le service
@@ -175,5 +259,19 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
   // Méthode pour émettre à un utilisateur spécifique
   emitToUser(userId: string, event: string, data: any) {
     this.server.to(`user:${userId}`).emit(event, data);
+  }
+
+  // Méthode pour émettre une notification de nouveau message non lu
+  emitUnreadNotification(userId: string, conversationId: string, messageCount: number) {
+    this.server.to(`user:${userId}`).emit('unreadMessage', {
+      conversationId,
+      messageCount,
+      timestamp: new Date(),
+    });
+  }
+
+  // Méthode pour émettre une notification de nouvelle conversation
+  emitNewConversationNotification(userId: string, conversation: any) {
+    this.server.to(`user:${userId}`).emit('newConversation', conversation);
   }
 } 

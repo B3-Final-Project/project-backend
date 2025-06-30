@@ -76,6 +76,12 @@ export class MessagesService {
 
   async sendMessage(dto: CreateMessageDto, req: RequestDto): Promise<any> {
     const userId = this.getUserId(req);
+    
+    // Valider que l'ID de conversation est un UUID valide
+    if (!this.isValidUUID(dto.conversation_id)) {
+      throw new BadRequestException('ID de conversation invalide');
+    }
+    
     const conversation = await this.conversationRepository.findOne({
       where: { id: dto.conversation_id },
       relations: ['user1', 'user2'],
@@ -96,6 +102,12 @@ export class MessagesService {
     });
 
     const savedMessage = await this.messageRepository.save(message);
+    
+    // Mettre à jour la date de mise à jour de la conversation
+    await this.conversationRepository.update(
+      { id: conversation.id },
+      { updated_at: new Date() }
+    );
     
     // Récupérer le message avec les relations
     const fullMessage = await this.messageRepository.findOne({
@@ -130,6 +142,12 @@ export class MessagesService {
 
   async getMessages(conversationId: string, req: RequestDto): Promise<any[]> {
     const userId = this.getUserId(req);
+    
+    // Valider que l'ID de conversation est un UUID valide
+    if (!this.isValidUUID(conversationId)) {
+      throw new BadRequestException('ID de conversation invalide');
+    }
+    
     const conversation = await this.conversationRepository.findOne({
       where: { id: conversationId },
     });
@@ -155,6 +173,12 @@ export class MessagesService {
 
   async markMessagesAsRead(conversationId: string, req: RequestDto): Promise<void> {
     const userId = this.getUserId(req);
+    
+    // Valider que l'ID de conversation est un UUID valide
+    if (!this.isValidUUID(conversationId)) {
+      throw new BadRequestException('ID de conversation invalide');
+    }
+    
     const conversation = await this.conversationRepository.findOne({
       where: { id: conversationId },
     });
@@ -178,6 +202,11 @@ export class MessagesService {
   }
 
   async getConversationById(conversationId: string): Promise<Conversation | null> {
+    // Valider que l'ID de conversation est un UUID valide
+    if (!this.isValidUUID(conversationId)) {
+      return null;
+    }
+    
     return this.conversationRepository.findOne({
       where: { id: conversationId },
       relations: ['user1', 'user2'],
@@ -186,6 +215,7 @@ export class MessagesService {
 
   private formatConversationForFrontend(conversation: Conversation, currentUserId: string): any {
     const otherUser = conversation.user1_id === currentUserId ? conversation.user2 : conversation.user1;
+    const otherUserId = conversation.user1_id === currentUserId ? conversation.user2_id : conversation.user1_id;
     const lastMessage = conversation.messages && conversation.messages.length > 0 
       ? conversation.messages[0] 
       : null;
@@ -200,6 +230,7 @@ export class MessagesService {
       id: conversation.id.toString(),
       name: otherUser?.name || 'Utilisateur inconnu',
       avatar: otherUser?.profile?.avatarUrl || otherUser?.profile?.images?.[0] || `https://api.dicebear.com/7.x/avataaars/svg?seed=${otherUser?.name || 'user'}`,
+      otherUserId: otherUserId,
       lastMessage: lastMessage ? {
         id: lastMessage.id.toString(),
         content: lastMessage.content,
@@ -222,6 +253,12 @@ export class MessagesService {
       isMe: message.sender_id === currentUserId,
       isRead: message.is_read,
       conversationId: message.conversation_id.toString(),
+      sender_id: message.sender_id,
     };
+  }
+
+  private isValidUUID(uuid: string): boolean {
+    const uuidPattern = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+    return uuidPattern.test(uuid);
   }
 } 

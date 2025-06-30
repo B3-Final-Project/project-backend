@@ -52,6 +52,7 @@ export class MessagesController {
     @Param('id') conversationId: string,
     @Req() req: HttpRequestDto,
   ) {
-    return this.messagesService.markMessagesAsRead(conversationId, req);
+    await this.messagesService.markMessagesAsRead(conversationId, req);
+    return { success: true };
   }
 } 

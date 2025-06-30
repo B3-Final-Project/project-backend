@@ -1,8 +1,11 @@
-import { IsNotEmpty, IsString, IsUUID } from 'class-validator';
+import { IsNotEmpty, IsString, IsUUID, Matches } from 'class-validator';
 
 export class CreateMessageDto {
   @IsNotEmpty()
-  @IsUUID()
+  @IsString()
+  @Matches(/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/, {
+    message: 'ID de conversation doit être un UUID valide'
+  })
   conversation_id: string;
 
   @IsNotEmpty()
