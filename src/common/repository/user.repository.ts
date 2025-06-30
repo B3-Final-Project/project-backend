@@ -57,10 +57,6 @@ export class UserRepository {
     return this.userRepository.count(options);
   }
 
-  public createQueryBuilder(alias?: string) {
-    return this.userRepository.createQueryBuilder(alias);
-  }
-
   public async getAverageAge(): Promise<number> {
     const result = await this.userRepository
       .createQueryBuilder('user')
@@ -123,5 +119,25 @@ export class UserRepository {
       ])
       .where('profile.id IS NOT NULL')
       .getRawOne();
+  }
+
+  public async updateBanStatus(
+    userId: string,
+    isBanned: boolean,
+  ): Promise<User> {
+    const user = await this.findById(userId);
+    if (!user) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
+
+    await this.userRepository.update(
+      { user_id: userId },
+      {
+        banned: isBanned,
+        updated_at: new Date(),
+      },
+    );
+
+    return await this.findById(userId);
   }
 }

@@ -14,13 +14,11 @@ import {
   UserManagementResponseDto,
 } from '../dto/user-management.dto';
 
-import { BanUserResponseDto } from '../dto/admin-actions.dto';
 import { HttpRequestDto } from '../../../common/dto/http-request.dto';
 import { InterestRepository } from '../../../common/repository/interest.repository';
 import { Profile } from '../../../common/entities/profile.entity';
 import { ProfileRepository } from '../../../common/repository/profile.repository';
 import { ProfileUtils } from './profile-utils.service';
-import { ReportDto } from '../dto/report.dto';
 import { ReportRepository } from '../../../common/repository/report.repository';
 import { S3Service } from './s3.service';
 import { User } from '../../../common/entities/user.entity';
@@ -29,7 +27,6 @@ import { UserRepository } from '../../../common/repository/user.repository';
 @Injectable()
 export class ProfileService {
   private readonly logger = new Logger(ProfileService.name);
-  private static readonly AUTO_BAN_THRESHOLD = 5;
   constructor(
     private readonly profileRepository: ProfileRepository,
     private readonly userRepository: UserRepository,
@@ -292,159 +289,6 @@ export class ProfileService {
     const profileId = currentUser.profile.id;
 
     return this.profileRepository.findMatchedProfiles(profileId);
-  }
-
-  public async uploadImage(
-    file: Express.MulterS3.File,
-    req: HttpRequestDto,
-    index: number,
-  ): Promise<{ images: string[] }> {
-    if (index < 0 || index >= 6) {
-      throw new BadRequestException('Image index must be between 0 and 5');
-    }
-
-    const userId = req.user.userId;
-    const profile = await this.profileRepository.findByUserId(userId);
-
-    // If there's already an image at this index, delete the old one from S3
-    if (profile.images?.[index]) {
-      const oldImageUrl = profile.images[index];
-      const oldImageKey = this.s3Service.extractKeyFromUrl(oldImageUrl);
-
-      if (oldImageKey) {
-        this.s3Service.deleteObject(oldImageKey).catch((error) => {
-          this.logger.error(
-            `Failed to delete old image ${oldImageKey}:`,
-            error,
-          );
-        });
-      }
-    }
-
-    // Save the new image URL
-    const result = await this.profileRepository.saveImageUrl(
-      profile,
-      file.location,
-      index,
-    );
-
-    this.logger.log(
-      `Image uploaded for user ${userId} at index ${index}: ${file.location}`,
-    );
-    return result;
-  }
-
-  public async removeImage(
-    req: HttpRequestDto,
-    index: number,
-  ): Promise<{ images: string[] }> {
-    const userId = req.user.userId;
-
-    const profile = await this.profileRepository.findByUserId(userId);
-    if (!profile.images?.[index]) {
-      throw new BadRequestException(`No image found at index ${index}`);
-    }
-    const oldImageUrl = profile.images[index];
-    const oldImageKey = this.s3Service.extractKeyFromUrl(oldImageUrl);
-    // If there's an old image, delete it from S3 using the key extracted from the URL
-    if (oldImageKey) {
-      this.s3Service.deleteObject(oldImageKey).catch((error) => {
-        this.logger.error(`Failed to delete old image ${oldImageKey}:`, error);
-      });
-    }
-    // Remove the image from the profile
-    profile.images.splice(index, 1);
-
-    await this.profileRepository.save(profile);
-
-    return { images: profile.images };
-  }
-
-  async reportUser(
-    reportedProfileId: number,
-    reporterUserId: string,
-    body: ReportDto,
-  ): Promise<{ message: string; reportCount: number }> {
-    // Find the reported user's profile
-    const reportedProfile =
-      await this.profileRepository.findByProfileId(reportedProfileId);
-
-    if (!reportedProfile) {
-      throw new NotFoundException(
-        `User with Profile ID ${reportedProfileId} not found`,
-      );
-    }
-
-    // Create the report record
-    await this.reportRepository.create(reportedProfileId, reporterUserId, body);
-
-    // Update the report count by counting actual reports
-    const reportCount =
-      await this.reportRepository.countByProfileId(reportedProfileId);
-
-    // Update the profile's report count
-    reportedProfile.reportCount = reportCount;
-    await this.profileRepository.save(reportedProfile);
-
-    this.logger.log(`User reported`, {
-      reportedProfileId,
-      reporterUserId,
-      newReportCount: reportCount,
-      reason: body.reason,
-      message: body.message,
-    });
-
-    // Auto-ban if report count exceeds threshold
-    if (reportCount >= ProfileService.AUTO_BAN_THRESHOLD) {
-      await this.banUser(reportedProfile.userProfile.user_id);
-      return {
-        message: `User reported successfully. User has been automatically banned due to ${reportCount} reports.`,
-        reportCount,
-      };
-    }
-
-    return {
-      message: 'User reported successfully',
-      reportCount,
-    };
-  }
-
-  async banUser(userId: string): Promise<BanUserResponseDto> {
-    const user = await this.userRepository.findById(userId);
-
-    if (!user) {
-      throw new NotFoundException(`User with ID ${userId} not found`);
-    }
-
-    if (user.banned) {
-      return { success: true, message: 'User is already banned' };
-    }
-
-    user.banned = true;
-    await this.userRepository.save(user);
-
-    this.logger.log(`User banned`, { userId });
-
-    return { success: true, message: 'User banned successfully' };
-  }
-
-  async unbanUser(userId: string): Promise<BanUserResponseDto> {
-    const user = await this.userRepository.findById(userId);
-
-    if (!user) {
-      throw new NotFoundException(`User with ID ${userId} not found`);
-    }
-
-    if (!user.banned) {
-      return { success: true, message: 'User is not banned' };
-    }
-
-    user.banned = false;
-    await this.userRepository.save(user);
-
-    this.logger.log(`User unbanned`, { userId });
-
-    return { success: true, message: 'User unbanned successfully' };
   }
 
   async getReportsForProfile(profileId: number) {

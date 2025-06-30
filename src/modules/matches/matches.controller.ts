@@ -8,6 +8,7 @@ import {
   ParseIntPipe,
   HttpStatus,
   BadRequestException,
+  UseInterceptors,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { MatchesService } from './matches.service';
@@ -25,10 +26,14 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { HateoasInterceptor } from '../../common/interceptors/hateoas.interceptor';
+import { HateoasLinks } from '../../common/decorators/hateoas.decorator';
+import { AppLinkBuilders } from '../../common/utils/hateoas-links.util';
 
 @ApiTags('matches')
 @ApiBearerAuth('jwt-auth')
 @UseGuards(AuthGuard('jwt'))
+@UseInterceptors(HateoasInterceptor)
 @Controller('matches')
 export class MatchesController {
   constructor(private readonly matchesService: MatchesService) {}
@@ -44,6 +49,7 @@ export class MatchesController {
     description: 'Liste des matchs',
     type: GetMatchesResponse,
   })
+  @HateoasLinks('match', AppLinkBuilders.matchLinks())
   @Get()
   async getUserMatches(
     @Req() req: HttpRequestDto,
@@ -63,6 +69,7 @@ export class MatchesController {
     description: 'Liste des matchs en attente',
     type: GetPendingMatchesResponse,
   })
+  @HateoasLinks('match', AppLinkBuilders.matchLinks())
   @Get('pending')
   async getPendingMatches(
     @Req() req: HttpRequestDto,
@@ -82,6 +89,7 @@ export class MatchesController {
     description: 'Liste des likes envoyés',
     type: GetSentMatchesResponse,
   })
+  @HateoasLinks('match', AppLinkBuilders.matchLinks())
   @Get('sent')
   async getSentLikes(
     @Req() req: HttpRequestDto,
@@ -105,6 +113,7 @@ export class MatchesController {
     description: 'Détails du match',
     type: Object,
   })
+  @HateoasLinks('match', AppLinkBuilders.matchLinks())
   @Get('details/:profileId')
   async getMatchDetails(
     @Param(
@@ -135,6 +144,7 @@ export class MatchesController {
     description: 'Résultat du like',
     type: MatchActionResponseDto,
   })
+  @HateoasLinks('match', AppLinkBuilders.matchLinks())
   @Post('like/:profileId')
   async likeProfile(
     @Param(
@@ -164,6 +174,7 @@ export class MatchesController {
     status: 200,
     description: 'Profil passé avec succès',
   })
+  @HateoasLinks('match', AppLinkBuilders.matchLinks())
   @Post('pass/:profileId')
   async passProfile(
     @Param(

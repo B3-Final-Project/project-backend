@@ -12,18 +12,22 @@ import { BoosterPack } from './common/entities/booster.entity';
 import { BoosterUsage } from './common/entities/booster-usage.entity';
 import { CognitoStrategy } from './auth/cognito.strategy';
 import { Constants } from './constants';
+import { HateoasModule } from './common/hateoas.module';
 import { Interest } from './common/entities/interest.entity';
 import { LoggerMiddleware } from './middlewares/logger.middleware';
 import { MatchesModule } from './modules/matches/matches.module';
 import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions';
 import { Profile } from './common/entities/profile.entity';
+import { ProfileImagesModule } from './modules/profile-images/profile-images.module';
 import { ProfileModule } from './modules/profile/profile.module';
 import { Report } from './common/entities/report.entity';
+import { ReportsModule } from './modules/reports/reports.module';
 import { SettingsModule } from './modules/settings/settings.module';
 import { StatsModule } from './modules/stats/stats.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './common/entities/user.entity';
 import { UserMatches } from './common/entities/user-matches.entity';
+import { UsersModule } from './modules/users/users.module';
 
 export const ormConfig: PostgresConnectionOptions = {
   type: 'postgres',
@@ -31,7 +35,15 @@ export const ormConfig: PostgresConnectionOptions = {
   port: Constants.DATABASE_PORT,
   username: Constants.DATABASE_USER,
   password: Constants.DATABASE_PASSWORD,
-  entities: [Interest, Profile, User, UserMatches, BoosterPack, BoosterUsage, Report],
+  entities: [
+    Interest,
+    Profile,
+    User,
+    UserMatches,
+    BoosterPack,
+    BoosterUsage,
+    Report,
+  ],
   database: Constants.DATABASE_NAME,
   synchronize: true,
   // ssl: {
@@ -46,11 +58,15 @@ export const ormConfig: PostgresConnectionOptions = {
 @Module({
   imports: [
     TypeOrmModule.forRoot(ormConfig),
+    HateoasModule,
     ProfileModule,
     BoosterModule,
     SettingsModule,
     MatchesModule,
     StatsModule,
+    ReportsModule,
+    UsersModule,
+    ProfileImagesModule,
   ],
   controllers: [AppController],
   providers: [AppService, CognitoStrategy],

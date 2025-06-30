@@ -1,7 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 
 import { AnalyticsService } from '../stats/analytics.service';
-import { AvailablePackDto } from './dto/available-pack.dto';
 import { BoosterRepository } from '../../common/repository/booster.repository';
 import { CreateBoosterDto } from './dto/create-booster.dto';
 import { HttpRequestDto } from '../../common/dto/http-request.dto';
@@ -113,11 +112,11 @@ export class BoosterService {
     return finalProfiles.map(mapProfileToCard);
   }
 
-  public async getAvailablePacks(): Promise<AvailablePackDto> {
+  public async getAvailablePacks() {
     this.logger.log('Fetching available packs');
     const packs = await this.boosterRepository.getAvailablePacks();
     this.logger.log('Available packs fetched', { packCount: packs.length });
-    return { data: packs };
+    return packs;
   }
 
   public async createBooster(

@@ -243,8 +243,8 @@ export class MatchService {
           fromProfileId,
           profile.id,
           BoosterAction.SEEN,
-        )
-      )
+        ),
+      ),
     );
 
     return savedMatches;
