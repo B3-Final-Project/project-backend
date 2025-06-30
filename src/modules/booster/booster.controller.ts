@@ -87,7 +87,7 @@ export class BoosterController {
     type: [Object],
   })
   @ApiResponse({ status: 400, description: 'Paramètre count invalide' })
-  @HateoasLinks('booster', AppLinkBuilders.boosterLinks())
+  @HateoasCollectionOnly('booster', AppLinkBuilders.boosterCollectionLinks())
   @Get(':count')
   public getBooster(
     @Param('count', ParseIntPipe) amount: number,

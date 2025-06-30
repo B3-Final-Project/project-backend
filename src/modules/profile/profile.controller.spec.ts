@@ -1,13 +1,14 @@
+import { APP_GUARD, Reflector } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { APP_GUARD } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
+import { HateoasInterceptor } from '../../common/interceptors/hateoas.interceptor';
+import { HateoasService } from '../../common/services/hateoas.service';
 import { HttpRequestDto } from '../../common/dto/http-request.dto';
 import { OrientationEnum } from './enums';
 import { Profile } from '../../common/entities/profile.entity';
 import { ProfileController } from './profile.controller';
 import { ProfileService } from './services/profile.service';
-import { Report } from '../../common/entities/report.entity';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 
 describe('ProfileController', () => {
@@ -69,10 +70,6 @@ describe('ProfileController', () => {
             updateProfileInterests: jest.fn(),
             createProfile: jest.fn(),
             updateProfileField: jest.fn(),
-            reportUser: jest.fn(),
-            getAllReports: jest.fn(),
-            getReportsForProfile: jest.fn(),
-            deleteReport: jest.fn(),
           },
         },
         {
@@ -82,6 +79,23 @@ describe('ProfileController', () => {
         {
           provide: AuthGuard('jwt'),
           useValue: { canActivate: () => true },
+        },
+        HateoasInterceptor,
+        {
+          provide: HateoasService,
+          useValue: {
+            wrapCollection: jest.fn(),
+            wrapCollectionWithItemLinks: jest.fn(),
+            wrapResource: jest.fn(),
+            registerLinkBuilders: jest.fn(),
+          },
+        },
+        {
+          provide: Reflector,
+          useValue: {
+            getAllAndOverride: jest.fn(),
+            getAllAndMerge: jest.fn(),
+          },
         },
       ],
     }).compile();
@@ -201,160 +215,6 @@ describe('ProfileController', () => {
       await expect(
         controller.updateProfileField({}, mockUserRequest),
       ).rejects.toThrow('patch fail');
-    });
-  });
-
-  describe('reportUserByUser', () => {
-    it('calls service.reportUser and returns result', async () => {
-      const reportDto = { reason: 1, message: 'spam content' };
-      const profileId = 123;
-      const expectedResult = {
-        message: 'User reported successfully',
-        reportCount: 1,
-      };
-      jest.spyOn(service, 'reportUser').mockResolvedValue(expectedResult);
-
-      const result = await controller.reportUserByUser(
-        profileId,
-        mockUserRequest,
-        reportDto,
-      );
-
-      expect(result).toBe(expectedResult);
-      expect(service.reportUser).toHaveBeenCalledWith(
-        profileId,
-        mockUserRequest.user.userId,
-        reportDto,
-      );
-    });
-
-    it('throws if service throws', async () => {
-      const reportDto = { reason: 1, message: 'spam content' };
-      const profileId = 123;
-      jest
-        .spyOn(service, 'reportUser')
-        .mockRejectedValue(new Error('report fail'));
-
-      await expect(
-        controller.reportUserByUser(profileId, mockUserRequest, reportDto),
-      ).rejects.toThrow('report fail');
-    });
-  });
-
-  describe('getAllReports', () => {
-    it('calls service.getAllReports and returns result', async () => {
-      const mockReport1 = {
-        id: 1,
-        reason: 1,
-        message: 'spam content',
-        reporterUserId: 'user1',
-        reported_profile_id: 123,
-        reportedProfile: null,
-        created_at: new Date(),
-        updated_at: new Date(),
-      } as Report;
-
-      const mockReport2 = {
-        id: 2,
-        reason: 2,
-        message: 'inappropriate content',
-        reporterUserId: 'user2',
-        reported_profile_id: 124,
-        reportedProfile: null,
-        created_at: new Date(),
-        updated_at: new Date(),
-      } as Report;
-
-      const expectedReports = {
-        reports: [mockReport1, mockReport2],
-        total: 2,
-      };
-      jest.spyOn(service, 'getAllReports').mockResolvedValue(expectedReports);
-
-      const result = await controller.getAllReports(0, 10);
-
-      expect(result).toBe(expectedReports);
-      expect(service.getAllReports).toHaveBeenCalledWith(0, 10);
-    });
-
-    it('throws if service throws', async () => {
-      jest
-        .spyOn(service, 'getAllReports')
-        .mockRejectedValue(new Error('get reports fail'));
-
-      await expect(controller.getAllReports(0, 10)).rejects.toThrow(
-        'get reports fail',
-      );
-    });
-  });
-
-  describe('getReportsForProfile', () => {
-    it('calls service.getReportsForProfile and returns result', async () => {
-      const profileId = 123;
-      const mockReport1 = {
-        id: 1,
-        reason: 1,
-        message: 'spam content',
-        reporterUserId: 'user1',
-        reported_profile_id: profileId,
-        reportedProfile: null,
-        created_at: new Date(),
-        updated_at: new Date(),
-      } as Report;
-
-      const mockReport2 = {
-        id: 3,
-        reason: 3,
-        message: 'fake profile',
-        reporterUserId: 'user3',
-        reported_profile_id: profileId,
-        reportedProfile: null,
-        created_at: new Date(),
-        updated_at: new Date(),
-      } as Report;
-
-      const expectedReports = [mockReport1, mockReport2];
-      jest
-        .spyOn(service, 'getReportsForProfile')
-        .mockResolvedValue(expectedReports);
-
-      const result = await controller.getReportsForProfile(profileId);
-
-      expect(result).toBe(expectedReports);
-      expect(service.getReportsForProfile).toHaveBeenCalledWith(profileId);
-    });
-
-    it('throws if service throws', async () => {
-      const profileId = 123;
-      jest
-        .spyOn(service, 'getReportsForProfile')
-        .mockRejectedValue(new Error('get profile reports fail'));
-
-      await expect(controller.getReportsForProfile(profileId)).rejects.toThrow(
-        'get profile reports fail',
-      );
-    });
-  });
-
-  describe('deleteReport', () => {
-    it('calls service.deleteReport', async () => {
-      const reportId = 1;
-      jest.spyOn(service, 'deleteReport').mockResolvedValue(undefined);
-
-      await controller.deleteReport(reportId);
-
-      expect(service.deleteReport).toHaveBeenCalledWith(reportId);
-    });
-
-    it('throws if service throws', async () => {
-      const reportId = 1;
-      jest
-        .spyOn(service, 'deleteReport')
-        .mockRejectedValue(new Error('delete report fail'));
-
-      await expect(controller.deleteReport(reportId)).rejects.toThrow(
-        'delete report fail',
-      );
     });
   });
 });
