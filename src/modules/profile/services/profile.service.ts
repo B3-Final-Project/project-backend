@@ -28,14 +28,13 @@ import { GeolocateService } from '../../geolocate/geolocate.service';
 @Injectable()
 export class ProfileService {
   private readonly logger = new Logger(ProfileService.name);
-
   constructor(
     private readonly profileRepository: ProfileRepository,
     private readonly userRepository: UserRepository,
     private readonly interestRepository: InterestRepository,
     private readonly reportRepository: ReportRepository,
     private readonly s3Service: S3Service,
-    private readonly geoService: GeolocateService,
+    private readonly geolocateService: GeolocateService,
   ) {}
 
   async updateProfile(
@@ -46,13 +45,13 @@ export class ProfileService {
       req.user.userId,
       ['interests'],
     );
+
     const updated = ProfileUtils.mapProfile(dto, profile);
 
     // Handle interests if provided
     if (dto.interestInfo?.interests && dto.interestInfo.interests.length > 0) {
       // Create Interest entities from the interestInfo
-      const interestItems = ProfileUtils.extractInterestItems(dto);
-      updated.interests = await this.interestRepository.save(interestItems);
+      updated.interests = await this.interestRepository.save(dto.interestInfo.interests);
     }
 
     const savedProfile = await this.profileRepository.save(updated);
@@ -73,12 +72,9 @@ export class ProfileService {
     // Handle interestInfo section specially
     if (section === 'interestInfo') {
       const interestInfo = dto as InterestInfo;
-      if (interestInfo.interests.length > 0) {
-        profile.interests = await this.interestRepository.save(
-          interestInfo.interests,
-        );
+      if (interestInfo.interests && interestInfo.interests.length > 0) {
+        profile.interests = await this.interestRepository.save(interestInfo.interests);
       }
-
       return this.profileRepository.save(profile);
     }
 
@@ -87,45 +83,15 @@ export class ProfileService {
       { [section]: dto } as PartialUpdateProfileDto,
       profile,
     );
-    if (section === 'locationWork') {
-      const partial = dto as PartialUpdateProfileDto['locationWork'];
-      await this.updateUserCoordinatesIfPresent(
-        partial?.coordinates,
-        req.user.userId,
-      );
-    }
-    return this.profileRepository.save(updated);
+    const savedProfile = this.profileRepository.save(updated);
+    this.logger.log(`updated profile section`, {
+      profile_id: profile.id,
+      payload: dto,
+    });
+    return savedProfile;
   }
 
-  // Update the city location in User with coordinates
-  private async updateUserCoordinatesIfPresent(
-    coordinates: number[] | undefined,
-    userId: string,
-  ): Promise<void> {
-    if (!coordinates || coordinates.length !== 2) return;
-
-    const [longitude, latitude] = coordinates;
-
-    // Reverse geocode the coordinates
-    const city = await this.geoService.reverseGeocode(latitude, longitude);
-    // 3. Update coordinates in user
-    const user = await this.userRepository.findUserWithProfile(userId);
-
-    // Update user's profile city
-    if (user.profile) {
-      user.profile.city = city.city;
-      await this.profileRepository.save(user.profile);
-    }
-
-    // Update user's coordinates
-    user.location = {
-      type: 'Point',
-      coordinates: [longitude, latitude],
-    };
-    await this.userRepository.save(user);
-  }
-
-  /** Replace the authenticated user’s interests */
+  /** Replace the authenticated user's interests */
   async updateProfileInterests(
     userId: string,
     interestItems: Array<{ prompt: string; answer: string }>,
@@ -230,9 +196,8 @@ export class ProfileService {
     // Handle interests if provided
     if (dto.interestInfo?.interests && dto.interestInfo.interests.length > 0) {
       // Create Interest entities from the interestInfo
-      const interestItems = ProfileUtils.extractInterestItems(dto);
       profileEntity.interests =
-        await this.interestRepository.save(interestItems);
+        await this.interestRepository.save(dto.interestInfo.interests);
     }
 
     const savedProfile = await this.profileRepository.save(profileEntity);
@@ -304,13 +269,41 @@ export class ProfileService {
     const section = providedSections[0];
     const dto = body[section];
 
-    const profile = this.updatePartialProfile(section, dto, req);
+    const profile = await this.updatePartialProfile(section, dto, req);
     this.logger.log(`Profile section updated`, {
       section,
       userId: req.user.userId,
       payload: dto,
     });
     return profile;
+  }
+
+  // Update the city location in User with coordinates
+  private async updateUserCoordinatesIfPresent(
+    coordinates: number[] | undefined,
+    userId: string,
+  ): Promise<void> {
+    if (!coordinates || coordinates.length !== 2) return;
+
+    const [longitude, latitude] = coordinates;
+
+    // Reverse geocode the coordinates
+    const city = await this.geolocateService.reverseGeocode(latitude, longitude);
+    // 3. Update coordinates in user
+    const user = await this.userRepository.findUserWithProfile(userId);
+
+    // Update user's profile city
+    if (user.profile) {
+      user.profile.city = city.city;
+      await this.profileRepository.save(user.profile);
+    }
+
+    // Update user's coordinates
+    user.location = {
+      type: 'Point',
+      coordinates: [longitude, latitude],
+    };
+    await this.userRepository.save(user);
   }
 
   public async getMatchedProfiles(req: HttpRequestDto): Promise<Profile[]> {
