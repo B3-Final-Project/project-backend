@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
+import { AnalyticsService } from '../stats/analytics.service';
 import { BoosterRepository } from '../../common/repository/booster.repository';
 import { BoosterService } from './booster.service';
 import { HttpRequestDto } from '../../common/dto/http-request.dto';
@@ -7,6 +8,7 @@ import { MatchService } from './match.service';
 import { NotFoundException } from '@nestjs/common';
 import { RarityEnum } from '../profile/enums/rarity.enum';
 import { UserCardDto } from '../../common/dto/user-card.dto';
+import { UserRepository } from '../../common/repository/user.repository';
 
 describe('BoosterService', () => {
   let boosterService: BoosterService;
@@ -29,6 +31,19 @@ describe('BoosterService', () => {
             save: jest.fn(),
             find: jest.fn(),
             findOne: jest.fn(),
+          },
+        },
+        {
+          provide: AnalyticsService,
+          useValue: {
+            trackBoosterUsage: jest.fn(),
+          },
+        },
+        {
+          provide: UserRepository,
+          useValue: {
+            findById: jest.fn(),
+            findUserWithProfile: jest.fn(),
           },
         },
         BoosterService,
@@ -76,6 +91,7 @@ describe('BoosterService', () => {
           images: [],
           avatarUrl: undefined,
           interests: [],
+          reportCount: 0,
         },
         {
           id: 2,
@@ -99,6 +115,7 @@ describe('BoosterService', () => {
           images: [],
           avatarUrl: undefined,
           interests: [],
+          reportCount: 0,
         },
         {
           id: 3,
@@ -122,6 +139,7 @@ describe('BoosterService', () => {
           images: [],
           avatarUrl: undefined,
           interests: [],
+          reportCount: 0,
         },
       ];
 
@@ -146,12 +164,23 @@ describe('BoosterService', () => {
           city: '',
           work: '',
           images: [],
+          avatarUrl: '/vintage.png',
+          rarity: RarityEnum.COMMON,
           languages: [],
           smoking: undefined,
           drinking: undefined,
           zodiac: undefined,
           interests: [],
-          rarity: RarityEnum.COMMON,
+          surname: '',
+          min_age: 18,
+          max_age: 30,
+          max_distance: 50,
+          orientation: 1,
+          relationship_type: 1,
+          religion: undefined,
+          politics: undefined,
+          created_at: matches[0].created_at,
+          updated_at: matches[0].updated_at,
         },
         {
           id: 2,
@@ -160,12 +189,23 @@ describe('BoosterService', () => {
           city: '',
           work: '',
           images: [],
+          avatarUrl: '/vintage.png',
           languages: [],
           smoking: undefined,
           drinking: undefined,
           zodiac: undefined,
           interests: [],
           rarity: RarityEnum.UNCOMMON,
+          surname: '',
+          min_age: 18,
+          max_age: 30,
+          max_distance: 50,
+          orientation: 1,
+          relationship_type: 1,
+          religion: undefined,
+          politics: undefined,
+          created_at: matches[1].created_at,
+          updated_at: matches[1].updated_at,
         },
         {
           id: 3,
@@ -174,12 +214,23 @@ describe('BoosterService', () => {
           city: '',
           work: '',
           images: [],
+          avatarUrl: '/vintage.png',
           languages: [],
           smoking: undefined,
           drinking: undefined,
           zodiac: undefined,
           interests: [],
           rarity: RarityEnum.RARE,
+          surname: '',
+          min_age: 18,
+          max_age: 30,
+          max_distance: 50,
+          orientation: 1,
+          relationship_type: 1,
+          religion: undefined,
+          politics: undefined,
+          created_at: matches[2].created_at,
+          updated_at: matches[2].updated_at,
         },
       ];
       expect(result).toEqual(expectedResult);
@@ -213,6 +264,7 @@ describe('BoosterService', () => {
           images: [],
           avatarUrl: undefined,
           interests: [],
+          reportCount: 0,
         },
         {
           id: 2,
@@ -236,6 +288,7 @@ describe('BoosterService', () => {
           images: [],
           avatarUrl: undefined,
           interests: [],
+          reportCount: 0,
         },
       ];
 
@@ -261,6 +314,7 @@ describe('BoosterService', () => {
         images: [],
         avatarUrl: undefined,
         interests: [],
+        reportCount: 0,
       }));
 
       const initialSnapshot = [...initialMatches];
@@ -293,12 +347,23 @@ describe('BoosterService', () => {
           city: '',
           work: '',
           images: [],
+          avatarUrl: '/vintage.png',
           languages: [],
           smoking: undefined,
           drinking: undefined,
           zodiac: undefined,
           interests: [],
           rarity: RarityEnum.COMMON,
+          surname: '',
+          min_age: 18,
+          max_age: 30,
+          max_distance: 50,
+          orientation: 1,
+          relationship_type: 1,
+          religion: undefined,
+          politics: undefined,
+          created_at: initialMatches[0].created_at,
+          updated_at: initialMatches[0].updated_at,
         },
         {
           id: 2,
@@ -307,12 +372,23 @@ describe('BoosterService', () => {
           city: '',
           work: '',
           images: [],
+          avatarUrl: '/vintage.png',
           languages: [],
           smoking: undefined,
           drinking: undefined,
           zodiac: undefined,
           interests: [],
           rarity: RarityEnum.UNCOMMON,
+          surname: '',
+          min_age: 18,
+          max_age: 30,
+          max_distance: 50,
+          orientation: 1,
+          relationship_type: 1,
+          religion: undefined,
+          politics: undefined,
+          created_at: initialMatches[1].created_at,
+          updated_at: initialMatches[1].updated_at,
         },
         ...Array.from({ length: 8 }, (_, i) => ({
           id: 3 + i,
@@ -321,12 +397,23 @@ describe('BoosterService', () => {
           city: '',
           work: '',
           images: [],
+          avatarUrl: '/vintage.png',
           languages: [],
           smoking: undefined,
           drinking: undefined,
           zodiac: undefined,
           interests: [],
           rarity: RarityEnum.COMMON,
+          surname: '',
+          min_age: 18,
+          max_age: 30,
+          max_distance: 50,
+          orientation: 1,
+          relationship_type: 1,
+          religion: undefined,
+          politics: undefined,
+          created_at: extraMatches[i].created_at,
+          updated_at: extraMatches[i].updated_at,
         })),
       ];
       expect(result).toEqual(expectedResult);

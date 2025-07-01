@@ -3,9 +3,10 @@ import {
   OrientationEnum,
   RelationshipTypeEnum,
 } from '../profile/enums';
+import { Injectable, Logger } from '@nestjs/common';
 
+import { AnalyticsService } from '../stats/analytics.service';
 import { BoosterAction } from './enums/action.enum';
-import { Injectable } from '@nestjs/common';
 import { MatchRepository } from '../../common/repository/matches.repository';
 import { Profile } from '../../common/entities/profile.entity';
 import { ProfileRepository } from '../../common/repository/profile.repository';
@@ -15,10 +16,13 @@ import { UserRepository } from '../../common/repository/user.repository';
 
 @Injectable()
 export class MatchService {
+  private readonly logger = new Logger(MatchService.name);
+
   constructor(
     private readonly userRepo: UserRepository,
     private readonly matchRepository: MatchRepository,
     private readonly profileRepository: ProfileRepository,
+    private readonly analyticsService: AnalyticsService,
   ) {}
 
   private async baseQuery(userId: string, excludeSeen?: boolean) {
@@ -126,6 +130,12 @@ export class MatchService {
     maxResults = 10,
     relationshipType?: RelationshipTypeEnum,
   ): Promise<(Profile & { rarity: RarityEnum })[]> {
+    this.logger.log('Finding matches for user', {
+      userId,
+      maxResults,
+      relationshipType: relationshipType,
+    });
+
     // 1. Load user and their profile
     const { qb, prefs, user } = await this.baseQuery(userId, true);
     const profile = user.profile;
@@ -148,6 +158,12 @@ export class MatchService {
       (m as any).rarity = this.calculateRarity(profile, m);
     });
 
+    this.logger.log('Matches found for user', {
+      userId,
+      matchCount: matches.length,
+      maxResults,
+    });
+
     return matches as (Profile & { rarity: RarityEnum })[];
   }
 
@@ -157,6 +173,13 @@ export class MatchService {
     maxResults = 10,
     excludeSeen = true,
   ): Promise<(Profile & { rarity: RarityEnum })[]> {
+    this.logger.log('Finding broad matches for user', {
+      userId,
+      excludeIds: excludeIds.length,
+      maxResults,
+      excludeSeen,
+    });
+
     // 1. Load user and their profile
     const { qb, user } = await this.baseQuery(userId, excludeSeen);
     const profile = user.profile;
@@ -176,6 +199,12 @@ export class MatchService {
       (m as any).rarity = this.calculateRarity(profile, m);
     });
 
+    this.logger.log('Broad matches found for user', {
+      userId,
+      matchCount: matches.length,
+      maxResults,
+    });
+
     return matches as (Profile & { rarity: RarityEnum })[];
   }
 
@@ -183,6 +212,11 @@ export class MatchService {
     profiles: Profile[],
     userId: string,
   ): Promise<UserMatches[]> {
+    this.logger.log('Creating matches for user', {
+      userId,
+      profileCount: profiles.length,
+    });
+
     // Get the user's profile ID
     const user = await this.userRepo.findUserWithProfile(userId);
     const fromProfileId = user.profile.id;
@@ -195,7 +229,25 @@ export class MatchService {
       return match;
     });
 
-    return this.matchRepository.save(userMatches);
+    const savedMatches = await this.matchRepository.save(userMatches);
+    this.logger.log('Matches created for user', {
+      userId,
+      fromProfileId,
+      createdCount: savedMatches.length,
+    });
+
+    // Track analytics for each profile shown
+    await Promise.all(
+      profiles.map((profile) =>
+        this.analyticsService.trackUserAction(
+          fromProfileId,
+          profile.id,
+          BoosterAction.SEEN,
+        ),
+      ),
+    );
+
+    return savedMatches;
   }
 
   /**

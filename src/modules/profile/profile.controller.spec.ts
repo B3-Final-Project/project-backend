@@ -1,7 +1,9 @@
+import { APP_GUARD, Reflector } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { APP_GUARD } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
+import { HateoasInterceptor } from '../../common/interceptors/hateoas.interceptor';
+import { HateoasService } from '../../common/services/hateoas.service';
 import { HttpRequestDto } from '../../common/dto/http-request.dto';
 import { OrientationEnum } from './enums';
 import { Profile } from '../../common/entities/profile.entity';
@@ -77,6 +79,23 @@ describe('ProfileController', () => {
           provide: AuthGuard('jwt'),
           useValue: { canActivate: () => true },
         },
+        HateoasInterceptor,
+        {
+          provide: HateoasService,
+          useValue: {
+            wrapCollection: jest.fn(),
+            wrapCollectionWithItemLinks: jest.fn(),
+            wrapResource: jest.fn(),
+            registerLinkBuilders: jest.fn(),
+          },
+        },
+        {
+          provide: Reflector,
+          useValue: {
+            getAllAndOverride: jest.fn(),
+            getAllAndMerge: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
@@ -131,10 +150,7 @@ describe('ProfileController', () => {
       };
       const result = await controller.updateProfileField(body, req);
       expect(result).toBe(mockProfile);
-      expect(service.updateProfileField).toHaveBeenCalledWith(
-        body,
-        req,
-      );
+      expect(service.updateProfileField).toHaveBeenCalledWith(body, req);
     });
 
     it('throws if service throws for interest updates', async () => {

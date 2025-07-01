@@ -35,18 +35,40 @@ export class ProfileRepository {
     return profile;
   }
 
+  public async getAllProfiles(
+    offset: number,
+    limit: number,
+    sortBy?: 'reportCount' | 'createdAt',
+    sortOrder?: 'ASC' | 'DESC',
+    search?: string,
+  ): Promise<Profile[]> {
+    let actualSortColumn = 'p.id';
+    if (sortBy === 'reportCount') {
+      actualSortColumn = 'p.reportCount';
+    } else if (sortBy === 'createdAt') {
+      actualSortColumn = 'p.created_at';
+    }
+
+    const query = this.profileRepository
+      .createQueryBuilder('p')
+      .leftJoinAndSelect('p.userProfile', 'u')
+      .skip(offset)
+      .take(limit)
+      .orderBy(actualSortColumn, sortOrder || 'ASC');
+    if (search && search.trim() !== '') {
+      // search by name or surname
+      query.andWhere(
+        'LOWER(u.name) LIKE LOWER(:search) OR LOWER(u.surname) LIKE LOWER(:search)',
+        { search: `%${search.trim()}%` },
+      );
+    }
+    return await query.getMany();
+  }
+
   public async findByProfileIds(profileIds: number[]): Promise<Profile[]> {
     return this.profileRepository
       .createQueryBuilder('p')
       .where('p.id IN (:...profileIds)', { profileIds })
-      .getMany();
-  }
-
-  public async findByUserIds(userIds: string[]): Promise<Profile[]> {
-    return await this.profileRepository
-      .createQueryBuilder('p')
-      .innerJoin('p.userProfile', 'u')
-      .where('u.user_id IN (:...userIds)', { userIds })
       .getMany();
   }
 
@@ -93,6 +115,15 @@ export class ProfileRepository {
     return { images: profile.images };
   }
 
+  public async incrementReportCount(profileId: number): Promise<void> {
+    await this.profileRepository
+      .createQueryBuilder()
+      .update(Profile)
+      .set({ reportCount: () => 'reportCount + 1' })
+      .where('id = :profileId', { profileId })
+      .execute();
+  }
+
   public async findMatchedProfiles(profileId: number): Promise<Profile[]> {
     // Find profiles where both profiles have liked each other
     return await this.profileRepository
@@ -112,5 +143,19 @@ export class ProfileRepository {
         likeAction: BoosterAction.LIKE,
       })
       .getMany();
+  }
+
+  public async getLocations(): Promise<{ city: string; count: string }[]> {
+    // Groups unique cities with count, ordered by count descending
+    return this.profileRepository
+      .createQueryBuilder('profile')
+      .select('profile.city', 'city')
+      .addSelect('COUNT(*)', 'count')
+      .where('profile.city IS NOT NULL')
+      .andWhere('profile.city != :empty', { empty: '' })
+      .groupBy('profile.city')
+      .orderBy('COUNT(*)', 'DESC')
+      .limit(10)
+      .getRawMany();
   }
 }
