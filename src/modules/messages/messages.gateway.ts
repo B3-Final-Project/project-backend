@@ -8,7 +8,6 @@ import {
   MessageBody,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { UseGuards } from '@nestjs/common';
 import { WsJwtGuard } from '../../common/guards/ws-jwt.guard';
 import { MessagesService } from './messages.service';
 import { CreateMessageDto } from './dto/create-message.dto';
@@ -186,6 +185,75 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
     } catch (error) {
       console.error('Error creating conversation:', error);
       client.emit('error', { message: 'Failed to create conversation' });
+    }
+  }
+
+  @SubscribeMessage('deleteConversation')
+  async handleDeleteConversation(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() conversationId: string,
+  ) {
+    try {
+      const userId = client.handshake.auth.userId;
+      console.log('🗑️ Suppression de conversation demandée:', { 
+        userId, 
+        conversationId,
+        socketId: client.id 
+      });
+      
+      // Récupérer les informations de la conversation avant suppression
+      const conversation = await this.messagesService.getConversationById(conversationId);
+      if (!conversation) {
+        client.emit('error', { message: 'Conversation non trouvée' });
+        return;
+      }
+
+      // Vérifier que l'utilisateur est autorisé à supprimer cette conversation
+      if (conversation.user1_id !== userId && conversation.user2_id !== userId) {
+        client.emit('error', { message: 'Non autorisé à supprimer cette conversation' });
+        return;
+      }
+
+      // Supprimer la conversation
+      await this.messagesService.deleteConversation(conversationId, { 
+        user: { 
+          userId,
+          groups: client.handshake.auth.groups || []
+        } 
+      } as WsRequestDto);
+      
+      // Notifier les deux utilisateurs de la suppression
+      const otherUserId = conversation.user1_id === userId ? conversation.user2_id : conversation.user1_id;
+      
+      console.log(`🗑️ Notification de suppression envoyée aux utilisateurs:`, {
+        deletedBy: userId,
+        otherUser: otherUserId,
+        conversationId
+      });
+      
+      // Émettre l'événement de suppression aux deux utilisateurs
+      this.server.to(`user:${userId}`).emit('conversationDeleted', {
+        conversationId,
+        deletedBy: userId,
+        timestamp: new Date()
+      });
+      
+      this.server.to(`user:${otherUserId}`).emit('conversationDeleted', {
+        conversationId,
+        deletedBy: userId,
+        timestamp: new Date()
+      });
+      
+      // Confirmer la suppression au client
+      client.emit('conversationDeleted', { 
+        success: true, 
+        conversationId,
+        deletedBy: userId
+      });
+      
+    } catch (error) {
+      console.error('❌ Erreur lors de la suppression de la conversation:', error);
+      client.emit('error', { message: 'Failed to delete conversation' });
     }
   }
 

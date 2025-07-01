@@ -213,6 +213,34 @@ export class MessagesService {
     });
   }
 
+  async deleteConversation(conversationId: string, req: RequestDto): Promise<void> {
+    const userId = this.getUserId(req);
+    
+    // Valider que l'ID de conversation est un UUID valide
+    if (!this.isValidUUID(conversationId)) {
+      throw new BadRequestException('ID de conversation invalide');
+    }
+    
+    const conversation = await this.conversationRepository.findOne({
+      where: { id: conversationId },
+      relations: ['user1', 'user2'],
+    });
+
+    if (!conversation) {
+      throw new NotFoundException('Conversation non trouvée');
+    }
+
+    if (conversation.user1_id !== userId && conversation.user2_id !== userId) {
+      throw new BadRequestException('Vous n\'êtes pas autorisé à supprimer cette conversation');
+    }
+
+    // Supprimer tous les messages de la conversation
+    await this.messageRepository.delete({ conversation_id: conversationId });
+    
+    // Supprimer la conversation
+    await this.conversationRepository.delete({ id: conversationId });
+  }
+
   private formatConversationForFrontend(conversation: Conversation, currentUserId: string): any {
     const otherUser = conversation.user1_id === currentUserId ? conversation.user2 : conversation.user1;
     const otherUserId = conversation.user1_id === currentUserId ? conversation.user2_id : conversation.user1_id;

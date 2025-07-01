@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Delete,
   Body,
   Param,
   UseGuards,
@@ -53,6 +54,15 @@ export class MessagesController {
     @Req() req: HttpRequestDto,
   ) {
     await this.messagesService.markMessagesAsRead(conversationId, req);
+    return { success: true };
+  }
+
+  @Delete('conversations/:id')
+  async deleteConversation(
+    @Param('id') conversationId: string,
+    @Req() req: HttpRequestDto,
+  ) {
+    await this.messagesService.deleteConversation(conversationId, req);
     return { success: true };
   }
 } 
