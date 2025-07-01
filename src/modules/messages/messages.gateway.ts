@@ -16,7 +16,7 @@ import { WsRequestDto } from '../../common/dto/ws-request.dto';
 
 @WebSocketGateway({
   cors: {
-    origin: process.env.FRONTEND_URL || "http://localhost:3000",
+    origin: process.env.FRONTEND_URL ?? "http://localhost:3000",
     credentials: true,
   },
   namespace: '/messages',
@@ -25,7 +25,7 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
   @WebSocketServer()
   server: Server;
 
-  private connectedUsers = new Map<string, Socket>();
+  private readonly connectedUsers = new Map<string, Socket>();
 
   constructor(
     private readonly messagesService: MessagesService,
@@ -133,7 +133,7 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
       const message = await this.messagesService.sendMessage(data, { 
         user: { 
           userId,
-          groups: client.handshake.auth.groups || []
+          groups: client.handshake.auth.groups ?? []
         } 
       } as WsRequestDto);
       
@@ -174,7 +174,7 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
       const conversation = await this.messagesService.createConversation(data, { 
         user: { 
           userId,
-          groups: client.handshake.auth.groups || []
+          groups: client.handshake.auth.groups ?? []
         } 
       } as WsRequestDto);
       
@@ -218,7 +218,7 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
       await this.messagesService.deleteConversation(conversationId, { 
         user: { 
           userId,
-          groups: client.handshake.auth.groups || []
+          groups: client.handshake.auth.groups ?? []
         } 
       } as WsRequestDto);
       
@@ -268,7 +268,7 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
       await this.messagesService.markMessagesAsRead(conversationId, { 
         user: { 
           userId,
-          groups: client.handshake.auth.groups || []
+          groups: client.handshake.auth.groups ?? []
         } 
       } as WsRequestDto);
       

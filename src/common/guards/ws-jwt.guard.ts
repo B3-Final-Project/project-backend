@@ -1,12 +1,9 @@
 import { CanActivate, Injectable } from '@nestjs/common';
-import { WsException } from '@nestjs/websockets';
-import { Socket } from 'socket.io';
 import { JwtService } from '@nestjs/jwt';
-import * as jwt from 'jsonwebtoken';
 
 @Injectable()
 export class WsJwtGuard implements CanActivate {
-  constructor(private jwtService: JwtService) {}
+  constructor(private readonly jwtService: JwtService) {}
 
   canActivate(context: any): boolean {
     console.log('🛡️ Guard WebSocket - canActivate appelé !');
@@ -30,9 +27,9 @@ export class WsJwtGuard implements CanActivate {
 
     try {
       // Décoder le token sans vérification (pour les tokens AWS Cognito)
-      const decoded = this.jwtService.decode(token) as any;
+      const decoded = this.jwtService.decode(token);
       
-      if (!decoded) {
+      if (!decoded || typeof decoded !== 'object') {
         console.error('❌ Guard WebSocket - Impossible de décoder le token');
         return false;
       }
@@ -66,11 +63,11 @@ export class WsJwtGuard implements CanActivate {
 
       // Stocker les informations d'authentification dans le client
       client.handshake.auth.userId = userId;
-      client.handshake.auth.groups = decoded.groups || [];
+      client.handshake.auth.groups = decoded.groups ?? [];
 
       console.log('✅ Guard WebSocket - Authentification réussie:', {
         userId,
-        groups: decoded.groups || []
+        groups: decoded.groups ?? []
       });
 
       return true;

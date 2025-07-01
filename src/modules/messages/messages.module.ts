@@ -13,7 +13,7 @@ import { WsJwtGuard } from '../../common/guards/ws-jwt.guard';
   imports: [
     TypeOrmModule.forFeature([Message, Conversation, User]),
     JwtModule.register({
-      secret: process.env.JWT_SECRET || 'your-secret-key',
+      secret: process.env.JWT_SECRET ?? 'your-secret-key',
       signOptions: { expiresIn: '1h' },
     }),
   ],
