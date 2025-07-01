@@ -140,4 +140,13 @@ export class UserRepository {
 
     return await this.findById(userId);
   }
+
+  public async delete(userId: string): Promise<void> {
+    const user = await this.findById(userId);
+    if (!user) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
+
+    await this.userRepository.delete({ user_id: userId });
+  }
 }

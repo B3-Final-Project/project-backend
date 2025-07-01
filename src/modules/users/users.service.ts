@@ -1,10 +1,12 @@
 import { BanResponseDto, BanStatusResponseDto } from './dto/ban-response.dto';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 
 import { UserRepository } from '../../common/repository/user.repository';
+import { HttpRequestDto } from 'src/common/dto/http-request.dto';
 
 @Injectable()
 export class UsersService {
+  private readonly logger = new Logger(UsersService.name);
   constructor(private readonly userRepository: UserRepository) {}
 
   async banUser(userId: string): Promise<BanResponseDto> {
@@ -74,5 +76,21 @@ export class UsersService {
           : { ban: { href: `/users/${userId}/bans`, method: 'POST' } }),
       },
     };
+  }
+
+  public async deleteUser(req: HttpRequestDto) {
+    const userId = req.user.userId;
+    const user = await this.userRepository.findById(userId);
+
+    if (!user) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
+
+    // Delete the user
+    await this.userRepository.delete(userId);
+
+    this.logger.log(`User with ID ${userId} deleted successfully`);
+
+    return;
   }
 }
