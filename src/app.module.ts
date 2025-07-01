@@ -18,6 +18,7 @@ import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConne
 import { BoosterModule } from './modules/booster/booster.module';
 import { UserMatches } from './common/entities/user-matches.entity';
 import { SettingsModule } from './modules/settings/settings.module';
+import { GeolocateModule } from './modules/geolocate/geolocate.module';
 
 export const ormConfig: PostgresConnectionOptions = {
   type: 'postgres',
@@ -43,6 +44,7 @@ export const ormConfig: PostgresConnectionOptions = {
     ProfileModule,
     BoosterModule,
     SettingsModule,
+    GeolocateModule,
   ],
   controllers: [AppController],
   providers: [AppService, CognitoStrategy],

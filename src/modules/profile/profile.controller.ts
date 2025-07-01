@@ -65,8 +65,14 @@ export class ProfileController {
   }
 
   @Put(':userId/interests')
-  @ApiOperation({ summary: 'Met à jour les centres d’intérêt d’un utilisateur' })
-  @ApiParam({ name: 'userId', type: String, description: 'ID de l’utilisateur' })
+  @ApiOperation({
+    summary: 'Met à jour les centres d’intérêt d’un utilisateur',
+  })
+  @ApiParam({
+    name: 'userId',
+    type: String,
+    description: 'ID de l’utilisateur',
+  })
   @ApiBody({
     schema: {
       type: 'object',
@@ -79,7 +85,11 @@ export class ProfileController {
       required: ['data'],
     },
   })
-  @ApiResponse({ status: 200, description: 'Intérêts mis à jour avec succès', type: Profile })
+  @ApiResponse({
+    status: 200,
+    description: 'Intérêts mis à jour avec succès',
+    type: Profile,
+  })
   @ApiResponse({
     status: 401,
     description: 'Unauthorized - jeton JWT manquant ou invalide',
@@ -92,7 +102,9 @@ export class ProfileController {
   }
 
   @Post()
-  @ApiOperation({ summary: 'Crée un nouveau profil pour l’utilisateur connecté' })
+  @ApiOperation({
+    summary: 'Crée un nouveau profil pour l’utilisateur connecté',
+  })
   @ApiBody({ type: UpdateProfileDto })
   @ApiResponse({ status: 201, description: 'Profil créé avec succès' })
   @ApiResponse({

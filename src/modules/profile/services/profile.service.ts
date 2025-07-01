@@ -12,7 +12,7 @@ import { ProfileUtils } from './profile-utils.service';
 import { User } from '../../../common/entities/user.entity';
 import { UserRepository } from '../../../common/repository/user.repository';
 import { S3Service } from './s3.service';
-import { GeoService } from './geo.service';
+import { GeolocateService } from '../../geolocate/geolocate.service';
 
 @Injectable()
 export class ProfileService {
@@ -23,7 +23,7 @@ export class ProfileService {
     private readonly userRepository: UserRepository,
     private readonly interestRepository: InterestRepository,
     private readonly s3Service: S3Service,
-    private readonly geoService: GeoService,
+    private readonly geoService: GeolocateService,
   ) {}
 
   async updateProfile(

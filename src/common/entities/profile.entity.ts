@@ -26,7 +26,7 @@ export class Profile {
 
   // Location and Work Info
   @Column({ type: 'varchar', nullable: true })
-  city?: string;
+  city?: { city: string | null };
 
   @Column({ type: 'varchar', nullable: true })
   work?: string;

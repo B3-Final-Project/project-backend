@@ -8,7 +8,7 @@ import {
   ZodiacEnum,
 } from '../modules/profile/enums';
 
-import { DataSource } from 'typeorm';
+import { DataSource, DeepPartial } from 'typeorm';
 import { Interest } from 'src/common/entities/interest.entity';
 import { Profile } from 'src/common/entities/profile.entity';
 import { User } from 'src/common/entities/user.entity';
@@ -75,7 +75,7 @@ export async function seedUsers(dataSource: DataSource, count = 50) {
         allInterests,
         faker.number.int({ min: 1, max: 5 }),
       ),
-    } as Profile);
+    } as DeepPartial<Profile>);
     await profileRepo.save(profile);
 
     const gender = faker.helpers.arrayElement([0, 1, 2]);

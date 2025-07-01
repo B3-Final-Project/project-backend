@@ -12,6 +12,7 @@ import { MulterModule } from '@nestjs/platform-express';
 import { S3Client } from '@aws-sdk/client-s3';
 import * as multerS3 from 'multer-s3';
 import { S3Service } from './services/s3.service';
+import { GeolocateService } from '../geolocate/geolocate.service';
 
 @Module({
   imports: [
@@ -74,6 +75,7 @@ import { S3Service } from './services/s3.service';
     ProfileRepository,
     InterestRepository,
     S3Service,
+    GeolocateService,
     {
       provide: S3Client,
       useFactory: () =>
