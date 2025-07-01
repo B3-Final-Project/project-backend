@@ -20,7 +20,9 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "sops:decrypt": "AWS_PROFILE=b3 sops --decrypt --input-type dotenv --output-type dotenv .env.enc > .env",
     "sops:encrypt": "AWS_PROFILE=b3 sops --encrypt --input-type dotenv --kms arn:aws:kms:eu-west-3:989418411786:key/mrk-aab2b8d1dcaa4886a120afd58f023fcf .env > .env.enc",
-    "seed:users": "ts-node -r tsconfig-paths/register src/seed/index.ts"
+    "seed:users": "ts-node -r tsconfig-paths/register src/seed/index.ts",
+    "seed:boosters": "ts-node -r tsconfig-paths/register src/seed/booster.ts",
+    "seed:stats": "ts-node -r tsconfig-paths/register src/seed/booster-usage.seed.ts"
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",
@@ -31,6 +33,7 @@
     "@nestjs/platform-express": "^10.4.17",
     "@nestjs/swagger": "^7.4.2",
     "@nestjs/typeorm": "^11.0.0",
+    "@types/lodash": "^4.17.19",
     "@types/passport-jwt": "^4.0.1",
     "aws-sdk": "^2.1692.0",
     "axios": "^1.8.4",
@@ -42,6 +45,7 @@
     "geojson": "^0.5.0",
     "jwk-to-pem": "^2.0.7",
     "jwks-rsa": "^3.2.0",
+    "lodash": "^4.17.21",
     "multer": "^1.4.5-lts.2",
     "multer-s3": "^3.0.1",
     "mysql2": "^3.12.0",

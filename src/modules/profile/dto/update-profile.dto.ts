@@ -1,11 +1,4 @@
-import {
-  IsArray,
-  IsEnum,
-  IsNumber,
-  IsOptional,
-  IsString,
-  ValidateNested,
-} from 'class-validator';
+
 import { PartialType } from '@nestjs/mapped-types';
 import {
   DrinkingEnum,
@@ -19,34 +12,49 @@ import {
 } from '../enums';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
+import {
+  IsArray,
+  IsEnum,
+  IsNumber,
+  IsOptional,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
 
 class PersonalInfo {
+  @ApiProperty()
   @IsString()
   @ApiProperty()
   name: string;
 
+  @ApiProperty()
   @IsString()
   @ApiProperty()
   surname: string;
 
+  @ApiProperty()
   @IsNumber()
   @ApiProperty()
   age: number;
 
+  @ApiProperty()
   @IsEnum(GenderEnum)
   @ApiProperty()
   gender: GenderEnum;
 
+  @ApiProperty()
   @IsEnum(OrientationEnum)
   @ApiProperty()
   orientation: OrientationEnum;
 }
 
 class LocationWorkInfo {
+  @ApiProperty()
   @IsString()
   @ApiProperty()
   city: string;
 
+  @ApiProperty()
   @IsString()
   @ApiProperty()
   work: string;
@@ -66,14 +74,17 @@ class LocationWorkInfo {
 }
 
 class PreferenceInfo {
+  @ApiProperty()
   @IsNumber()
   @ApiProperty()
   min_age: number;
 
+  @ApiProperty()
   @IsNumber()
   @ApiProperty()
   max_age: number;
 
+  @ApiProperty()
   @IsNumber()
   @ApiProperty()
   max_distance: number;
@@ -83,50 +94,77 @@ class PreferenceInfo {
 }
 
 class LifestyleInfo {
+  @ApiProperty()
   @IsEnum(SmokingEnum)
   @ApiProperty()
   smoking: SmokingEnum;
 
+  @ApiProperty()
   @IsEnum(DrinkingEnum)
   @ApiProperty()
   drinking: DrinkingEnum;
 
+  @ApiProperty()
   @IsOptional()
   @IsEnum(ReligionEnum)
   @ApiProperty()
   religion: ReligionEnum;
 
+  @ApiProperty()
   @IsOptional()
   @IsEnum(PoliticsEnum)
   @ApiProperty()
   politics: PoliticsEnum;
 
+  @ApiProperty()
   @IsOptional()
   @IsEnum(ZodiacEnum)
   zodiac: ZodiacEnum;
 }
 
+export class InterestItem {
+  @ApiProperty()
+  @IsString()
+  prompt: string;
+
+  @ApiProperty()
+  @IsString()
+  answer: string;
+}
+
+export class InterestInfo {
+  @ApiProperty({ type: [InterestItem] })
+  @ValidateNested({ each: true })
+  @Type(() => InterestItem)
+  interests: InterestItem[];
+}
+
 export class UpdateProfileDto {
+  @ApiProperty({ type: PersonalInfo })
   @ValidateNested()
   @Type(() => PersonalInfo)
   @ApiProperty({ type: PersonalInfo })
   personalInfo: PersonalInfo;
 
+  @ApiProperty({ type: PreferenceInfo })
   @ValidateNested()
   @Type(() => PreferenceInfo)
   @ApiProperty({ type: PreferenceInfo })
   preferenceInfo: PreferenceInfo;
 
+  @ApiProperty({ type: LocationWorkInfo })
   @ValidateNested()
   @Type(() => LocationWorkInfo)
   @ApiProperty({ type: LocationWorkInfo })
   locationWork: LocationWorkInfo;
 
+  @ApiProperty({ type: LifestyleInfo })
   @ValidateNested()
   @Type(() => LifestyleInfo)
   @ApiProperty({ type: LifestyleInfo })
   lifestyleInfo: LifestyleInfo;
 
+  @ApiProperty({ type: InterestInfo, required: false })
   @IsOptional()
   @IsString({ each: true })
   @ApiProperty({ type: [String], required: false })

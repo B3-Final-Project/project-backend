@@ -1,10 +1,20 @@
-import { Controller, Get } from '@nestjs/common';
+import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Controller, Get, UseInterceptors } from '@nestjs/common';
+
+import { AppLinkBuilders } from '../../common/utils/hateoas-links.util';
 import { AuthSettingsDto } from './dto/auth-settings.dto';
-import {ApiOkResponse, ApiOperation, ApiTags} from "@nestjs/swagger";
+import { HateoasInterceptor } from '../../common/interceptors/hateoas.interceptor';
+import { HateoasLinks } from '../../common/decorators/hateoas.decorator';
 
 @ApiTags('settings')
 @Controller('settings')
+@UseInterceptors(HateoasInterceptor)
 export class SettingsController {
+  @ApiOperation({
+    summary: 'Récupère la configuration d’authentification Cognito',
+  })
+  @ApiOkResponse({ description: 'Configuration renvoyée avec succès' })
+  @HateoasLinks('settings', AppLinkBuilders.settingsLinks())
   @Get('auth')
   @ApiOperation({ summary: 'Récupère la configuration d’authentification Cognito' })
   @ApiOkResponse({ description: 'Configuration renvoyée avec succès' })

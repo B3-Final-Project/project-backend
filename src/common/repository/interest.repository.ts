@@ -1,7 +1,8 @@
-import { InjectRepository } from '@nestjs/typeorm';
-import { Interest } from '../entities/interest.entity';
-import { In, Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Interest } from '../entities/interest.entity';
+import { InterestItem } from '../../modules/profile/dto/update-profile.dto';
 
 @Injectable()
 export class InterestRepository {
@@ -10,19 +11,14 @@ export class InterestRepository {
     private readonly interestRepository: Repository<Interest>,
   ) {}
 
-  public async saveNewInterest(interestDescriptions: string[]) {
-    const existing = await this.interestRepository.find({
-      where: { description: In(interestDescriptions) },
-    });
-    const existingSet = new Set(existing.map((i) => i.description));
+  public async save(items: InterestItem[]): Promise<Interest[]> {
+    const interests = items.map((item) =>
+      this.interestRepository.create({
+        prompt: item.prompt,
+        answer: item.answer,
+      }),
+    );
 
-    const toCreate = interestDescriptions
-      .filter((d) => !existingSet.has(d))
-      .map((d) => this.interestRepository.create({ description: d }));
-
-    // save all and reassign
-    const savedNew = await this.interestRepository.save(toCreate);
-
-    return [...existing, ...savedNew];
+    return await this.interestRepository.save(interests);
   }
 }

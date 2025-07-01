@@ -3,41 +3,91 @@ import {
   Controller,
   Get,
   Param,
-  Put,
+  ParseIntPipe,
+  Patch,
   Post,
+  Put,
   Req,
   UseGuards,
-  Patch,
+  Query,
   UseInterceptors,
-  UploadedFile,
-  Delete,
-  ParseIntPipe,
-  HttpStatus,
-  BadRequestException,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { HttpRequestDto } from '../../common/dto/http-request.dto';
-import { UpdateProfileDto } from './dto/update-profile.dto';
-import { Profile } from '../../common/entities/profile.entity';
-import { ProfileService } from './services/profile.service';
-import { FileInterceptor } from '@nestjs/platform-express';
 import {
   ApiBearerAuth,
   ApiBody,
-  ApiConsumes,
   ApiOperation,
   ApiParam,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { UpdateProfileDto } from './dto/update-profile.dto';
+import { ProfileService } from './services/profile.service';
+import { HttpRequestDto } from '../../common/dto/http-request.dto';
+import { Profile } from '../../common/entities/profile.entity';
+import { UserManagementResponseDto } from './dto/user-management.dto';
+import { IsAdmin } from '../../auth/admin.guard';
+import { HateoasInterceptor } from '../../common/interceptors/hateoas.interceptor';
+import { HateoasLinks } from '../../common/decorators/hateoas.decorator';
+import { AppLinkBuilders } from '../../common/utils/hateoas-links.util';
 
-@UseGuards(AuthGuard('jwt'))
-@ApiBearerAuth('jwt-auth')
 @ApiTags('profiles')
+@ApiBearerAuth('jwt-auth')
+@UseGuards(AuthGuard('jwt'))
+@UseInterceptors(HateoasInterceptor)
 @Controller('profiles')
 export class ProfileController {
   constructor(private readonly profileService: ProfileService) {}
+  @ApiOperation({ summary: 'Récupère tous les profils' })
+  @ApiResponse({
+    status: 200,
+    description: 'Profils récupérés avec succès',
+    type: [Profile],
+  })
+  @Get('all')
+  @UseGuards(IsAdmin)
+  @HateoasLinks('profile', AppLinkBuilders.profileLinks())
+  public async getAllProfiles(
+    @Query('offset', ParseIntPipe) offset: number,
+    @Query('limit', ParseIntPipe) limit: number,
+    @Query('sortBy') sortBy?: 'reportCount' | 'createdAt', // Optional sort field
+    @Query('sortOrder') sortOrder?: 'ASC' | 'DESC',
+    @Query('search') search?: string, // Optional search term
+  ): Promise<UserManagementResponseDto> {
+    return this.profileService.getAllProfiles(
+      offset,
+      limit,
+      sortBy,
+      sortOrder,
+      search,
+    );
+  }
 
+  @ApiOperation({ summary: 'Récupère un profil par son ID' })
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    description: 'ID du profil à récupérer',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Profil récupéré avec succès',
+    type: Profile,
+  })
+  @UseGuards(IsAdmin)
+  @HateoasLinks('profile', AppLinkBuilders.profileLinks())
+  @Get(':id')
+  public async getProfileById(@Param('id') id: string) {
+    return this.profileService.getProfileById(id);
+  }
+
+  @ApiOperation({ summary: 'Récupère le profil de l’utilisateur connecté' })
+  @ApiResponse({
+    status: 200,
+    description: 'Profil récupéré avec succès',
+    type: Profile,
+  })
+  @HateoasLinks('profile', AppLinkBuilders.profileLinks())
   @Get()
   @ApiOperation({ summary: 'Récupère le profil de l’utilisateur connecté' })
   @ApiResponse({ status: 200, description: 'Profil récupéré avec succès' })
@@ -49,6 +99,14 @@ export class ProfileController {
     return this.profileService.getProfile(req);
   }
 
+  @ApiOperation({ summary: 'Met à jour le profil complet de l’utilisateur' })
+  @ApiBody({ type: UpdateProfileDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Profil mis à jour avec succès',
+    type: Profile,
+  })
+  @HateoasLinks('profile', AppLinkBuilders.profileLinks())
   @Put()
   @ApiOperation({ summary: 'Met à jour le profil complet de l’utilisateur' })
   @ApiBody({ type: UpdateProfileDto })
@@ -64,43 +122,16 @@ export class ProfileController {
     return this.profileService.updateProfile(body, req);
   }
 
-  @Put(':userId/interests')
   @ApiOperation({
-    summary: 'Met à jour les centres d’intérêt d’un utilisateur',
+    summary: 'Crée un nouveau profil pour l’utilisateur connecté',
   })
-  @ApiParam({
-    name: 'userId',
-    type: String,
-    description: 'ID de l’utilisateur',
-  })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        data: {
-          type: 'array',
-          items: { type: 'string' },
-        },
-      },
-      required: ['data'],
-    },
-  })
+  @ApiBody({ type: UpdateProfileDto })
   @ApiResponse({
-    status: 200,
-    description: 'Intérêts mis à jour avec succès',
+    status: 201,
+    description: 'Profil créé avec succès',
     type: Profile,
   })
-  @ApiResponse({
-    status: 401,
-    description: 'Unauthorized - jeton JWT manquant ou invalide',
-  })
-  public async updateProfileInterests(
-    @Param('userId') userId: string,
-    @Body() body: { data: string[] },
-  ): Promise<Profile> {
-    return this.profileService.updateProfileInterests(userId, body.data);
-  }
-
+  @HateoasLinks('profile', AppLinkBuilders.profileLinks())
   @Post()
   @ApiOperation({
     summary: 'Crée un nouveau profil pour l’utilisateur connecté',
@@ -118,89 +149,22 @@ export class ProfileController {
     return this.profileService.createProfile(body, req);
   }
 
+  @ApiOperation({ summary: 'Patch une section du profil utilisateur' })
+  @ApiBody({
+    type: UpdateProfileDto,
+    description: 'Section partielle du profil à patcher',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Profil patché avec succès',
+    type: Profile,
+  })
+  @HateoasLinks('profile', AppLinkBuilders.profileLinks())
   @Patch()
   public async updateProfileField(
     @Body() body: Partial<UpdateProfileDto>,
     @Req() req: HttpRequestDto,
   ) {
     return this.profileService.updateProfileField(body, req);
-  }
-
-  // Image goes through S3 interceptor and automatically uploads to S3
-  // returning only the object URL
-  @Put('image/:index')
-  @UseInterceptors(FileInterceptor('image'))
-  @ApiOperation({ summary: 'Upload une image de profil à un index donné' })
-  @ApiParam({
-    name: 'index',
-    type: Number,
-    description: 'Index de l’image (0 à 5)',
-  })
-  @ApiConsumes('multipart/form-data')
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        image: {
-          type: 'string',
-          format: 'binary',
-        },
-      },
-    },
-  })
-  @ApiResponse({ status: 200, description: 'Image uploadée avec succès' })
-  @ApiResponse({
-    status: 401,
-    description: 'Unauthorized - jeton JWT manquant ou invalide',
-  })
-  public async uploadImage(
-    @Param(
-      'index',
-      new ParseIntPipe({
-        errorHttpStatusCode: HttpStatus.BAD_REQUEST,
-        exceptionFactory: () =>
-          new BadRequestException(
-            'Index must be a valid number between 0 and 5',
-          ),
-      }),
-    )
-    index: number,
-    @UploadedFile() file: Express.MulterS3.File,
-    @Req() req: HttpRequestDto,
-  ) {
-    return this.profileService.uploadImage(file, req, index);
-  }
-
-  @Delete('image/:index')
-  @ApiOperation({ summary: 'Supprime une image de profil à un index donné' })
-  @ApiParam({
-    name: 'index',
-    type: Number,
-    description: 'Index de l’image (0 à 5)',
-  })
-  @ApiResponse({ status: 200, description: 'Image supprimée avec succès' })
-  @ApiResponse({
-    status: 401,
-    description: 'Unauthorized - jeton JWT manquant ou invalide',
-  })
-  public async deleteImage(
-    @Param(
-      'index',
-      new ParseIntPipe({
-        errorHttpStatusCode: HttpStatus.BAD_REQUEST,
-        exceptionFactory: () =>
-          new BadRequestException(
-            'Index must be a valid number between 0 and 5',
-          ),
-      }),
-    )
-    index: number,
-    @Req() req: HttpRequestDto,
-  ) {
-    if (index < 0 || index > 5) {
-      throw new BadRequestException('Image index must be between 0 and 5');
-    }
-
-    return this.profileService.removeImage(req, index);
   }
 }
