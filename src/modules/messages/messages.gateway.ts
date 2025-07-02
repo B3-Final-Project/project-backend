@@ -19,7 +19,7 @@ import { WsRequestDto } from '../../common/dto/ws-request.dto';
     origin: process.env.FRONTEND_URL ?? "http://localhost:3000",
     credentials: true,
   },
-  namespace: '/messages',
+  namespace: '/api/ws/messages',
 })
 export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
