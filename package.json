@@ -21,8 +21,7 @@
     "sops:decrypt": "AWS_PROFILE=b3 sops --decrypt --input-type dotenv --output-type dotenv .env.enc > .env",
     "sops:encrypt": "AWS_PROFILE=b3 sops --encrypt --input-type dotenv --kms arn:aws:kms:eu-west-3:989418411786:key/mrk-aab2b8d1dcaa4886a120afd58f023fcf .env > .env.enc",
     "seed:users": "ts-node -r tsconfig-paths/register src/seed/index.ts",
-    "seed:boosters": "ts-node -r tsconfig-paths/register src/seed/booster.ts",
-    "seed:stats": "ts-node -r tsconfig-paths/register src/seed/booster-usage.seed.ts"
+    "seed:boosters": "ts-node -r tsconfig-paths/register src/seed/booster.ts"
   },
   "dependencies": {
     "@aws-sdk/client-cognito-identity-provider": "^3.840.0",

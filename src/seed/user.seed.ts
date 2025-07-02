@@ -1,5 +1,6 @@
 import {
   DrinkingEnum,
+  GenderEnum,
   OrientationEnum,
   PoliticsEnum,
   RelationshipTypeEnum,
@@ -19,22 +20,27 @@ export async function seedInterests(dataSource: DataSource) {
   const interestRepo = dataSource.getRepository(Interest);
 
   const interests = [
-    'Music',
-    'Sports',
-    'Travel',
-    'Cooking',
-    'Reading',
-    'Gaming',
-    'Art',
-    'Technology',
-    'Fitness',
-    'Movies',
+    'A perfect day for me is...',
+    "I'm passionate about...",
+    'The way to my heart is...',
+    'My ideal weekend includes...',
+    'I get excited when...',
+    'My biggest goal is...',
+    'I love to talk about...',
+    'My favorite hobby is...',
+    "Something I'll never get tired of...",
+    "The best advice I've received is...",
+    'My hidden talent is...',
+    "I'm always down for...",
+    'Something that makes me laugh is...',
+    'My biggest pet peeve is...',
+    "I can't live without...",
   ];
 
-  const interestEntities = interests.map((description) =>
+  const interestEntities = interests.map((interest) =>
     interestRepo.create({
-      prompt: 'What is your favorite hobby?',
-      answer: description,
+      prompt: interest,
+      answer: faker.lorem.sentence(),
     }),
   );
 
@@ -56,17 +62,22 @@ export async function seedUsers(dataSource: DataSource, count = 50) {
 
   for (let i = 0; i < count; i++) {
     const minAge = faker.number.int({ min: 18, max: 25 });
-    const maxAge = faker.number.int({ min: minAge + 1, max: 60 });
+    const maxAge = faker.number.int({ min: minAge + 1, max: 99 });
     const profile: Profile = profileRepo.create({
-      city: 'Paris',
+      city: faker.location.city(),
       work: faker.person.jobTitle(),
-      languages: faker.helpers.arrayElements(
-        ['en', 'fr', 'es', 'de', 'it'],
-        faker.number.int({ min: 1, max: 3 }),
-      ),
+      languages: [
+        faker.helpers.arrayElement([
+          'English',
+          'French',
+          'Spanish',
+          'German',
+          'Italian',
+        ]),
+      ],
       min_age: minAge,
       max_age: maxAge,
-      max_distance: faker.number.float({ min: 5, max: 100 }),
+      max_distance: faker.number.float({ min: 25, max: 150 }),
       orientation: faker.helpers.enumValue(OrientationEnum),
       relationship_type: faker.helpers.enumValue(RelationshipTypeEnum),
       smoking: faker.helpers.enumValue(SmokingEnum),
@@ -81,8 +92,8 @@ export async function seedUsers(dataSource: DataSource, count = 50) {
     } as Profile);
     await profileRepo.save(profile);
 
-    const gender = faker.helpers.arrayElement([0, 1, 2]);
-    const age = faker.number.int({ min: 18, max: 70 });
+    const gender = faker.helpers.enumValue(GenderEnum);
+    const age = faker.number.int({ min: 18, max: 40 });
     const location = {
       type: 'Point',
       coordinates: [faker.location.longitude(), faker.location.latitude()],
