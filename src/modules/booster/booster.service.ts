@@ -51,7 +51,7 @@ export class BoosterService {
       ? this.getBoosterPackIdByType(type)
       : RelationshipTypeEnum.ANY;
     await this.analyticsService.trackBoosterUsage(
-      currentUser?.user_id ?? '',
+      currentUser?.id ?? 0,
       boosterPackId,
     );
 

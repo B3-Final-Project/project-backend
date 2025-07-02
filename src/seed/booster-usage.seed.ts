@@ -41,13 +41,12 @@ export async function seedBoosterUsage(
     if (usedAt < earliestDate) earliestDate = usedAt;
     if (usedAt > latestDate) latestDate = usedAt;
 
-    userUsageCount[randomUser.user_id] =
-      (userUsageCount[randomUser.user_id] || 0) + 1;
+    userUsageCount[randomUser.id] = (userUsageCount[randomUser.id] || 0) + 1;
     boosterPackUsageCount[randomBoosterPack.id] =
       (boosterPackUsageCount[randomBoosterPack.id] || 0) + 1;
 
     const boosterUsage = boosterUsageRepository.create({
-      userId: randomUser.user_id,
+      userId: randomUser.id,
       boosterPackId: randomBoosterPack.id,
       usedAt,
     });

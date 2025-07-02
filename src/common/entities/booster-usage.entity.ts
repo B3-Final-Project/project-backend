@@ -19,12 +19,9 @@ export class BoosterUsage {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ApiProperty({
-    example: 'uuid-123',
-    description: 'User ID who used the booster',
-  })
-  @Column({ type: 'varchar', length: 255 })
-  userId: string;
+  @ApiProperty({ example: 1, description: 'User ID who used the booster' })
+  @Column({ type: 'int' })
+  userId: number;
 
   @ApiProperty({ example: 1, description: 'Booster pack ID that was used' })
   @Column({ type: 'int' })
