@@ -118,7 +118,7 @@ export class UsersController {
     description: 'User not found',
   })
   @HateoasLinks('user', AppLinkBuilders.userLinks())
-  @Delete(':userId')
+  @Delete()
   public async deleteUser(@Req() req: HttpRequestDto): Promise<void> {
     return this.usersService.deleteUser(req);
   }

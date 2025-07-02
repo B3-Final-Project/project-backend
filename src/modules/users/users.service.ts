@@ -117,7 +117,10 @@ export class UsersService {
     try {
       await this.cognitoService.deleteUser(userId);
     } catch (error) {
-      this.logger.error(`Failed to delete Cognito user ${userId}, but database cleanup completed`, error);
+      this.logger.error(
+        `Failed to delete Cognito user ${userId}, but database cleanup completed`,
+        error,
+      );
       // Database cleanup is done, but Cognito deletion failed
       // You might want to handle this case based on your requirements
     }

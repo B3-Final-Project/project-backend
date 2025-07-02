@@ -8,7 +8,7 @@ import { Injectable, Logger } from '@nestjs/common';
 export class CognitoService {
   private readonly logger = new Logger(CognitoService.name);
   private readonly cognitoClient: CognitoIdentityProviderClient;
-  private readonly userPoolId: string;
+  private readonly userPoolId = process.env.COGNITO_USER_POOL;
 
   constructor() {
     this.cognitoClient = new CognitoIdentityProviderClient({
@@ -18,7 +18,9 @@ export class CognitoService {
         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
       },
     });
-    this.userPoolId = process.env.COGNITO_USER_POOL_ID;
+    this.userPoolId = this.userPoolId.split(
+      'https://cognito-idp.eu-west-3.amazonaws.com/',
+    )[1];
   }
 
   /**
