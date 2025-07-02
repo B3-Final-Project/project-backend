@@ -13,12 +13,7 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { MatchesService } from './matches.service';
 import { HttpRequestDto } from '../../common/dto/http-request.dto';
-import {
-  GetMatchesResponse,
-  GetPendingMatchesResponse,
-  GetSentMatchesResponse,
-  MatchActionResponseDto,
-} from './dto/match-response.dto';
+import { MatchActionResponseDto } from './dto/match-response.dto';
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -29,6 +24,7 @@ import {
 import { HateoasInterceptor } from '../../common/interceptors/hateoas.interceptor';
 import { HateoasLinks } from '../../common/decorators/hateoas.decorator';
 import { AppLinkBuilders } from '../../common/utils/hateoas-links.util';
+import { Profile } from '../../common/entities/profile.entity';
 
 @ApiTags('matches')
 @ApiBearerAuth('jwt-auth')
@@ -47,13 +43,11 @@ export class MatchesController {
   @ApiResponse({
     status: 200,
     description: 'Liste des matchs',
-    type: GetMatchesResponse,
+    type: [Profile],
   })
   @HateoasLinks('match', AppLinkBuilders.matchLinks())
   @Get()
-  async getUserMatches(
-    @Req() req: HttpRequestDto,
-  ): Promise<GetMatchesResponse> {
+  async getUserMatches(@Req() req: HttpRequestDto): Promise<Profile[]> {
     return this.matchesService.getUserMatches(req);
   }
 
@@ -67,13 +61,11 @@ export class MatchesController {
   @ApiResponse({
     status: 200,
     description: 'Liste des matchs en attente',
-    type: GetPendingMatchesResponse,
+    type: [Profile],
   })
   @HateoasLinks('match', AppLinkBuilders.matchLinks())
   @Get('pending')
-  async getPendingMatches(
-    @Req() req: HttpRequestDto,
-  ): Promise<GetPendingMatchesResponse> {
+  async getPendingMatches(@Req() req: HttpRequestDto): Promise<Profile[]> {
     return this.matchesService.getPendingMatches(req);
   }
 
@@ -87,13 +79,11 @@ export class MatchesController {
   @ApiResponse({
     status: 200,
     description: 'Liste des likes envoyés',
-    type: GetSentMatchesResponse,
+    type: [Profile],
   })
   @HateoasLinks('match', AppLinkBuilders.matchLinks())
   @Get('sent')
-  async getSentLikes(
-    @Req() req: HttpRequestDto,
-  ): Promise<GetSentMatchesResponse> {
+  async getSentLikes(@Req() req: HttpRequestDto): Promise<Profile[]> {
     return this.matchesService.getSentLikes(req);
   }
 

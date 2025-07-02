@@ -125,22 +125,22 @@ export class ProfileRepository {
   }
 
   public async findMatchedProfiles(profileId: number): Promise<Profile[]> {
-    // Find profiles where both profiles have liked each other
+    // Find profiles where both profiles have a MATCH action for each other
     return await this.profileRepository
       .createQueryBuilder('p')
       .innerJoin(
         'matches',
-        'my_like',
-        'my_like.to_profile_id = p.id AND my_like.from_profile_id = :profileId AND my_like.action = :likeAction',
+        'my_match',
+        'my_match.to_profile_id = p.id AND my_match.from_profile_id = :profileId AND my_match.action = :matchAction',
       )
       .innerJoin(
         'matches',
-        'their_like',
-        'their_like.from_profile_id = p.id AND their_like.to_profile_id = :profileId AND their_like.action = :likeAction',
+        'their_match',
+        'their_match.from_profile_id = p.id AND their_match.to_profile_id = :profileId AND their_match.action = :matchAction',
       )
       .setParameters({
         profileId,
-        likeAction: BoosterAction.LIKE,
+        matchAction: BoosterAction.MATCH,
       })
       .getMany();
   }

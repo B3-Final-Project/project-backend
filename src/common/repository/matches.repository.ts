@@ -11,6 +11,40 @@ export class MatchRepository {
     private readonly userMatches: Repository<UserMatches>,
   ) {}
 
+  /**
+   * Delete all LIKE actions from one profile to another (one direction only)
+   */
+  public async deleteLikesFromTo(
+    fromProfileId: number,
+    toProfileId: number,
+  ): Promise<void> {
+    await this.userMatches
+      .createQueryBuilder()
+      .delete()
+      .from('matches')
+      .where(
+        'from_profile_id = :fromProfileId AND to_profile_id = :toProfileId AND action = :likeAction',
+        {
+          fromProfileId,
+          toProfileId,
+          likeAction: BoosterAction.LIKE,
+        },
+      )
+      .execute();
+  }
+
+  public async getMatchRow(
+    fromProfileId: number,
+    toProfileId: number,
+  ): Promise<UserMatches | null> {
+    return await this.userMatches.findOne({
+      where: {
+        from_profile_id: fromProfileId,
+        to_profile_id: toProfileId,
+      },
+    });
+  }
+
   public async getSeenRows(fromProfileId: number) {
     const seenRows = await this.userMatches.find({
       where: { from_profile_id: fromProfileId },
