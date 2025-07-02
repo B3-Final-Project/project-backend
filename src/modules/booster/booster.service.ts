@@ -23,7 +23,7 @@ export class BoosterService {
     private readonly userRepository: UserRepository,
   ) {}
 
-  public async getBooster(
+  public async openBooster(
     amount: number,
     req: HttpRequestDto,
     type?: RelationshipTypeEnum,
