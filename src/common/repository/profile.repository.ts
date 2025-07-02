@@ -158,4 +158,45 @@ export class ProfileRepository {
       .limit(10)
       .getRawMany();
   }
+
+  /**
+   * Delete a profile by userId (and all join table associations)
+   */
+  public async deleteByUserId(userId: string): Promise<void> {
+    const profile = await this.findByUserId(userId, ['interests']);
+    if (!profile) return;
+
+    // Remove interests association
+    if (profile.interests && profile.interests.length > 0) {
+      await this.profileRepository
+        .createQueryBuilder()
+        .relation(Profile, 'interests')
+        .of(profile.id)
+        .remove(profile.interests);
+    }
+
+    // Delete profile
+    await this.profileRepository.delete(profile.id);
+  }
+
+  /**
+   * Delete a profile by profileId
+   */
+  public async deleteByProfileId(profileId: number): Promise<void> {
+    await this.profileRepository.delete(profileId);
+  }
+
+  /**
+   * Remove interests association from a profile
+   */
+  public async removeInterests(profileId: number): Promise<void> {
+    const profile = await this.findByProfileId(profileId, ['interests']);
+    if (profile?.interests && profile.interests.length > 0) {
+      await this.profileRepository
+        .createQueryBuilder()
+        .relation(Profile, 'interests')
+        .of(profileId)
+        .remove(profile.interests);
+    }
+  }
 }

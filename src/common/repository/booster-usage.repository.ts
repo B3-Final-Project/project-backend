@@ -21,4 +21,11 @@ export class BoosterUsageRepository {
   public create(data: Partial<BoosterUsage>): BoosterUsage {
     return this.boosterUsageRepo.create(data);
   }
+
+  /**
+   * Delete all booster usages for a given userId
+   */
+  public async deleteByUserId(userId: number): Promise<void> {
+    await this.boosterUsageRepo.delete({ userId });
+  }
 }

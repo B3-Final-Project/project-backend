@@ -154,4 +154,18 @@ export class MatchRepository {
 
     return parseInt(result?.count) || 0;
   }
+
+  /**
+   * Delete all matches for a given profileId (as from or to)
+   */
+  public async deleteByProfileId(profileId: number): Promise<void> {
+    await this.userMatches
+      .createQueryBuilder()
+      .delete()
+      .from('matches')
+      .where('from_profile_id = :profileId OR to_profile_id = :profileId', {
+        profileId,
+      })
+      .execute();
+  }
 }

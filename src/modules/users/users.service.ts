@@ -1,13 +1,25 @@
 import { BanResponseDto, BanStatusResponseDto } from './dto/ban-response.dto';
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 
-import { UserRepository } from '../../common/repository/user.repository';
+import { BoosterUsageRepository } from '../../common/repository/booster-usage.repository';
+import { CognitoService } from '../../auth/cognito.service';
 import { HttpRequestDto } from 'src/common/dto/http-request.dto';
+import { MatchRepository } from '../../common/repository/matches.repository';
+import { ProfileRepository } from '../../common/repository/profile.repository';
+import { ReportRepository } from '../../common/repository/report.repository';
+import { UserRepository } from '../../common/repository/user.repository';
 
 @Injectable()
 export class UsersService {
   private readonly logger = new Logger(UsersService.name);
-  constructor(private readonly userRepository: UserRepository) {}
+  constructor(
+    private readonly userRepository: UserRepository,
+    private readonly profileRepository: ProfileRepository,
+    private readonly matchRepository: MatchRepository,
+    private readonly reportRepository: ReportRepository,
+    private readonly boosterUsageRepository: BoosterUsageRepository,
+    private readonly cognitoService: CognitoService,
+  ) {}
 
   async banUser(userId: string): Promise<BanResponseDto> {
     const user = await this.userRepository.findById(userId);
@@ -80,17 +92,38 @@ export class UsersService {
 
   public async deleteUser(req: HttpRequestDto) {
     const userId = req.user.userId;
-    const user = await this.userRepository.findById(userId);
-
+    const user = await this.userRepository.findUserWithProfile(userId);
     if (!user) {
       throw new NotFoundException(`User with ID ${userId} not found`);
     }
+    const profileId = user.profile.id;
 
-    // Delete the user
-    await this.userRepository.delete(userId);
+    // 1. Delete all matches where this profile is involved
+    await this.matchRepository.deleteByProfileId(profileId);
 
-    this.logger.log(`User with ID ${userId} deleted successfully`);
+    // 2. Delete all reports related to this profile
+    await this.reportRepository.deleteByProfileId(profileId);
 
-    return;
+    // 3. Delete all booster usages for this user
+    await this.boosterUsageRepository.deleteByUserId(user.id);
+
+    // 4. Remove interests association from profile
+    await this.profileRepository.removeInterests(profileId);
+
+    // 5. Delete the user and profile in a transaction to handle FK constraints
+    await this.userRepository.deleteUserAndProfile(userId, profileId);
+
+    // 6. Delete the user from Cognito
+    try {
+      await this.cognitoService.deleteUser(userId);
+    } catch (error) {
+      this.logger.error(`Failed to delete Cognito user ${userId}, but database cleanup completed`, error);
+      // Database cleanup is done, but Cognito deletion failed
+      // You might want to handle this case based on your requirements
+    }
+
+    this.logger.log(
+      `User with ID ${userId} and all related data deleted successfully`,
+    );
   }
 }

@@ -101,4 +101,11 @@ export class ReportRepository {
     const [reports, total] = await queryBuilder.getManyAndCount();
     return { reports, total };
   }
+
+  /**
+   * Delete all reports for a given profileId
+   */
+  public async deleteByProfileId(profileId: number): Promise<void> {
+    await this.reportRepository.delete({ reported_profile_id: profileId });
+  }
 }
