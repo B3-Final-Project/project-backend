@@ -18,7 +18,7 @@ export class AnalyticsService {
    * This directly inserts to the database for immediate availability in stats
    */
   async trackBoosterUsage(
-    userId: number,
+    userId: string,
     boosterPackId: number,
   ): Promise<void> {
     try {

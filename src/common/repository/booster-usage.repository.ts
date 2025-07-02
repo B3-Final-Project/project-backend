@@ -25,7 +25,7 @@ export class BoosterUsageRepository {
   /**
    * Delete all booster usages for a given userId
    */
-  public async deleteByUserId(userId: number): Promise<void> {
+  public async deleteByUserId(userId: string): Promise<void> {
     await this.boosterUsageRepo.delete({ userId });
   }
 }
