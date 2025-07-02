@@ -1,49 +1,42 @@
-import { CanActivate, Injectable } from '@nestjs/common';
+import { CanActivate, Injectable, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class WsJwtGuard implements CanActivate {
+  private readonly logger = new Logger(WsJwtGuard.name);
+
   constructor(private readonly jwtService: JwtService) {}
 
   canActivate(context: any): boolean {
-    console.log('🛡️ Guard WebSocket - canActivate appelé !');
+    this.logger.log('🛡️ Guard WebSocket - canActivate appelé !');
     
     const client = context.switchToWs().getClient();
-    console.log('🔍 Guard WebSocket - Début de vérification:', {
-      socketId: client.id,
-      auth: client.handshake.auth,
-      headers: client.handshake.headers
-    });
+    this.logger.debug(`🔍 Guard WebSocket - Début de vérification - socketId: ${client.id}`);
     
     const token = client.handshake.auth.token;
 
     if (!token) {
-      console.error('❌ Guard WebSocket - Pas de token fourni dans auth.token');
-      console.log('🔍 Auth complet:', client.handshake.auth);
+      this.logger.error('❌ Guard WebSocket - Pas de token fourni dans auth.token');
+      this.logger.debug(`🔍 Auth complet: ${JSON.stringify(client.handshake.auth)}`);
       return false;
     }
 
-    console.log('🔍 Guard WebSocket - Token trouvé:', token.substring(0, 20) + '...');
+    this.logger.debug(`🔍 Guard WebSocket - Token trouvé: ${token.substring(0, 20)}...`);
 
     try {
       // Décoder le token sans vérification (pour les tokens AWS Cognito)
       const decoded = this.jwtService.decode(token);
       
       if (!decoded || typeof decoded !== 'object') {
-        console.error('❌ Guard WebSocket - Impossible de décoder le token');
+        this.logger.error('❌ Guard WebSocket - Impossible de décoder le token');
         return false;
       }
 
-      console.log('🔍 Guard WebSocket - Token décodé:', {
-        sub: decoded.sub,
-        username: decoded.username,
-        exp: decoded.exp,
-        currentTime: Math.floor(Date.now() / 1000)
-      });
+      this.logger.debug(`🔍 Guard WebSocket - Token décodé - sub: ${decoded.sub}, username: ${decoded.username}, exp: ${decoded.exp}, currentTime: ${Math.floor(Date.now() / 1000)}`);
 
       // Vérifier l'expiration manuellement
       if (decoded.exp && decoded.exp < Math.floor(Date.now() / 1000)) {
-        console.error('❌ Guard WebSocket - Token expiré');
+        this.logger.error('❌ Guard WebSocket - Token expiré');
         return false;
       }
 
@@ -57,7 +50,7 @@ export class WsJwtGuard implements CanActivate {
         // Fallback pour les autres types d'utilisateurs
         userId = decoded.username;
       } else {
-        console.error('❌ Guard WebSocket - Pas d\'userId trouvé dans le payload');
+        this.logger.error('❌ Guard WebSocket - Pas d\'userId trouvé dans le payload');
         return false;
       }
 
@@ -65,14 +58,11 @@ export class WsJwtGuard implements CanActivate {
       client.handshake.auth.userId = userId;
       client.handshake.auth.groups = decoded.groups ?? [];
 
-      console.log('✅ Guard WebSocket - Authentification réussie:', {
-        userId,
-        groups: decoded.groups ?? []
-      });
+      this.logger.log(`✅ Guard WebSocket - Authentification réussie - userId: ${userId}, groups: ${(decoded.groups ?? []).join(', ')}`);
 
       return true;
     } catch (error) {
-      console.error('❌ Guard WebSocket - Erreur lors du décodage du token:', error);
+      this.logger.error(`❌ Guard WebSocket - Erreur lors du décodage du token: ${error.message}`);
       return false;
     }
   }
