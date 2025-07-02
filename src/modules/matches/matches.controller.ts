@@ -13,12 +13,7 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { MatchesService } from './matches.service';
 import { HttpRequestDto } from '../../common/dto/http-request.dto';
-import {
-  GetMatchesResponse,
-  GetPendingMatchesResponse,
-  GetSentMatchesResponse,
-  MatchActionResponseDto,
-} from './dto/match-response.dto';
+import { MatchActionResponseDto } from './dto/match-response.dto';
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -29,6 +24,7 @@ import {
 import { HateoasInterceptor } from '../../common/interceptors/hateoas.interceptor';
 import { HateoasLinks } from '../../common/decorators/hateoas.decorator';
 import { AppLinkBuilders } from '../../common/utils/hateoas-links.util';
+import { User } from '../../common/entities/user.entity';
 
 @ApiTags('matches')
 @ApiBearerAuth('jwt-auth')
@@ -42,18 +38,16 @@ export class MatchesController {
    * Get all mutual matches for the authenticated user
    */
   @ApiOperation({
-    summary: 'Récupère tous les matchs mutuels de l’utilisateur authentifié',
+    summary: 'Récupère tous les matchs mutuels de l utilisateur authentifié',
   })
   @ApiResponse({
     status: 200,
     description: 'Liste des matchs',
-    type: GetMatchesResponse,
+    type: [User],
   })
   @HateoasLinks('match', AppLinkBuilders.matchLinks())
   @Get()
-  async getUserMatches(
-    @Req() req: HttpRequestDto,
-  ): Promise<GetMatchesResponse> {
+  async getUserMatches(@Req() req: HttpRequestDto): Promise<User[]> {
     return this.matchesService.getUserMatches(req);
   }
 
@@ -62,18 +56,16 @@ export class MatchesController {
    */
   @ApiOperation({
     summary:
-      "Récupère les profils qui vous ont liké mais auxquels vous n'avez pas encore répondu",
+      'Récupère les profils qui vous ont liké mais auxquels vous n avez pas encore répondu',
   })
   @ApiResponse({
     status: 200,
     description: 'Liste des matchs en attente',
-    type: GetPendingMatchesResponse,
+    type: [User],
   })
   @HateoasLinks('match', AppLinkBuilders.matchLinks())
   @Get('pending')
-  async getPendingMatches(
-    @Req() req: HttpRequestDto,
-  ): Promise<GetPendingMatchesResponse> {
+  async getPendingMatches(@Req() req: HttpRequestDto): Promise<User[]> {
     return this.matchesService.getPendingMatches(req);
   }
 
@@ -82,18 +74,16 @@ export class MatchesController {
    */
   @ApiOperation({
     summary:
-      "Récupère les profils que vous avez liké mais qui n'ont pas encore répondu",
+      'Récupère les profils que vous avez liké mais qui n ont pas encore répondu',
   })
   @ApiResponse({
     status: 200,
     description: 'Liste des likes envoyés',
-    type: GetSentMatchesResponse,
+    type: [User],
   })
   @HateoasLinks('match', AppLinkBuilders.matchLinks())
   @Get('sent')
-  async getSentLikes(
-    @Req() req: HttpRequestDto,
-  ): Promise<GetSentMatchesResponse> {
+  async getSentLikes(@Req() req: HttpRequestDto): Promise<User[]> {
     return this.matchesService.getSentLikes(req);
   }
 
@@ -101,7 +91,7 @@ export class MatchesController {
    * Get match details for a specific profile
    */
   @ApiOperation({
-    summary: "Récupère les détails d'un match pour un profil donné",
+    summary: 'Récupère les détails d un match pour un profil donné',
   })
   @ApiParam({
     name: 'profileId',

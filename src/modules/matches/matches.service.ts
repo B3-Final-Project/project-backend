@@ -1,9 +1,4 @@
-import {
-  GetMatchesResponse,
-  GetPendingMatchesResponse,
-  GetSentMatchesResponse,
-  MatchActionResponseDto,
-} from './dto/match-response.dto';
+import { MatchActionResponseDto } from './dto/match-response.dto';
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 
 import { AnalyticsService } from '../stats/analytics.service';
@@ -13,6 +8,8 @@ import { MatchRepository } from '../../common/repository/matches.repository';
 import { ProfileRepository } from '../../common/repository/profile.repository';
 import { UserMatches } from '../../common/entities/user-matches.entity';
 import { UserRepository } from '../../common/repository/user.repository';
+import { Profile } from '../../common/entities/profile.entity';
+import { User } from '../../common/entities/user.entity';
 
 @Injectable()
 export class MatchesService {
@@ -26,9 +23,33 @@ export class MatchesService {
   ) {}
 
   /**
+   * Helper method to convert profiles to Users
+   */
+  private convertProfilesToUsers(profiles: Profile[]): User[] {
+    return profiles
+      .map((profile) => profile.userProfile)
+      .filter((user): user is User => user !== null && user !== undefined);
+  }
+
+  /**
+   * Helper method to get users from profile IDs
+   */
+  private async getProfilesAsUsers(profileIds: number[]): Promise<User[]> {
+    if (profileIds.length === 0) {
+      return [];
+    }
+
+    // Get profiles with userProfile relation in one query
+    const profiles =
+      await this.profileRepository.findByProfileIdsWithUsers(profileIds);
+
+    return this.convertProfilesToUsers(profiles);
+  }
+
+  /**
    * Get all mutual matches for a user
    */
-  async getUserMatches(req: HttpRequestDto): Promise<GetMatchesResponse> {
+  async getUserMatches(req: HttpRequestDto): Promise<User[]> {
     const userId = req.user.userId;
     this.logger.log('Fetching user matches', { userId });
 
@@ -43,29 +64,26 @@ export class MatchesService {
         error: e.message,
       });
       if (e instanceof NotFoundException) {
-        return { matches: [] };
+        return [];
       }
       throw e;
     }
 
-    const matches = await this.profileRepository.findMatchedProfiles(profileId);
+    const matches =
+      await this.profileRepository.findMatchedProfilesWithUsers(profileId);
     this.logger.log('User matches fetched', {
       userId,
       profileId,
       matchCount: matches.length,
     });
 
-    return {
-      matches,
-    };
+    return this.convertProfilesToUsers(matches);
   }
 
   /**
    * Get profiles that liked you but you haven't responded to yet
    */
-  async getPendingMatches(
-    req: HttpRequestDto,
-  ): Promise<GetPendingMatchesResponse> {
+  async getPendingMatches(req: HttpRequestDto): Promise<User[]> {
     const userId = req.user.userId;
     this.logger.log('Fetching pending matches', { userId });
 
@@ -79,26 +97,24 @@ export class MatchesService {
 
     if (profileIds.length === 0) {
       this.logger.log('No pending matches found', { userId, ourProfileId });
-      return { matches: [] };
+      return [];
     }
 
-    // Fetch the actual profiles
-    const matches = await this.profileRepository.findByProfileIds(profileIds);
+    // Fetch the actual users from the profiles
+    const matches = await this.getProfilesAsUsers(profileIds);
     this.logger.log('Pending matches fetched', {
       userId,
       ourProfileId,
       pendingCount: matches.length,
     });
 
-    return {
-      matches,
-    };
+    return matches;
   }
 
   /**
    * Get profiles you liked but haven't heard back from
    */
-  async getSentLikes(req: HttpRequestDto): Promise<GetSentMatchesResponse> {
+  async getSentLikes(req: HttpRequestDto): Promise<User[]> {
     const userId = req.user.userId;
     this.logger.log('Fetching sent likes', { userId });
 
@@ -112,20 +128,18 @@ export class MatchesService {
 
     if (profileIds.length === 0) {
       this.logger.log('No sent likes found', { userId, fromProfileId });
-      return { matches: [] };
+      return [];
     }
 
-    // Fetch the actual profiles
-    const matches = await this.profileRepository.findByProfileIds(profileIds);
+    // Fetch the actual users from the profiles
+    const matches = await this.getProfilesAsUsers(profileIds);
     this.logger.log('Sent likes fetched', {
       userId,
       fromProfileId,
       sentLikesCount: matches.length,
     });
 
-    return {
-      matches,
-    };
+    return matches;
   }
 
   /**
