@@ -69,7 +69,6 @@ export class MessagesService {
     const conversation = this.conversationRepository.create({
       user1_id: user1.user_id,
       user2_id: user2.user_id,
-      is_active: true,
     });
 
     const savedConversation =
