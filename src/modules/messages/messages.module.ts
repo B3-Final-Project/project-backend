@@ -19,7 +19,12 @@ import { ConversationRepository } from '../../common/repository/conversation.rep
     }),
   ],
   controllers: [MessagesController],
-  providers: [MessagesService, MessagesGateway, WsJwtGuard, ConversationRepository],
+  providers: [
+    MessagesService,
+    MessagesGateway,
+    WsJwtGuard,
+    ConversationRepository,
+  ],
   exports: [MessagesService],
 })
-export class MessagesModule {} 
+export class MessagesModule {}

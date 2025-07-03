@@ -20,7 +20,6 @@ import { Profile } from '../../../common/entities/profile.entity';
 import { ProfileRepository } from '../../../common/repository/profile.repository';
 import { ProfileUtils } from './profile-utils.service';
 import { ReportRepository } from '../../../common/repository/report.repository';
-import { S3Service } from './s3.service';
 import { User } from '../../../common/entities/user.entity';
 import { UserRepository } from '../../../common/repository/user.repository';
 
@@ -32,7 +31,6 @@ export class ProfileService {
     private readonly userRepository: UserRepository,
     private readonly interestRepository: InterestRepository,
     private readonly reportRepository: ReportRepository,
-    private readonly s3Service: S3Service,
   ) {}
 
   async updateProfile(
@@ -111,7 +109,7 @@ export class ProfileService {
 
   async getProfile(
     req: HttpRequestDto,
-  ): Promise<{ profile: Profile; user: User } | null> {
+  ): Promise<{ profile: Profile; user: User }> {
     let profile: Profile;
     try {
       profile = await this.userRepository.findProfileOrThrowByUserId(
@@ -120,7 +118,11 @@ export class ProfileService {
       );
     } catch (error) {
       if (error instanceof NotFoundException) {
-        return null;
+        this.logger.warn(`Profile not found for user ${req.user.userId}`);
+        return {
+          profile: null,
+          user: null,
+        };
       }
       throw error; // Re-throw unexpected errors
     }

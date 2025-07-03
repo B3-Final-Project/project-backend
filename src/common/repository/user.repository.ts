@@ -140,4 +140,41 @@ export class UserRepository {
 
     return await this.findById(userId);
   }
+
+  public async delete(userId: string): Promise<void> {
+    const user = await this.findById(userId);
+    if (!user) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
+
+    await this.userRepository.delete({ user_id: userId });
+  }
+
+  /**
+   * Delete user and profile in a transaction to handle foreign key constraints
+   */
+  public async deleteUserAndProfile(
+    userId: string,
+    profileId: number,
+  ): Promise<void> {
+    const user = await this.findById(userId);
+    if (!user) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
+
+    // Use a transaction to delete both user and profile atomically
+    await this.userRepository.manager.transaction(async (manager) => {
+      // First, set the profile_id to NULL in users table using raw SQL
+      await manager.query(
+        'UPDATE users SET profile_id = NULL WHERE user_id = $1',
+        [userId],
+      );
+
+      // Then delete the profile
+      await manager.query('DELETE FROM profiles WHERE id = $1', [profileId]);
+
+      // Finally delete the user
+      await manager.query('DELETE FROM users WHERE user_id = $1', [userId]);
+    });
+  }
 }

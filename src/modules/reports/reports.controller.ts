@@ -25,13 +25,11 @@ import { HttpRequestDto } from '../../common/dto/http-request.dto';
 import { IsAdmin } from '../../auth/admin.guard';
 import { ReportsService } from './reports.service';
 import { CreateReportDto } from './dto/create-report.dto';
-import {
-  ReportResponseDto,
-  ReportsListResponseDto,
-} from './dto/report-response.dto';
+import { ReportsListResponseDto } from './dto/report-response.dto';
 import { HateoasInterceptor } from '../../common/interceptors/hateoas.interceptor';
 import { HateoasLinks } from '../../common/decorators/hateoas.decorator';
 import { AppLinkBuilders } from '../../common/utils/hateoas-links.util';
+import { Report } from '../../common/entities/report.entity';
 
 @ApiTags('reports')
 @ApiBearerAuth('jwt-auth')
@@ -46,7 +44,7 @@ export class ReportsController {
   @ApiResponse({
     status: 201,
     description: 'Report created successfully',
-    type: ReportResponseDto,
+    type: Report,
   })
   @ApiResponse({
     status: 400,
@@ -97,6 +95,7 @@ export class ReportsController {
     description: 'Reports retrieved successfully',
     type: ReportsListResponseDto,
   })
+  @HateoasLinks('reports', AppLinkBuilders.reportLinks())
   @UseGuards(IsAdmin)
   @Get()
   public async getAllReports(
@@ -125,17 +124,18 @@ export class ReportsController {
   @ApiResponse({
     status: 200,
     description: 'Report retrieved successfully',
-    type: ReportResponseDto,
+    type: Report,
   })
   @ApiResponse({
     status: 404,
     description: 'Report not found',
   })
+  @HateoasLinks('report', AppLinkBuilders.reportLinks())
   @UseGuards(IsAdmin)
   @Get(':reportId')
   public async getReportById(
     @Param('reportId', ParseIntPipe) reportId: number,
-  ): Promise<ReportResponseDto> {
+  ): Promise<Report> {
     return this.reportsService.getReportById(reportId);
   }
 
@@ -153,6 +153,7 @@ export class ReportsController {
     status: 404,
     description: 'Report not found',
   })
+  @HateoasLinks('report', AppLinkBuilders.reportLinks())
   @UseGuards(IsAdmin)
   @Delete(':reportId')
   public async deleteReport(

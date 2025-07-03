@@ -58,7 +58,7 @@ describe('BoosterService', () => {
     it('throws if there is no user in the request', async () => {
       const amount = 5;
       const request = { user: null } as unknown as HttpRequestDto;
-      await expect(boosterService.getBooster(amount, request)).rejects.toThrow(
+      await expect(boosterService.openBooster(amount, request)).rejects.toThrow(
         NotFoundException,
       );
     });
@@ -146,7 +146,7 @@ describe('BoosterService', () => {
       matchService.findMatchesForUser.mockResolvedValue(matches);
       matchService.createMatches.mockResolvedValue(undefined as any);
 
-      const result = await boosterService.getBooster(amount, request);
+      const result = await boosterService.openBooster(amount, request);
 
       expect(matchService.findMatchesForUser).toHaveBeenCalledWith(
         userId,
@@ -325,7 +325,7 @@ describe('BoosterService', () => {
       matchService.findBroadMatches.mockResolvedValue(extraMatches);
       matchService.createMatches.mockResolvedValue(undefined as any);
 
-      const result = await boosterService.getBooster(amount, request);
+      const result = await boosterService.openBooster(amount, request);
 
       expect(matchService.findBroadMatches).toHaveBeenCalledWith(
         userId,
@@ -429,7 +429,7 @@ describe('BoosterService', () => {
       matchService.findBroadMatches.mockResolvedValue([]);
       matchService.createMatches.mockResolvedValue(undefined as any);
 
-      const result = await boosterService.getBooster(amount, request);
+      const result = await boosterService.openBooster(amount, request);
 
       expect(matchService.findMatchesForUser).toHaveBeenCalledWith(
         userId,

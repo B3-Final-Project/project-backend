@@ -1,12 +1,10 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import {
-  ReportResponseDto,
-  ReportsListResponseDto,
-} from './dto/report-response.dto';
+import { ReportsListResponseDto } from './dto/report-response.dto';
 
 import { CreateReportDto } from './dto/create-report.dto';
 import { ReportRepository } from '../../common/repository/report.repository';
 import { ProfileRepository } from '../../common/repository/profile.repository';
+import { Report } from '../../common/entities/report.entity';
 
 interface GetReportsFilters {
   offset: number;
@@ -66,7 +64,7 @@ export class ReportsService {
   private async createReport(
     reporterId: string,
     createReportDto: CreateReportDto,
-  ): Promise<ReportResponseDto> {
+  ): Promise<Report> {
     const report = await this.reportRepository.create(
       createReportDto.reportedProfileId,
       reporterId,
@@ -76,7 +74,7 @@ export class ReportsService {
       },
     );
 
-    return this.mapToReportResponseDto(report);
+    return report;
   }
 
   async getAllReports(
@@ -97,23 +95,22 @@ export class ReportsService {
     const totalPages = Math.ceil(total / limit);
 
     return {
-      reports: reports.map((report) => this.mapToReportResponseDto(report)),
+      reports,
       total,
       page,
       limit,
       totalPages,
-      _links: this.generateListLinks(page, totalPages, limit, filters),
     };
   }
 
-  async getReportById(reportId: number): Promise<ReportResponseDto> {
+  async getReportById(reportId: number): Promise<Report> {
     const report = await this.reportRepository.findById(reportId);
 
     if (!report) {
       throw new NotFoundException(`Report with ID ${reportId} not found`);
     }
 
-    return this.mapToReportResponseDto(report);
+    return report;
   }
 
   async deleteReport(reportId: number): Promise<{ message: string }> {
@@ -126,69 +123,5 @@ export class ReportsService {
     await this.reportRepository.deleteById(reportId);
 
     return { message: 'Report deleted successfully' };
-  }
-
-  private mapToReportResponseDto(report: any): ReportResponseDto {
-    return {
-      id: report.id,
-      reportedProfileId: report.reportedProfileId,
-      reporterId: report.reporterId,
-      reason: report.reason,
-      details: report.details,
-      status: report.status ?? 'pending',
-      createdAt: report.createdAt,
-      updatedAt: report.updatedAt,
-      _links: {
-        self: { href: `/reports/${report.id}` },
-        reportedProfile: { href: `/profiles/${report.reportedProfileId}` },
-        reporter: { href: `/users/${report.reporterId}` },
-        delete: {
-          href: `/reports/${report.id}`,
-          method: 'DELETE',
-        },
-      },
-    };
-  }
-
-  private generateListLinks(
-    page: number,
-    totalPages: number,
-    limit: number,
-    filters: GetReportsFilters,
-  ) {
-    const baseUrl = '/reports';
-    const queryParams = this.buildQueryParams(filters);
-
-    const links: any = {
-      self: { href: `${baseUrl}?page=${page}&limit=${limit}${queryParams}` },
-    };
-
-    if (page > 1) {
-      links.first = { href: `${baseUrl}?page=1&limit=${limit}${queryParams}` };
-      links.prev = {
-        href: `${baseUrl}?page=${page - 1}&limit=${limit}${queryParams}`,
-      };
-    }
-
-    if (page < totalPages) {
-      links.next = {
-        href: `${baseUrl}?page=${page + 1}&limit=${limit}${queryParams}`,
-      };
-      links.last = {
-        href: `${baseUrl}?page=${totalPages}&limit=${limit}${queryParams}`,
-      };
-    }
-
-    return links;
-  }
-
-  private buildQueryParams(filters: GetReportsFilters): string {
-    const params = [];
-
-    if (filters.profileId) params.push(`profileId=${filters.profileId}`);
-    if (filters.reporterId) params.push(`reporterId=${filters.reporterId}`);
-    if (filters.status) params.push(`status=${filters.status}`);
-
-    return params.length > 0 ? `&${params.join('&')}` : '';
   }
 }

@@ -95,6 +95,6 @@ export class BoosterController {
     type: RelationshipTypeEnum,
     @Req() req: HttpRequestDto,
   ) {
-    return this.boosterService.getBooster(amount, req, type);
+    return this.boosterService.openBooster(amount, req, type);
   }
 }

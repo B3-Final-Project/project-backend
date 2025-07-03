@@ -4,4 +4,4 @@ export class CreateConversationDto {
   @IsNotEmpty()
   @IsString()
   user2_id: string;
-} 
+}

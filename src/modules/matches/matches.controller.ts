@@ -38,7 +38,7 @@ export class MatchesController {
    * Get all mutual matches for the authenticated user
    */
   @ApiOperation({
-    summary: 'Récupère tous les matchs mutuels de l utilisateur authentifié',
+    summary: 'Récupère tous les matchs mutuels de l’utilisateur authentifié',
   })
   @ApiResponse({
     status: 200,
@@ -56,7 +56,7 @@ export class MatchesController {
    */
   @ApiOperation({
     summary:
-      'Récupère les profils qui vous ont liké mais auxquels vous n avez pas encore répondu',
+      "Récupère les profils qui vous ont liké mais auxquels vous n'avez pas encore répondu",
   })
   @ApiResponse({
     status: 200,
@@ -74,7 +74,7 @@ export class MatchesController {
    */
   @ApiOperation({
     summary:
-      'Récupère les profils que vous avez liké mais qui n ont pas encore répondu',
+      "Récupère les profils que vous avez liké mais qui n'ont pas encore répondu",
   })
   @ApiResponse({
     status: 200,
@@ -91,7 +91,7 @@ export class MatchesController {
    * Get match details for a specific profile
    */
   @ApiOperation({
-    summary: 'Récupère les détails d un match pour un profil donné',
+    summary: "Récupère les détails d'un match pour un profil donné",
   })
   @ApiParam({
     name: 'profileId',

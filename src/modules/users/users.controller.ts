@@ -4,6 +4,7 @@ import {
   Get,
   Param,
   Post,
+  Req,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
@@ -21,6 +22,7 @@ import { BanResponseDto, BanStatusResponseDto } from './dto/ban-response.dto';
 import { HateoasInterceptor } from '../../common/interceptors/hateoas.interceptor';
 import { HateoasLinks } from '../../common/decorators/hateoas.decorator';
 import { AppLinkBuilders } from '../../common/utils/hateoas-links.util';
+import { HttpRequestDto } from 'src/common/dto/http-request.dto';
 
 @ApiTags('users')
 @ApiBearerAuth('jwt-auth')
@@ -104,5 +106,20 @@ export class UsersController {
     @Param('userId') userId: string,
   ): Promise<BanStatusResponseDto> {
     return this.usersService.getUserBanStatus(userId);
+  }
+
+  @ApiOperation({ summary: 'Delete User' })
+  @ApiResponse({
+    status: 204,
+    description: 'User deleted successfully',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'User not found',
+  })
+  @HateoasLinks('user', AppLinkBuilders.userLinks())
+  @Delete()
+  public async deleteUser(@Req() req: HttpRequestDto): Promise<void> {
+    return this.usersService.deleteUser(req);
   }
 }

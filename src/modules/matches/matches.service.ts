@@ -221,30 +221,45 @@ export class MatchesService {
     const currentUser = await this.userRepository.findUserWithProfile(userId);
     const ourProfileId = currentUser.profile.id;
 
-    // Check if already liked/matched
-    if (
-      await this.matchRepository.hasProcessedProfile(ourProfileId, profileId)
-    ) {
-      this.logger.log('Profile already processed', {
+    // Check for existing match (SEEN or LIKE)
+    let match = await this.matchRepository.getMatchRow(ourProfileId, profileId);
+    // Always delete previous LIKE logs from this user to the target before saving a new LIKE
+    await this.matchRepository.deleteLikesFromTo(ourProfileId, profileId);
+    if (match) {
+      if (match.action === BoosterAction.LIKE) {
+        this.logger.log('Profile already liked', {
+          userId,
+          ourProfileId,
+          targetProfileId: profileId,
+        });
+        return {
+          success: false,
+          message: 'Profile already liked',
+          isMatch: false,
+        };
+      } else {
+        // Update SEEN to LIKE
+        match.action = BoosterAction.LIKE;
+        match = (await this.matchRepository.save([match]))[0];
+        this.logger.log('SEEN updated to LIKE', {
+          userId,
+          ourProfileId,
+          targetProfileId: profileId,
+        });
+      }
+    } else {
+      // No match exists, create a LIKE match
+      match = new UserMatches();
+      match.from_profile_id = ourProfileId;
+      match.to_profile_id = profileId;
+      match.action = BoosterAction.LIKE;
+      match = (await this.matchRepository.save([match]))[0];
+      this.logger.log('Like action saved', {
         userId,
         ourProfileId,
         targetProfileId: profileId,
       });
-      return { matched: false }; // Already processed
     }
-
-    // Create the like record
-    const match = new UserMatches();
-    match.from_profile_id = ourProfileId;
-    match.to_profile_id = profileId;
-    match.action = BoosterAction.LIKE;
-
-    await this.matchRepository.save([match]);
-    this.logger.log('Like action saved', {
-      userId,
-      ourProfileId,
-      targetProfileId: profileId,
-    });
 
     // Track the like action for analytics
     await this.analyticsService.trackUserAction(
@@ -283,6 +298,10 @@ export class MatchesService {
         targetProfileId: profileId,
       });
 
+      // Remove previous LIKE logs for both users (cleanup)
+      await this.matchRepository.deleteLikesFromTo(ourProfileId, profileId);
+      await this.matchRepository.deleteLikesFromTo(profileId, ourProfileId);
+
       // Track the match actions for analytics
       await this.analyticsService.trackUserAction(
         ourProfileId,
@@ -295,7 +314,12 @@ export class MatchesService {
         BoosterAction.MATCH,
       );
 
-      return { matched: true };
+      return {
+        success: true,
+        message: 'It’s a match! Both users liked each other.',
+        isMatch: true,
+        matchId: undefined, // You can set a real matchId if you have one
+      };
     }
 
     this.logger.log('Like sent, waiting for response', {
@@ -303,13 +327,20 @@ export class MatchesService {
       ourProfileId,
       targetProfileId: profileId,
     });
-    return { matched: false };
+    return {
+      success: true,
+      message: 'Like sent, waiting for response.',
+      isMatch: false,
+    };
   }
 
   /**
    * Pass/reject a profile
    */
-  async passProfile(req: HttpRequestDto, profileId: number): Promise<void> {
+  async passProfile(
+    req: HttpRequestDto,
+    profileId: number,
+  ): Promise<MatchActionResponseDto> {
     const userId = req.user.userId;
     this.logger.log('User passing profile', {
       userId,
@@ -329,7 +360,7 @@ export class MatchesService {
         ourProfileId,
         targetProfileId: profileId,
       });
-      return;
+      return { success: false, message: 'Profile already processed (pass)' };
     }
 
     // Create the seen record (pass = just mark as seen)
@@ -351,5 +382,6 @@ export class MatchesService {
       profileId,
       BoosterAction.SEEN,
     );
+    return { success: true, message: 'Profile passed/seen.' };
   }
 }

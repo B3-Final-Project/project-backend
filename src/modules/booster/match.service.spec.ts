@@ -37,6 +37,7 @@ describe('MatchService', () => {
       getSeenRows: jest.fn(),
       save: jest.fn(),
       getUserLikes: jest.fn(),
+      getMatchRow: jest.fn(),
     } as any;
     profileRepo = { createUserMatchQueryBuilder: jest.fn() } as any;
 
@@ -175,6 +176,7 @@ describe('MatchService', () => {
       const profiles: Profile[] = [{ id: 7 } as any, { id: 13 } as any];
       const saved: UserMatches[] = [];
       matchRepo.save.mockResolvedValue(saved);
+      matchRepo.getMatchRow.mockResolvedValue(null);
 
       // Mock the user with profile
       const fakeUser = {
