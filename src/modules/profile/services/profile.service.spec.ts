@@ -3,7 +3,6 @@ import {
   UpdateProfileDto,
 } from '../dto/update-profile.dto';
 import { Test, TestingModule } from '@nestjs/testing';
-
 import { BadRequestException } from '@nestjs/common';
 import { HttpRequestDto } from '../../../common/dto/http-request.dto';
 import { InterestRepository } from '../../../common/repository/interest.repository';
@@ -15,15 +14,18 @@ import { ReportRepository } from '../../../common/repository/report.repository';
 import { S3Service } from './s3.service';
 import { User } from '../../../common/entities/user.entity';
 import { UserRepository } from '../../../common/repository/user.repository';
+import { GeolocateService } from '../../geolocate/geolocate.service';
 
 describe('ProfileService', () => {
   let service: ProfileService;
+  let geolocateService: GeolocateService;
   let profileRepository: jest.Mocked<ProfileRepository>;
   let userRepository: jest.Mocked<UserRepository>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
+        GeolocateService,
         ProfileService,
         {
           provide: ProfileRepository,
@@ -68,6 +70,7 @@ describe('ProfileService', () => {
     }).compile();
 
     service = module.get<ProfileService>(ProfileService);
+    geolocateService = module.get<GeolocateService>(GeolocateService);
     profileRepository = module.get(ProfileRepository);
     userRepository = module.get(UserRepository);
 
