@@ -89,14 +89,6 @@ export class BoosterController {
   @ApiResponse({ status: 400, description: 'Paramètre count invalide' })
   @HateoasCollectionOnly('booster', AppLinkBuilders.boosterCollectionLinks())
   @Get(':count')
-  @ApiOperation({ summary: 'Récupère un booster avec un nombre donné' })
-  @ApiParam({
-    name: 'count',
-    type: Number,
-    description: 'Nombre de boosters à récupérer',
-  })
-  @ApiResponse({ status: 200, description: 'Booster récupéré avec succès' })
-  @ApiResponse({ status: 400, description: 'Paramètre count invalide' })
   public getBooster(
     @Param('count', ParseIntPipe) amount: number,
     @Query('type', new ParseEnumPipe(RelationshipTypeEnum, { optional: true }))

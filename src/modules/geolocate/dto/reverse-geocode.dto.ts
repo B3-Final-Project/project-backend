@@ -1,15 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Transform } from 'class-transformer';
-import { IsNumber } from 'class-validator';
+import { IsLatitude, IsLongitude } from 'class-validator';
 
 export class ReverseGeocodeDto {
   @ApiProperty({ type: Number })
-  @Transform(({ value }) => parseFloat(value))
-  @IsNumber()
+  @IsLatitude()
   lat: number;
 
   @ApiProperty({ type: Number })
-  @Transform(({ value }) => parseFloat(value))
-  @IsNumber()
+  @IsLongitude()
   lon: number;
-} 
+}

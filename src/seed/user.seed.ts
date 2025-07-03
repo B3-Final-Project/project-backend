@@ -89,7 +89,7 @@ export async function seedUsers(dataSource: DataSource, count = 50) {
         allInterests,
         faker.number.int({ min: 1, max: 5 }),
       ),
-    } as DeepPartial<Profile>);
+    } as Profile);
     await profileRepo.save(profile);
 
     const gender = faker.helpers.enumValue(GenderEnum);

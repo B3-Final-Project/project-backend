@@ -16,9 +16,6 @@ export class SettingsController {
   @ApiOkResponse({ description: 'Configuration renvoyée avec succès' })
   @HateoasLinks('settings', AppLinkBuilders.settingsLinks())
   @Get('auth')
-  @ApiOperation({ summary: 'Récupère la configuration d’authentification Cognito' })
-  @ApiOkResponse({ description: 'Configuration renvoyée avec succès' })
-
   public getAuthConfig(): AuthSettingsDto {
     return {
       userPool: process.env.COGNITO_USER_POOL,

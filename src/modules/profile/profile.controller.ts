@@ -89,12 +89,6 @@ export class ProfileController {
   })
   @HateoasLinks('profile', AppLinkBuilders.profileLinks())
   @Get()
-  @ApiOperation({ summary: 'Récupère le profil de l’utilisateur connecté' })
-  @ApiResponse({ status: 200, description: 'Profil récupéré avec succès' })
-  @ApiResponse({
-    status: 401,
-    description: 'Unauthorized - jeton JWT manquant ou invalide',
-  })
   public async getProfile(@Req() req: HttpRequestDto) {
     return this.profileService.getProfile(req);
   }
@@ -108,13 +102,6 @@ export class ProfileController {
   })
   @HateoasLinks('profile', AppLinkBuilders.profileLinks())
   @Put()
-  @ApiOperation({ summary: 'Met à jour le profil complet de l’utilisateur' })
-  @ApiBody({ type: UpdateProfileDto })
-  @ApiResponse({ status: 200, description: 'Profil mis à jour avec succès' })
-  @ApiResponse({
-    status: 401,
-    description: 'Unauthorized - jeton JWT manquant ou invalide',
-  })
   public async updateProfile(
     @Req() req: HttpRequestDto,
     @Body() body: UpdateProfileDto,
@@ -133,15 +120,6 @@ export class ProfileController {
   })
   @HateoasLinks('profile', AppLinkBuilders.profileLinks())
   @Post()
-  @ApiOperation({
-    summary: 'Crée un nouveau profil pour l’utilisateur connecté',
-  })
-  @ApiBody({ type: UpdateProfileDto })
-  @ApiResponse({ status: 201, description: 'Profil créé avec succès' })
-  @ApiResponse({
-    status: 401,
-    description: 'Unauthorized - jeton JWT manquant ou invalide',
-  })
   public async createProfile(
     @Req() req: HttpRequestDto,
     @Body() body: UpdateProfileDto,
