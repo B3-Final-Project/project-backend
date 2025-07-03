@@ -9,4 +9,4 @@ export class CreateMessageDto {
   @IsNotEmpty()
   @IsString()
   content: string;
-} 
+}

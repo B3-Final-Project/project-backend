@@ -28,10 +28,7 @@ export class MessagesController {
   }
 
   @Post()
-  async sendMessage(
-    @Body() dto: CreateMessageDto,
-    @Req() req: HttpRequestDto,
-  ) {
+  async sendMessage(@Body() dto: CreateMessageDto, @Req() req: HttpRequestDto) {
     return this.messagesService.sendMessage(dto, req);
   }
 
@@ -65,4 +62,4 @@ export class MessagesController {
     await this.messagesService.deleteConversation(conversationId, req);
     return { success: true };
   }
-} 
+}
