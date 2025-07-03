@@ -1,5 +1,5 @@
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { UserMatches } from '../entities/user-matches.entity';
 import { Injectable } from '@nestjs/common';
 import { BoosterAction } from '../../modules/booster/enums/action.enum';
@@ -61,32 +61,9 @@ export class MatchRepository {
     return await this.userMatches.find({
       where: {
         from_profile_id: fromProfileId,
-        action: BoosterAction.LIKE,
+        action: In([BoosterAction.MATCH, BoosterAction.LIKE]),
       },
     });
-  }
-
-  public async isMatch(
-    profileId1: number,
-    profileId2: number,
-  ): Promise<boolean> {
-    const like1 = await this.userMatches.findOne({
-      where: {
-        from_profile_id: profileId1,
-        to_profile_id: profileId2,
-        action: BoosterAction.LIKE,
-      },
-    });
-
-    const like2 = await this.userMatches.findOne({
-      where: {
-        from_profile_id: profileId2,
-        to_profile_id: profileId1,
-        action: BoosterAction.LIKE,
-      },
-    });
-
-    return !!(like1 && like2);
   }
 
   public async getMatchRows(
