@@ -221,22 +221,33 @@ export class MatchService {
     const user = await this.userRepo.findUserWithProfile(userId);
     const fromProfileId = user.profile.id;
 
-    const userMatches = profiles.map((profile) => {
-      const match = new UserMatches();
-      match.from_profile_id = fromProfileId;
-      match.to_profile_id = profile.id;
-      match.action = BoosterAction.SEEN;
-      return match;
-    });
+    // Only create matches for profiles that don't already have a match
+    const userMatches: UserMatches[] = [];
+    for (const profile of profiles) {
+      const existing = await this.matchRepository.getMatchRow(
+        fromProfileId,
+        profile.id,
+      );
+      if (!existing) {
+        const match = new UserMatches();
+        match.from_profile_id = fromProfileId;
+        match.to_profile_id = profile.id;
+        match.action = BoosterAction.SEEN;
+        userMatches.push(match);
+      }
+    }
 
-    const savedMatches = await this.matchRepository.save(userMatches);
+    let savedMatches: UserMatches[] = [];
+    if (userMatches.length > 0) {
+      savedMatches = await this.matchRepository.save(userMatches);
+    }
     this.logger.log('Matches created for user', {
       userId,
       fromProfileId,
       createdCount: savedMatches.length,
     });
 
-    // Track analytics for each profile shown
+    // Track analytics for each profile shown/liked
     await Promise.all(
       profiles.map((profile) =>
         this.analyticsService.trackUserAction(

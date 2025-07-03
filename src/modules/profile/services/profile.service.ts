@@ -20,7 +20,6 @@ import { Profile } from '../../../common/entities/profile.entity';
 import { ProfileRepository } from '../../../common/repository/profile.repository';
 import { ProfileUtils } from './profile-utils.service';
 import { ReportRepository } from '../../../common/repository/report.repository';
-import { S3Service } from './s3.service';
 import { User } from '../../../common/entities/user.entity';
 import { UserRepository } from '../../../common/repository/user.repository';
 import { GeolocateService } from '../../geolocate/geolocate.service';
@@ -33,7 +32,6 @@ export class ProfileService {
     private readonly userRepository: UserRepository,
     private readonly interestRepository: InterestRepository,
     private readonly reportRepository: ReportRepository,
-    private readonly s3Service: S3Service,
     private readonly geolocateService: GeolocateService,
   ) {}
 
@@ -51,7 +49,8 @@ export class ProfileService {
     // Handle interests if provided
     if (dto.interestInfo?.interests && dto.interestInfo.interests.length > 0) {
       // Create Interest entities from the interestInfo
-      updated.interests = await this.interestRepository.save(dto.interestInfo.interests);
+      const interestItems = ProfileUtils.extractInterestItems(dto);
+      updated.interests = await this.interestRepository.save(interestItems);
     }
 
     const savedProfile = await this.profileRepository.save(updated);
@@ -72,9 +71,12 @@ export class ProfileService {
     // Handle interestInfo section specially
     if (section === 'interestInfo') {
       const interestInfo = dto as InterestInfo;
-      if (interestInfo.interests && interestInfo.interests.length > 0) {
-        profile.interests = await this.interestRepository.save(interestInfo.interests);
+      if (interestInfo.interests.length > 0) {
+        profile.interests = await this.interestRepository.save(
+          interestInfo.interests,
+        );
       }
+
       return this.profileRepository.save(profile);
     }
 
@@ -109,7 +111,7 @@ export class ProfileService {
 
   async getProfile(
     req: HttpRequestDto,
-  ): Promise<{ profile: Profile; user: User } | null> {
+  ): Promise<{ profile: Profile; user: User }> {
     let profile: Profile;
     try {
       profile = await this.userRepository.findProfileOrThrowByUserId(
@@ -118,7 +120,11 @@ export class ProfileService {
       );
     } catch (error) {
       if (error instanceof NotFoundException) {
-        return null;
+        this.logger.warn(`Profile not found for user ${req.user.userId}`);
+        return {
+          profile: null,
+          user: null,
+        };
       }
       throw error; // Re-throw unexpected errors
     }
@@ -196,8 +202,9 @@ export class ProfileService {
     // Handle interests if provided
     if (dto.interestInfo?.interests && dto.interestInfo.interests.length > 0) {
       // Create Interest entities from the interestInfo
+      const interestItems = ProfileUtils.extractInterestItems(dto);
       profileEntity.interests =
-        await this.interestRepository.save(dto.interestInfo.interests);
+        await this.interestRepository.save(interestItems);
     }
 
     const savedProfile = await this.profileRepository.save(profileEntity);

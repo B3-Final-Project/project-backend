@@ -1,5 +1,5 @@
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { UserMatches } from '../entities/user-matches.entity';
 import { Injectable } from '@nestjs/common';
 import { BoosterAction } from '../../modules/booster/enums/action.enum';
@@ -10,6 +10,40 @@ export class MatchRepository {
     @InjectRepository(UserMatches)
     private readonly userMatches: Repository<UserMatches>,
   ) {}
+
+  /**
+   * Delete all LIKE actions from one profile to another (one direction only)
+   */
+  public async deleteLikesFromTo(
+    fromProfileId: number,
+    toProfileId: number,
+  ): Promise<void> {
+    await this.userMatches
+      .createQueryBuilder()
+      .delete()
+      .from('matches')
+      .where(
+        'from_profile_id = :fromProfileId AND to_profile_id = :toProfileId AND action = :likeAction',
+        {
+          fromProfileId,
+          toProfileId,
+          likeAction: BoosterAction.LIKE,
+        },
+      )
+      .execute();
+  }
+
+  public async getMatchRow(
+    fromProfileId: number,
+    toProfileId: number,
+  ): Promise<UserMatches | null> {
+    return await this.userMatches.findOne({
+      where: {
+        from_profile_id: fromProfileId,
+        to_profile_id: toProfileId,
+      },
+    });
+  }
 
   public async getSeenRows(fromProfileId: number) {
     const seenRows = await this.userMatches.find({
@@ -27,32 +61,9 @@ export class MatchRepository {
     return await this.userMatches.find({
       where: {
         from_profile_id: fromProfileId,
-        action: BoosterAction.LIKE,
+        action: In([BoosterAction.MATCH, BoosterAction.LIKE]),
       },
     });
-  }
-
-  public async isMatch(
-    profileId1: number,
-    profileId2: number,
-  ): Promise<boolean> {
-    const like1 = await this.userMatches.findOne({
-      where: {
-        from_profile_id: profileId1,
-        to_profile_id: profileId2,
-        action: BoosterAction.LIKE,
-      },
-    });
-
-    const like2 = await this.userMatches.findOne({
-      where: {
-        from_profile_id: profileId2,
-        to_profile_id: profileId1,
-        action: BoosterAction.LIKE,
-      },
-    });
-
-    return !!(like1 && like2);
   }
 
   public async getMatchRows(
@@ -153,5 +164,19 @@ export class MatchRepository {
       .getRawOne();
 
     return parseInt(result?.count) || 0;
+  }
+
+  /**
+   * Delete all matches for a given profileId (as from or to)
+   */
+  public async deleteByProfileId(profileId: number): Promise<void> {
+    await this.userMatches
+      .createQueryBuilder()
+      .delete()
+      .from('matches')
+      .where('from_profile_id = :profileId OR to_profile_id = :profileId', {
+        profileId,
+      })
+      .execute();
   }
 }

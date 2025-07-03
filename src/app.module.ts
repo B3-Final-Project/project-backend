@@ -15,7 +15,6 @@ import { Constants } from './constants';
 import { HateoasModule } from './common/hateoas.module';
 import { Interest } from './common/entities/interest.entity';
 import { LoggerMiddleware } from './middlewares/logger.middleware';
-import { MatchesModule } from './modules/matches/matches.module';
 import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions';
 import { Profile } from './common/entities/profile.entity';
 import { ProfileImagesModule } from './modules/profile-images/profile-images.module';
@@ -24,11 +23,15 @@ import { Report } from './common/entities/report.entity';
 import { ReportsModule } from './modules/reports/reports.module';
 import { SettingsModule } from './modules/settings/settings.module';
 import { StatsModule } from './modules/stats/stats.module';
+import { Message } from './common/entities/message.entity';
+import { Conversation } from './common/entities/conversation.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './common/entities/user.entity';
 import { UserMatches } from './common/entities/user-matches.entity';
 import { GeolocateModule } from './modules/geolocate/geolocate.module';
 import { UsersModule } from './modules/users/users.module';
+import { MatchesModule } from './modules/matches/matches.module';
+import { MessagesModule } from './modules/messages/messages.module';
 
 export const ormConfig: PostgresConnectionOptions = {
   type: 'postgres',
@@ -44,6 +47,8 @@ export const ormConfig: PostgresConnectionOptions = {
     BoosterPack,
     BoosterUsage,
     Report,
+    Message,
+    Conversation,
   ],
   database: Constants.DATABASE_NAME,
   synchronize: true,
@@ -69,6 +74,7 @@ export const ormConfig: PostgresConnectionOptions = {
     ReportsModule,
     UsersModule,
     ProfileImagesModule,
+    MessagesModule,
   ],
   controllers: [AppController],
   providers: [AppService, CognitoStrategy],

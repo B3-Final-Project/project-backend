@@ -1,4 +1,5 @@
 import { LinkBuilder } from '../interfaces/hateoas.interface';
+import { Report } from '../entities/report.entity';
 
 /**
  * Common HATEOAS link builders for typical REST operations
@@ -190,33 +191,30 @@ export class AppLinkBuilders {
     return [
       {
         rel: 'self',
-        href: (resource: any) => `/matches/${resource.profileId}`,
+        href: (resource: any) =>
+          `/matches/${resource.profileId ?? ':profileId'}`,
         method: 'GET',
       },
       {
         rel: 'like',
-        href: (resource: any) => `/matches/${resource.profileId}/like`,
+        href: (resource: any) =>
+          `/matches/like/${resource.profileId ?? ':profileId'}`,
         method: 'POST',
         title: 'Like this profile',
         condition: (resource: any) => !resource.isLiked,
       },
       {
-        rel: 'unlike',
-        href: (resource: any) => `/matches/${resource.profileId}/unlike`,
-        method: 'DELETE',
-        title: 'Unlike this profile',
-        condition: (resource: any) => resource.isLiked,
-      },
-      {
         rel: 'pass',
-        href: (resource: any) => `/matches/${resource.profileId}/pass`,
+        href: (resource: any) =>
+          `/matches/pass/${resource.profileId ?? ':profileId'}`,
         method: 'POST',
         title: 'Pass on this profile',
         condition: (resource: any) => !resource.isPassed,
       },
       {
         rel: 'profile',
-        href: (resource: any) => `/profiles/${resource.profileId}`,
+        href: (resource: any) =>
+          `/profiles/${resource.profileId ?? ':profileId'}`,
         method: 'GET',
         title: 'View full profile',
       },
@@ -232,13 +230,13 @@ export class AppLinkBuilders {
       {
         rel: 'self',
         href: (resource: any) =>
-          `/profiles/${resource.profileId}/images/${resource.index}`,
+          `/profiles/${resource.profileId ?? 'profileId'}/images/${resource.index}`,
         method: 'GET',
       },
       {
         rel: 'update',
         href: (resource: any) =>
-          `/profiles/${resource.profileId}/images/${resource.index}`,
+          `/profiles/${resource.profileId ?? 'profileId'}/images/${resource.index}`,
         method: 'PUT',
         title: 'Update this image',
         type: 'multipart/form-data',
@@ -246,19 +244,21 @@ export class AppLinkBuilders {
       {
         rel: 'delete',
         href: (resource: any) =>
-          `/profiles/${resource.profileId}/images/${resource.index}`,
+          `/profiles/${resource.profileId ?? 'profileId'}/images/${resource.index}`,
         method: 'DELETE',
         title: 'Delete this image',
       },
       {
         rel: 'profile',
-        href: (resource: any) => `/profiles/${resource.profileId}`,
+        href: (resource: any) =>
+          `/profiles/${resource.profileId ?? 'profileId'}`,
         method: 'GET',
         title: 'View profile',
       },
       {
         rel: 'collection',
-        href: (resource: any) => `/profiles/${resource.profileId}/images`,
+        href: (resource: any) =>
+          `/profiles/${resource.profileId ?? 'profileId'}/images`,
         method: 'GET',
         title: 'View all profile images',
       },
@@ -335,13 +335,15 @@ export class AppLinkBuilders {
       },
       {
         rel: 'reported-profile',
-        href: (resource: any) => `/profiles/${resource.reportedProfileId}`,
+        href: (resource: any) =>
+          `/profiles/${resource.reported_profile_id ?? 'profileId'}`,
         method: 'GET',
         title: 'View reported profile',
       },
       {
         rel: 'reporter-profile',
-        href: (resource: any) => `/profiles/${resource.reporterProfileId}`,
+        href: (resource: Report) =>
+          `/profiles/${resource.reported_profile_id ?? 'profileId'}`,
         method: 'GET',
         title: 'View reporter profile',
       },

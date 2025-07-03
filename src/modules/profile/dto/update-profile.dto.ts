@@ -74,10 +74,12 @@ class PreferenceInfo {
 
 class LifestyleInfo {
   @ApiProperty()
+  @IsOptional()
   @IsEnum(SmokingEnum)
   smoking: SmokingEnum;
 
   @ApiProperty()
+  @IsOptional()
   @IsEnum(DrinkingEnum)
   drinking: DrinkingEnum;
 

@@ -21,20 +21,23 @@
     "sops:decrypt": "AWS_PROFILE=b3 sops --decrypt --input-type dotenv --output-type dotenv .env.enc > .env",
     "sops:encrypt": "AWS_PROFILE=b3 sops --encrypt --input-type dotenv --kms arn:aws:kms:eu-west-3:989418411786:key/mrk-aab2b8d1dcaa4886a120afd58f023fcf .env > .env.enc",
     "seed:users": "ts-node -r tsconfig-paths/register src/seed/index.ts",
-    "seed:boosters": "ts-node -r tsconfig-paths/register src/seed/booster.ts",
-    "seed:stats": "ts-node -r tsconfig-paths/register src/seed/booster-usage.seed.ts"
+    "seed:boosters": "ts-node -r tsconfig-paths/register src/seed/booster.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-cognito-identity-provider": "^3.840.0",
     "@nestjs/common": "^10.0.0",
     "@nestjs/core": "^10.0.0",
     "@nestjs/jwt": "^10.2.0",
     "@nestjs/mapped-types": "^2.1.0",
     "@nestjs/passport": "^10.0.3",
     "@nestjs/platform-express": "^10.4.17",
+    "@nestjs/platform-socket.io": "^10.4.19",
     "@nestjs/swagger": "^7.4.2",
     "@nestjs/typeorm": "^11.0.0",
+    "@nestjs/websockets": "^10.4.19",
     "@types/lodash": "^4.17.19",
     "@types/passport-jwt": "^4.0.1",
+    "@types/uuid": "^10.0.0",
     "aws-sdk": "^2.1692.0",
     "axios": "^1.8.4",
     "class-transformer": "^0.5.1",
@@ -55,8 +58,10 @@
     "pg": "^8.13.2",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1",
+    "socket.io": "^4.8.1",
     "swagger-ui-express": "^5.0.1",
-    "typeorm": "^0.3.20"
+    "typeorm": "^0.3.20",
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "@faker-js/faker": "^9.7.0",
@@ -71,6 +76,7 @@
     "@types/multer-s3": "^3.0.3",
     "@types/node": "^20.3.1",
     "@types/passport-google-oauth20": "^2.0.16",
+    "@types/socket.io": "^3.0.1",
     "@types/supertest": "^6.0.0",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",

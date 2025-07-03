@@ -24,22 +24,57 @@ export async function seedBoosterUsage(
 
   const boosterUsages: BoosterUsage[] = [];
 
+  let earliestDate = new Date();
+  let latestDate = new Date(0);
+  const userUsageCount: Record<string, number> = {};
+  const boosterPackUsageCount: Record<string, number> = {};
+
   for (let i = 0; i < count; i++) {
     const randomUser = users[Math.floor(Math.random() * users.length)]; //NOSONAR
     const randomBoosterPack =
       boosterPacks[Math.floor(Math.random() * boosterPacks.length)]; //NOSONAR
 
+    const usedAt = new Date(
+      Date.now() - Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000), //NOSONAR Random date within last 30 days
+    );
+
+    if (usedAt < earliestDate) earliestDate = usedAt;
+    if (usedAt > latestDate) latestDate = usedAt;
+
+    userUsageCount[randomUser.id] = (userUsageCount[randomUser.id] || 0) + 1;
+    boosterPackUsageCount[randomBoosterPack.id] =
+      (boosterPackUsageCount[randomBoosterPack.id] || 0) + 1;
+
     const boosterUsage = boosterUsageRepository.create({
       userId: randomUser.id,
       boosterPackId: randomBoosterPack.id,
-      usedAt: new Date(
-        Date.now() - Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000), //NOSONAR Random date within last 30 days
-      ),
+      usedAt,
     });
 
     boosterUsages.push(boosterUsage);
   }
 
   await boosterUsageRepository.save(boosterUsages);
+  // Statistics
+  const uniqueUsers = Object.keys(userUsageCount).length;
+  const uniqueBoosterPacks = Object.keys(boosterPackUsageCount).length;
+  const mostActiveUser = Object.entries(userUsageCount).sort(
+    (a, b) => b[1] - a[1],
+  )[0];
+  const mostUsedBoosterPack = Object.entries(boosterPackUsageCount).sort(
+    (a, b) => b[1] - a[1],
+  )[0];
+
   console.log(`✅ Seeded ${count} booster usage records`);
+  console.log(`📊 Booster Usage Statistics:`);
+  console.log(`- Unique users: ${uniqueUsers}`);
+  console.log(`- Unique booster packs: ${uniqueBoosterPacks}`);
+  console.log(
+    `- Most active user: ${mostActiveUser ? mostActiveUser[0] + ' (' + mostActiveUser[1] + ' usages)' : 'N/A'}`,
+  );
+  console.log(
+    `- Most used booster pack: ${mostUsedBoosterPack ? mostUsedBoosterPack[0] + ' (' + mostUsedBoosterPack[1] + ' usages)' : 'N/A'}`,
+  );
+  console.log(`- Earliest usage date: ${earliestDate.toISOString()}`);
+  console.log(`- Latest usage date: ${latestDate.toISOString()}`);
 }

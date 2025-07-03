@@ -72,6 +72,16 @@ export class ProfileRepository {
       .getMany();
   }
 
+  public async findByProfileIdsWithUsers(
+    profileIds: number[],
+  ): Promise<Profile[]> {
+    return this.profileRepository
+      .createQueryBuilder('p')
+      .leftJoinAndSelect('p.userProfile', 'u')
+      .where('p.id IN (:...profileIds)', { profileIds })
+      .getMany();
+  }
+
   public async findByUserId(
     userId: string,
     extraRelations?: string[],
@@ -125,9 +135,33 @@ export class ProfileRepository {
   }
 
   public async findMatchedProfiles(profileId: number): Promise<Profile[]> {
-    // Find profiles where both profiles have liked each other
+    // Find profiles where both profiles have a MATCH action for each other
     return await this.profileRepository
       .createQueryBuilder('p')
+      .innerJoin(
+        'matches',
+        'my_match',
+        'my_match.to_profile_id = p.id AND my_match.from_profile_id = :profileId AND my_match.action = :matchAction',
+      )
+      .innerJoin(
+        'matches',
+        'their_match',
+        'their_match.from_profile_id = p.id AND their_match.to_profile_id = :profileId AND their_match.action = :matchAction',
+      )
+      .setParameters({
+        profileId,
+        matchAction: BoosterAction.MATCH,
+      })
+      .getMany();
+  }
+
+  public async findMatchedProfilesWithUsers(
+    profileId: number,
+  ): Promise<Profile[]> {
+    // Find profiles where both profiles have liked each other, including user data
+    return await this.profileRepository
+      .createQueryBuilder('p')
+      .leftJoinAndSelect('p.userProfile', 'u')
       .innerJoin(
         'matches',
         'my_like',
@@ -157,5 +191,46 @@ export class ProfileRepository {
       .orderBy('COUNT(*)', 'DESC')
       .limit(10)
       .getRawMany();
+  }
+
+  /**
+   * Delete a profile by userId (and all join table associations)
+   */
+  public async deleteByUserId(userId: string): Promise<void> {
+    const profile = await this.findByUserId(userId, ['interests']);
+    if (!profile) return;
+
+    // Remove interests association
+    if (profile.interests && profile.interests.length > 0) {
+      await this.profileRepository
+        .createQueryBuilder()
+        .relation(Profile, 'interests')
+        .of(profile.id)
+        .remove(profile.interests);
+    }
+
+    // Delete profile
+    await this.profileRepository.delete(profile.id);
+  }
+
+  /**
+   * Delete a profile by profileId
+   */
+  public async deleteByProfileId(profileId: number): Promise<void> {
+    await this.profileRepository.delete(profileId);
+  }
+
+  /**
+   * Remove interests association from a profile
+   */
+  public async removeInterests(profileId: number): Promise<void> {
+    const profile = await this.findByProfileId(profileId, ['interests']);
+    if (profile?.interests && profile.interests.length > 0) {
+      await this.profileRepository
+        .createQueryBuilder()
+        .relation(Profile, 'interests')
+        .of(profileId)
+        .remove(profile.interests);
+    }
   }
 }
