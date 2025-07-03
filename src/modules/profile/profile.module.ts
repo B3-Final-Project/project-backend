@@ -10,6 +10,7 @@ import { ReportRepository } from '../../common/repository/report.repository';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from '../../common/entities/user.entity';
 import { UserRepository } from '../../common/repository/user.repository';
+import { GeolocateService } from '../geolocate/geolocate.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Profile, Interest, User, Report])],
@@ -20,6 +21,7 @@ import { UserRepository } from '../../common/repository/user.repository';
     ProfileRepository,
     InterestRepository,
     ReportRepository,
+    GeolocateService,
   ],
 })
 export class ProfileModule {}

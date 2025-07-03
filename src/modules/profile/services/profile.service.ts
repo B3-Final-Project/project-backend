@@ -22,6 +22,7 @@ import { ProfileUtils } from './profile-utils.service';
 import { ReportRepository } from '../../../common/repository/report.repository';
 import { User } from '../../../common/entities/user.entity';
 import { UserRepository } from '../../../common/repository/user.repository';
+import { GeolocateService } from '../../geolocate/geolocate.service';
 
 @Injectable()
 export class ProfileService {
@@ -31,6 +32,7 @@ export class ProfileService {
     private readonly userRepository: UserRepository,
     private readonly interestRepository: InterestRepository,
     private readonly reportRepository: ReportRepository,
+    private readonly geolocateService: GeolocateService,
   ) {}
 
   async updateProfile(
@@ -274,13 +276,41 @@ export class ProfileService {
     const section = providedSections[0];
     const dto = body[section];
 
-    const profile = this.updatePartialProfile(section, dto, req);
+    const profile = await this.updatePartialProfile(section, dto, req);
     this.logger.log(`Profile section updated`, {
       section,
       userId: req.user.userId,
       payload: dto,
     });
     return profile;
+  }
+
+  // Update the city location in User with coordinates
+  private async updateUserCoordinatesIfPresent(
+    coordinates: number[] | undefined,
+    userId: string,
+  ): Promise<void> {
+    if (!coordinates || coordinates.length !== 2) return;
+
+    const [longitude, latitude] = coordinates;
+
+    // Reverse geocode the coordinates
+    const city = await this.geolocateService.reverseGeocode(latitude, longitude);
+    // 3. Update coordinates in user
+    const user = await this.userRepository.findUserWithProfile(userId);
+
+    // Update user's profile city
+    if (user.profile) {
+      user.profile.city = city.city;
+      await this.profileRepository.save(user.profile);
+    }
+
+    // Update user's coordinates
+    user.location = {
+      type: 'Point',
+      coordinates: [longitude, latitude],
+    };
+    await this.userRepository.save(user);
   }
 
   public async getMatchedProfiles(req: HttpRequestDto): Promise<Profile[]> {

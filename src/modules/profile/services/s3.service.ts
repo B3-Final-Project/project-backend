@@ -9,7 +9,7 @@ export class S3Service {
   constructor(private readonly s3Client: S3Client) {}
 
   /**
-   * Delete an object from S3 bucket
+   * Delete an object from S3
    */
   async deleteObject(key: string): Promise<boolean> {
     try {

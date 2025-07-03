@@ -28,6 +28,7 @@ import { Conversation } from './common/entities/conversation.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './common/entities/user.entity';
 import { UserMatches } from './common/entities/user-matches.entity';
+import { GeolocateModule } from './modules/geolocate/geolocate.module';
 import { UsersModule } from './modules/users/users.module';
 import { MatchesModule } from './modules/matches/matches.module';
 import { MessagesModule } from './modules/messages/messages.module';
@@ -67,6 +68,7 @@ export const ormConfig: PostgresConnectionOptions = {
     ProfileModule,
     BoosterModule,
     SettingsModule,
+    GeolocateModule,
     MatchesModule,
     StatsModule,
     ReportsModule,
