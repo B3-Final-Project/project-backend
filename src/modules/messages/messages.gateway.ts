@@ -37,10 +37,6 @@ export class MessagesGateway
   ) {}
 
   async handleConnection(client: Socket) {
-    this.logger.log(
-      `🚀 handleConnection appelé ! socketId: ${client.id}, userId: ${client.handshake.auth.userId}`,
-    );
-
     try {
       // Appliquer le guard manuellement
       const context = {
@@ -50,9 +46,6 @@ export class MessagesGateway
       };
 
       const isAuthenticated = this.wsJwtGuard.canActivate(context);
-      this.logger.debug(
-        `🔐 Résultat de l'authentification: ${isAuthenticated}`,
-      );
 
       if (!isAuthenticated) {
         this.logger.error('❌ Authentification échouée, déconnexion du client');
@@ -61,9 +54,6 @@ export class MessagesGateway
       }
 
       const userId = client.handshake.auth.userId;
-      this.logger.log(
-        `🔌 Nouvelle connexion WebSocket - socketId: ${client.id}, userId: ${userId}`,
-      );
 
       if (userId) {
         this.connectedUsers.set(userId, client);
@@ -73,7 +63,6 @@ export class MessagesGateway
         );
 
         // Notifier les autres utilisateurs que cet utilisateur est en ligne
-        this.logger.debug(`📡 Émission userOnline pour ${userId}`);
         client.broadcast.emit('userOnline', { userId });
       } else {
         this.logger.error(
@@ -93,7 +82,6 @@ export class MessagesGateway
       this.logger.log(`User ${userId} disconnected from messages`);
 
       // Notifier les autres utilisateurs que cet utilisateur est hors ligne
-      this.logger.debug(`📡 Émission userOffline pour ${userId}`);
       client.broadcast.emit('userOffline', { userId });
     }
   }
@@ -103,12 +91,8 @@ export class MessagesGateway
     @ConnectedSocket() client: Socket,
     @MessageBody() conversationId: string,
   ) {
-    this.logger.log(
-      `📨 Événement joinConversation reçu - socketId: ${client.id}, conversationId: ${conversationId}`,
-    );
     const userId = client.handshake.auth.userId;
     client.join(`conversation:${conversationId}`);
-    this.logger.log(`User ${userId} joined conversation ${conversationId}`);
   }
 
   @SubscribeMessage('leaveConversation')
@@ -116,12 +100,8 @@ export class MessagesGateway
     @ConnectedSocket() client: Socket,
     @MessageBody() conversationId: string,
   ) {
-    this.logger.log(
-      `📨 Événement leaveConversation reçu - socketId: ${client.id}, conversationId: ${conversationId}`,
-    );
     const userId = client.handshake.auth.userId;
     client.leave(`conversation:${conversationId}`);
-    this.logger.log(`User ${userId} left conversation ${conversationId}`);
   }
 
   @SubscribeMessage('sendMessage')
@@ -129,14 +109,8 @@ export class MessagesGateway
     @ConnectedSocket() client: Socket,
     @MessageBody() data: CreateMessageDto,
   ) {
-    this.logger.log(
-      `📨 Événement sendMessage reçu - socketId: ${client.id}, conversationId: ${data.conversation_id}`,
-    );
     try {
       const userId = client.handshake.auth.userId;
-      this.logger.log(
-        `📤 Message reçu via WebSocket - userId: ${userId}, conversationId: ${data.conversation_id}, content: ${data.content.substring(0, 50)}...`,
-      );
 
       const message = await this.messagesService.sendMessage(data, {
         user: {
@@ -153,9 +127,6 @@ export class MessagesGateway
       this.server
         .to(`conversation:${data.conversation_id}`)
         .emit('newMessage', message);
-      this.logger.debug(
-        `📡 Message émis à la conversation ${data.conversation_id}`,
-      );
 
       // Émettre une notification de nouveau message non lu
       const conversation = await this.messagesService.getConversationById(
@@ -166,9 +137,6 @@ export class MessagesGateway
           conversation.user1_id === userId
             ? conversation.user2_id
             : conversation.user1_id;
-        this.logger.debug(
-          `🔔 Envoi notification à l'utilisateur ${otherUserId}`,
-        );
         this.server.to(`user:${otherUserId}`).emit('unreadMessage', {
           conversationId: data.conversation_id,
           messageCount: 1,
@@ -268,9 +236,6 @@ export class MessagesGateway
   ) {
     try {
       const userId = client.handshake.auth.userId;
-      this.logger.log(
-        `📖 Marquage comme lu - userId: ${userId}, conversationId: ${conversationId}`,
-      );
 
       await this.messagesService.markMessagesAsRead(conversationId, {
         user: {
@@ -309,12 +274,9 @@ export class MessagesGateway
   ) {
     try {
       const userId = client.handshake.auth.userId;
-      this.logger.debug(
-        `⌨️ État de frappe - userId: ${userId}, conversationId: ${data.conversationId}, isTyping: ${data.isTyping}`,
-      );
 
-      // Émettre l'état de frappe aux autres utilisateurs de la conversation
-      this.server.to(`conversation:${data.conversationId}`).emit('userTyping', {
+      // Émettre l'état de frappe aux autres utilisateurs de la conversation (exclure l'utilisateur actuel)
+      client.to(`conversation:${data.conversationId}`).emit('userTyping', {
         userId,
         conversationId: data.conversationId,
         isTyping: data.isTyping,
@@ -328,13 +290,8 @@ export class MessagesGateway
 
   @SubscribeMessage('getOnlineUsers')
   async handleGetOnlineUsers(@ConnectedSocket() client: Socket) {
-    this.logger.log(
-      `📨 Événement getOnlineUsers reçu - socketId: ${client.id}`,
-    );
     const onlineUsers = Array.from(this.connectedUsers.keys());
-    this.logger.log(`📋 Utilisateurs en ligne: ${onlineUsers.join(', ')}`);
     client.emit('onlineUsers', { users: onlineUsers });
-    this.logger.log('📡 Liste des utilisateurs en ligne envoyée au client');
   }
 
   // Méthode pour émettre des messages depuis le service
