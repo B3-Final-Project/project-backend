@@ -9,6 +9,7 @@ import { ProfileRepository } from '../../common/repository/profile.repository';
 import { UserMatches } from '../../common/entities/user-matches.entity';
 import { UserRepository } from '../../common/repository/user.repository';
 import { Profile } from '../../common/entities/profile.entity';
+import { User } from '../../common/entities/user.entity';
 
 @Injectable()
 export class MatchesService {
@@ -22,9 +23,33 @@ export class MatchesService {
   ) {}
 
   /**
+   * Helper method to convert profiles to Users
+   */
+  private convertProfilesToUsers(profiles: Profile[]): User[] {
+    return profiles
+      .map((profile) => profile.userProfile)
+      .filter((user): user is User => user !== null && user !== undefined);
+  }
+
+  /**
+   * Helper method to get users from profile IDs
+   */
+  private async getProfilesAsUsers(profileIds: number[]): Promise<User[]> {
+    if (profileIds.length === 0) {
+      return [];
+    }
+
+    // Get profiles with userProfile relation in one query
+    const profiles =
+      await this.profileRepository.findByProfileIdsWithUsers(profileIds);
+
+    return this.convertProfilesToUsers(profiles);
+  }
+
+  /**
    * Get all mutual matches for a user
    */
-  async getUserMatches(req: HttpRequestDto): Promise<Profile[]> {
+  async getUserMatches(req: HttpRequestDto): Promise<User[]> {
     const userId = req.user.userId;
     this.logger.log('Fetching user matches', { userId });
 
@@ -44,20 +69,21 @@ export class MatchesService {
       throw e;
     }
 
-    const matches = await this.profileRepository.findMatchedProfiles(profileId);
+    const matches =
+      await this.profileRepository.findMatchedProfilesWithUsers(profileId);
     this.logger.log('User matches fetched', {
       userId,
       profileId,
       matchCount: matches.length,
     });
 
-    return matches;
+    return this.convertProfilesToUsers(matches);
   }
 
   /**
    * Get profiles that liked you but you haven't responded to yet
    */
-  async getPendingMatches(req: HttpRequestDto): Promise<Profile[]> {
+  async getPendingMatches(req: HttpRequestDto): Promise<User[]> {
     const userId = req.user.userId;
     this.logger.log('Fetching pending matches', { userId });
 
@@ -74,8 +100,8 @@ export class MatchesService {
       return [];
     }
 
-    // Fetch the actual profiles
-    const matches = await this.profileRepository.findByProfileIds(profileIds);
+    // Fetch the actual users from the profiles
+    const matches = await this.getProfilesAsUsers(profileIds);
     this.logger.log('Pending matches fetched', {
       userId,
       ourProfileId,
@@ -88,7 +114,7 @@ export class MatchesService {
   /**
    * Get profiles you liked but haven't heard back from
    */
-  async getSentLikes(req: HttpRequestDto): Promise<Profile[]> {
+  async getSentLikes(req: HttpRequestDto): Promise<User[]> {
     const userId = req.user.userId;
     this.logger.log('Fetching sent likes', { userId });
 
@@ -105,8 +131,8 @@ export class MatchesService {
       return [];
     }
 
-    // Fetch the actual profiles
-    const matches = await this.profileRepository.findByProfileIds(profileIds);
+    // Fetch the actual users from the profiles
+    const matches = await this.getProfilesAsUsers(profileIds);
     this.logger.log('Sent likes fetched', {
       userId,
       fromProfileId,

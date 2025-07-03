@@ -72,6 +72,16 @@ export class ProfileRepository {
       .getMany();
   }
 
+  public async findByProfileIdsWithUsers(
+    profileIds: number[],
+  ): Promise<Profile[]> {
+    return this.profileRepository
+      .createQueryBuilder('p')
+      .leftJoinAndSelect('p.userProfile', 'u')
+      .where('p.id IN (:...profileIds)', { profileIds })
+      .getMany();
+  }
+
   public async findByUserId(
     userId: string,
     extraRelations?: string[],
@@ -141,6 +151,30 @@ export class ProfileRepository {
       .setParameters({
         profileId,
         matchAction: BoosterAction.MATCH,
+      })
+      .getMany();
+  }
+
+  public async findMatchedProfilesWithUsers(
+    profileId: number,
+  ): Promise<Profile[]> {
+    // Find profiles where both profiles have liked each other, including user data
+    return await this.profileRepository
+      .createQueryBuilder('p')
+      .leftJoinAndSelect('p.userProfile', 'u')
+      .innerJoin(
+        'matches',
+        'my_like',
+        'my_like.to_profile_id = p.id AND my_like.from_profile_id = :profileId AND my_like.action = :likeAction',
+      )
+      .innerJoin(
+        'matches',
+        'their_like',
+        'their_like.from_profile_id = p.id AND their_like.to_profile_id = :profileId AND their_like.action = :likeAction',
+      )
+      .setParameters({
+        profileId,
+        likeAction: BoosterAction.LIKE,
       })
       .getMany();
   }
