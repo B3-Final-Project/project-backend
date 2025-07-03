@@ -41,4 +41,4 @@ export class Conversation {
 
   @UpdateDateColumn()
   updated_at: Date;
-} 
+}

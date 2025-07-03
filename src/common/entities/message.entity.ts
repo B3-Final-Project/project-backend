@@ -36,4 +36,4 @@ export class Message {
 
   @CreateDateColumn()
   created_at: Date;
-} 
+}

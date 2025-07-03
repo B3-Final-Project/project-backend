@@ -16,15 +16,21 @@ export class ConversationRepository extends Repository<Conversation> {
       .leftJoinAndSelect('user2.profile', 'user2Profile')
       .leftJoinAndSelect('conversation.messages', 'messages')
       .leftJoinAndSelect('messages.sender', 'sender')
-      .where('conversation.user1_id = :userId OR conversation.user2_id = :userId', {
-        userId,
-      })
+      .where(
+        'conversation.user1_id = :userId OR conversation.user2_id = :userId',
+        {
+          userId,
+        },
+      )
       .orderBy('conversation.updated_at', 'DESC')
       .addOrderBy('messages.created_at', 'DESC')
       .getMany();
   }
 
-  async findExistingConversation(user1Id: string, user2Id: string): Promise<Conversation | null> {
+  async findExistingConversation(
+    user1Id: string,
+    user2Id: string,
+  ): Promise<Conversation | null> {
     return this.createQueryBuilder('conversation')
       .leftJoinAndSelect('conversation.user1', 'user1')
       .leftJoinAndSelect('conversation.user2', 'user2')
@@ -38,4 +44,4 @@ export class ConversationRepository extends Repository<Conversation> {
       .orderBy('messages.created_at', 'DESC')
       .getOne();
   }
-} 
+}

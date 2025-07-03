@@ -24,7 +24,7 @@ import {
 import { HateoasInterceptor } from '../../common/interceptors/hateoas.interceptor';
 import { HateoasLinks } from '../../common/decorators/hateoas.decorator';
 import { AppLinkBuilders } from '../../common/utils/hateoas-links.util';
-import { Profile } from '../../common/entities/profile.entity';
+import { User } from '../../common/entities/user.entity';
 
 @ApiTags('matches')
 @ApiBearerAuth('jwt-auth')
@@ -43,11 +43,11 @@ export class MatchesController {
   @ApiResponse({
     status: 200,
     description: 'Liste des matchs',
-    type: [Profile],
+    type: [User],
   })
   @HateoasLinks('match', AppLinkBuilders.matchLinks())
   @Get()
-  async getUserMatches(@Req() req: HttpRequestDto): Promise<Profile[]> {
+  async getUserMatches(@Req() req: HttpRequestDto): Promise<User[]> {
     return this.matchesService.getUserMatches(req);
   }
 
@@ -61,11 +61,11 @@ export class MatchesController {
   @ApiResponse({
     status: 200,
     description: 'Liste des matchs en attente',
-    type: [Profile],
+    type: [User],
   })
   @HateoasLinks('match', AppLinkBuilders.matchLinks())
   @Get('pending')
-  async getPendingMatches(@Req() req: HttpRequestDto): Promise<Profile[]> {
+  async getPendingMatches(@Req() req: HttpRequestDto): Promise<User[]> {
     return this.matchesService.getPendingMatches(req);
   }
 
@@ -79,11 +79,11 @@ export class MatchesController {
   @ApiResponse({
     status: 200,
     description: 'Liste des likes envoyés',
-    type: [Profile],
+    type: [User],
   })
   @HateoasLinks('match', AppLinkBuilders.matchLinks())
   @Get('sent')
-  async getSentLikes(@Req() req: HttpRequestDto): Promise<Profile[]> {
+  async getSentLikes(@Req() req: HttpRequestDto): Promise<User[]> {
     return this.matchesService.getSentLikes(req);
   }
 

@@ -17,4 +17,4 @@ export class WsRequestValidatorDto {
   @IsArray()
   @IsString({ each: true })
   groups: string[];
-} 
+}
