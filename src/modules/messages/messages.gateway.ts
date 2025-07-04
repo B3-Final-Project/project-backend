@@ -13,6 +13,8 @@ import { WsJwtGuard } from '../../common/guards/ws-jwt.guard';
 import { MessagesService } from './messages.service';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { CreateConversationDto } from './dto/create-conversation.dto';
+import { AddReactionDto } from './dto/add-reaction.dto';
+import { RemoveReactionDto } from './dto/remove-reaction.dto';
 import { WsRequestDto } from '../../common/dto/ws-request.dto';
 import { UserRepository } from '../../common/repository/user.repository';
 
@@ -322,7 +324,93 @@ export class MessagesGateway
     this.server.to(`user:${userId}`).emit(event, data);
   }
 
+  @SubscribeMessage('addReaction')
+  async handleAddReaction(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: AddReactionDto,
+  ) {
+    try {
+      const userId = client.handshake.auth.userId;
 
+      const updatedMessage = await this.messagesService.addReaction(data, {
+        user: {
+          userId,
+          groups: client.handshake.auth.groups ?? [],
+        },
+      } as WsRequestDto);
 
+      // Récupérer la conversation pour émettre à tous les participants
+      const conversation = await this.messagesService.getConversationById(
+        updatedMessage.conversation_id,
+      );
 
+      if (conversation) {
+        // Émettre la mise à jour du message à tous les utilisateurs de la conversation
+        this.server
+          .to(`conversation:${updatedMessage.conversation_id}`)
+          .emit('messageReactionAdded', updatedMessage);
+
+        // Émettre aussi une notification spécifique à l'autre utilisateur
+        const otherUserId =
+          conversation.user1_id === userId
+            ? conversation.user2_id
+            : conversation.user1_id;
+        
+        this.server.to(`user:${otherUserId}`).emit('messageReactionAdded', updatedMessage);
+      }
+
+      // Confirmer l'ajout de réaction au client
+      client.emit('reactionAdded', { success: true, messageId: data.message_id });
+    } catch (error) {
+      this.logger.error(
+        `❌ Erreur lors de l'ajout de la réaction: ${error.message}`,
+      );
+      client.emit('error', { message: 'Failed to add reaction' });
+    }
+  }
+
+  @SubscribeMessage('removeReaction')
+  async handleRemoveReaction(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: RemoveReactionDto,
+  ) {
+    try {
+      const userId = client.handshake.auth.userId;
+
+      const updatedMessage = await this.messagesService.removeReaction(data, {
+        user: {
+          userId,
+          groups: client.handshake.auth.groups ?? [],
+        },
+      } as WsRequestDto);
+
+      // Récupérer la conversation pour émettre à tous les participants
+      const conversation = await this.messagesService.getConversationById(
+        updatedMessage.conversation_id,
+      );
+
+      if (conversation) {
+        // Émettre la mise à jour du message à tous les utilisateurs de la conversation
+        this.server
+          .to(`conversation:${updatedMessage.conversation_id}`)
+          .emit('messageReactionRemoved', updatedMessage);
+
+        // Émettre aussi une notification spécifique à l'autre utilisateur
+        const otherUserId =
+          conversation.user1_id === userId
+            ? conversation.user2_id
+            : conversation.user1_id;
+        
+        this.server.to(`user:${otherUserId}`).emit('messageReactionRemoved', updatedMessage);
+      }
+
+      // Confirmer la suppression de réaction au client
+      client.emit('reactionRemoved', { success: true, messageId: data.message_id });
+    } catch (error) {
+      this.logger.error(
+        `❌ Erreur lors de la suppression de la réaction: ${error.message}`,
+      );
+      client.emit('error', { message: 'Failed to remove reaction' });
+    }
+  }
 }

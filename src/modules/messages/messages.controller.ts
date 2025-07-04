@@ -12,6 +12,8 @@ import { AuthGuard } from '@nestjs/passport';
 import { MessagesService } from './messages.service';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { CreateConversationDto } from './dto/create-conversation.dto';
+import { AddReactionDto } from './dto/add-reaction.dto';
+import { RemoveReactionDto } from './dto/remove-reaction.dto';
 import { HttpRequestDto } from '../../common/dto/http-request.dto';
 
 @Controller('messages')
@@ -65,5 +67,17 @@ export class MessagesController {
   ) {
     await this.messagesService.deleteConversation(conversationId, req);
     return { success: true };
+  }
+
+  @Post('reactions')
+  async addReaction(@Body() dto: AddReactionDto, @Req() req: HttpRequestDto) {
+    const message = await this.messagesService.addReaction(dto, req);
+    return { data: message };
+  }
+
+  @Delete('reactions')
+  async removeReaction(@Body() dto: RemoveReactionDto, @Req() req: HttpRequestDto) {
+    const message = await this.messagesService.removeReaction(dto, req);
+    return { data: message };
   }
 }
