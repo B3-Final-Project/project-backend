@@ -53,6 +53,20 @@ export class MatchRepository {
     return seenRows.map((row) => row.to_profile_id);
   }
 
+  public async saveMatch(match: UserMatches): Promise<UserMatches> {
+    const existingMatch = await this.getMatchRow(
+      match.from_profile_id,
+      match.to_profile_id,
+    );
+
+    if (existingMatch) {
+      existingMatch.action = match.action;
+      return await this.userMatches.save(existingMatch);
+    } else {
+      return await this.userMatches.save(match);
+    }
+  }
+
   public async save(matches: UserMatches[]) {
     return await this.userMatches.save(matches);
   }

@@ -71,11 +71,16 @@ describe('ReportsService', () => {
       profileRepository.findByProfileId.mockResolvedValue(mockProfile);
       reportRepository.create.mockResolvedValue(mockReport);
       reportRepository.countByProfileId.mockResolvedValue(1);
-      profileRepository.save.mockResolvedValue({ ...mockProfile, reportCount: 1 });
+      profileRepository.save.mockResolvedValue({
+        ...mockProfile,
+        reportCount: 1,
+      });
 
       const result = await service.reportUser(reporterUserId, createReportDto);
 
-      expect(profileRepository.findByProfileId).toHaveBeenCalledWith(createReportDto.reportedProfileId);
+      expect(profileRepository.findByProfileId).toHaveBeenCalledWith(
+        createReportDto.reportedProfileId,
+      );
       expect(reportRepository.create).toHaveBeenCalledWith(
         createReportDto.reportedProfileId,
         reporterUserId,
@@ -84,8 +89,13 @@ describe('ReportsService', () => {
           message: createReportDto.details || '',
         },
       );
-      expect(reportRepository.countByProfileId).toHaveBeenCalledWith(createReportDto.reportedProfileId);
-      expect(profileRepository.save).toHaveBeenCalledWith({ ...mockProfile, reportCount: 1 });
+      expect(reportRepository.countByProfileId).toHaveBeenCalledWith(
+        createReportDto.reportedProfileId,
+      );
+      expect(profileRepository.save).toHaveBeenCalledWith({
+        ...mockProfile,
+        reportCount: 1,
+      });
       expect(result).toEqual({
         message: createReportDto.details,
         reportCount: 1,
@@ -95,8 +105,12 @@ describe('ReportsService', () => {
     it('should throw NotFoundException if reported user profile not found', async () => {
       profileRepository.findByProfileId.mockResolvedValue(null);
 
-      await expect(service.reportUser(reporterUserId, createReportDto)).rejects.toThrow(
-        new NotFoundException(`User with Profile ID ${createReportDto.reportedProfileId} not found`),
+      await expect(
+        service.reportUser(reporterUserId, createReportDto),
+      ).rejects.toThrow(
+        new NotFoundException(
+          `User with Profile ID ${createReportDto.reportedProfileId} not found`,
+        ),
       );
     });
   });
@@ -120,7 +134,7 @@ describe('ReportsService', () => {
         offset: 0,
         limit: 10,
       };
-      
+
       reportRepository.findAllWithFilters.mockResolvedValue({
         reports: mockReports,
         total: 2,
@@ -146,7 +160,7 @@ describe('ReportsService', () => {
         reporterId: 'user123',
         status: 'pending',
       };
-      
+
       reportRepository.findAllWithFilters.mockResolvedValue({
         reports: mockReports,
         total: 25,

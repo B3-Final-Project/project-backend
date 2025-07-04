@@ -9,7 +9,7 @@ import {
   ZodiacEnum,
 } from '../modules/profile/enums';
 
-import { DataSource, DeepPartial } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { Interest } from 'src/common/entities/interest.entity';
 import { Profile } from 'src/common/entities/profile.entity';
 import { User } from 'src/common/entities/user.entity';
