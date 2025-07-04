@@ -52,10 +52,10 @@ export const ormConfig: PostgresConnectionOptions = {
   ],
   database: Constants.DATABASE_NAME,
   synchronize: true,
-  // ssl: {
-  //   rejectUnauthorized: false, // Set to true in production with valid SSL certs
-  //   sessionTimeout: 10000, // 10 seconds
-  // },
+  ssl: {
+    rejectUnauthorized: false, // Set to true in production with valid SSL certs
+    sessionTimeout: 10000, // 10 seconds
+  },
   extra: {
     connectionTimeoutMillis: 30000,
   },
