@@ -9,11 +9,13 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from '../../common/entities/user.entity';
 import { UserMatches } from '../../common/entities/user-matches.entity';
 import { UserRepository } from '../../common/repository/user.repository';
+import { MessagesModule } from '../messages/messages.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([UserMatches, Profile, User]),
     StatsModule, // Import StatsModule to use AnalyticsService
+    MessagesModule, // Import MessagesModule to use MessagesService and MessagesGateway
   ],
   controllers: [MatchesController],
   providers: [

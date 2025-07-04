@@ -14,6 +14,7 @@ import { MessagesService } from './messages.service';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { CreateConversationDto } from './dto/create-conversation.dto';
 import { WsRequestDto } from '../../common/dto/ws-request.dto';
+import { UserRepository } from '../../common/repository/user.repository';
 
 @WebSocketGateway({
   cors: {
@@ -34,6 +35,7 @@ export class MessagesGateway
   constructor(
     private readonly messagesService: MessagesService,
     private readonly wsJwtGuard: WsJwtGuard,
+    private readonly userRepository: UserRepository,
   ) {}
 
   async handleConnection(client: Socket) {
@@ -123,25 +125,39 @@ export class MessagesGateway
         `✅ Message traité par le service - messageId: ${message.id}`,
       );
 
-      // Émettre le message à tous les utilisateurs de la conversation
-      this.server
-        .to(`conversation:${data.conversation_id}`)
-        .emit('newMessage', message);
-
-      // Émettre une notification de nouveau message non lu
+      // Récupérer la conversation avec les informations de l'expéditeur
       const conversation = await this.messagesService.getConversationById(
         data.conversation_id,
       );
+
       if (conversation) {
+        // Récupérer les informations de l'expéditeur depuis le UserRepository
+        const sender = await this.userRepository.findById(userId);
+        const senderName = sender ? `${sender.name} ${sender.surname}`.trim() : 'Quelqu\'un';
+
+        // Créer un objet message enrichi avec les informations de l'expéditeur
+        const enrichedMessage = {
+          ...message,
+          senderName,
+        };
+
+        // Émettre le message enrichi à tous les utilisateurs de la conversation
+        this.server
+          .to(`conversation:${data.conversation_id}`)
+          .emit('newMessage', enrichedMessage);
+
+        // Émettre aussi une notification spécifique à l'autre utilisateur
         const otherUserId =
           conversation.user1_id === userId
             ? conversation.user2_id
             : conversation.user1_id;
-        this.server.to(`user:${otherUserId}`).emit('unreadMessage', {
-          conversationId: data.conversation_id,
-          messageCount: 1,
-          timestamp: new Date(),
-        });
+        
+        this.server.to(`user:${otherUserId}`).emit('newMessage', enrichedMessage);
+      } else {
+        // Fallback si la conversation n'est pas trouvée
+        this.server
+          .to(`conversation:${data.conversation_id}`)
+          .emit('newMessage', message);
       }
 
       // Confirmer l'envoi au client
@@ -168,11 +184,7 @@ export class MessagesGateway
         },
       } as WsRequestDto);
 
-      // Émettre la nouvelle conversation aux deux utilisateurs
-      this.server.to(`user:${userId}`).emit('newConversation', conversation);
-      this.server
-        .to(`user:${data.user2_id}`)
-        .emit('newConversation', conversation);
+
     } catch (error) {
       this.logger.error(`Error creating conversation: ${error.message}`);
       client.emit('error', { message: 'Failed to create conversation' });
@@ -190,6 +202,22 @@ export class MessagesGateway
         `🗑️ Suppression de conversation demandée - userId: ${userId}, conversationId: ${conversationId}`,
       );
 
+      // Récupérer la conversation AVANT de la supprimer pour obtenir l'autre utilisateur
+      const conversation =
+        await this.messagesService.getConversationById(conversationId);
+      
+      if (!conversation) {
+        this.logger.error(`❌ Conversation ${conversationId} non trouvée`);
+        client.emit('error', { message: 'Conversation not found' });
+        return;
+      }
+
+      const otherUserId =
+        conversation.user1_id === userId
+          ? conversation.user2_id
+          : conversation.user1_id;
+
+      // Supprimer la conversation
       await this.messagesService.deleteConversation(conversationId, {
         user: {
           userId,
@@ -197,27 +225,17 @@ export class MessagesGateway
         },
       } as WsRequestDto);
 
-      // Notifier les utilisateurs de la conversation qu'elle a été supprimée
-      const conversation =
-        await this.messagesService.getConversationById(conversationId);
-      if (conversation) {
-        const otherUserId =
-          conversation.user1_id === userId
-            ? conversation.user2_id
-            : conversation.user1_id;
+      this.logger.debug(
+        `🗑️ Notification de suppression envoyée aux utilisateurs - deletedBy: ${userId}, otherUser: ${otherUserId}`,
+      );
 
-        this.logger.debug(
-          `🗑️ Notification de suppression envoyée aux utilisateurs - deletedBy: ${userId}, otherUser: ${otherUserId}`,
-        );
-
-        // Émettre l'événement de suppression aux deux utilisateurs
-        this.server
-          .to(`user:${userId}`)
-          .emit('conversationDeleted', { conversationId });
-        this.server
-          .to(`user:${otherUserId}`)
-          .emit('conversationDeleted', { conversationId });
-      }
+      // Émettre l'événement de suppression aux deux utilisateurs
+      this.server
+        .to(`user:${userId}`)
+        .emit('conversationDeleted', { conversationId });
+      this.server
+        .to(`user:${otherUserId}`)
+        .emit('conversationDeleted', { conversationId });
 
       // Confirmer la suppression au client
       client.emit('conversationDeleted', { success: true, conversationId });
@@ -304,21 +322,7 @@ export class MessagesGateway
     this.server.to(`user:${userId}`).emit(event, data);
   }
 
-  // Méthode pour émettre une notification de nouveau message non lu
-  emitUnreadNotification(
-    userId: string,
-    conversationId: string,
-    messageCount: number,
-  ) {
-    this.server.to(`user:${userId}`).emit('unreadMessage', {
-      conversationId,
-      messageCount,
-      timestamp: new Date(),
-    });
-  }
 
-  // Méthode pour émettre une notification de nouvelle conversation
-  emitNewConversationNotification(userId: string, conversation: any) {
-    this.server.to(`user:${userId}`).emit('newConversation', conversation);
-  }
+
+
 }
