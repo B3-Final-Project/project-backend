@@ -174,7 +174,7 @@ export class ProfileRepository {
       )
       .setParameters({
         profileId,
-        likeAction: BoosterAction.LIKE,
+        likeAction: BoosterAction.MATCH,
       })
       .getMany();
   }

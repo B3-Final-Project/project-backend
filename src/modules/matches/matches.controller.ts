@@ -22,7 +22,10 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { HateoasInterceptor } from '../../common/interceptors/hateoas.interceptor';
-import { HateoasLinks } from '../../common/decorators/hateoas.decorator';
+import {
+  HateoasLinks,
+  HateoasCollectionOnly,
+} from '../../common/decorators/hateoas.decorator';
 import { AppLinkBuilders } from '../../common/utils/hateoas-links.util';
 import { User } from '../../common/entities/user.entity';
 
@@ -45,7 +48,7 @@ export class MatchesController {
     description: 'Liste des matchs',
     type: [User],
   })
-  @HateoasLinks('match', AppLinkBuilders.matchLinks())
+  @HateoasCollectionOnly('match')
   @Get()
   async getUserMatches(@Req() req: HttpRequestDto): Promise<User[]> {
     return this.matchesService.getUserMatches(req);
@@ -63,7 +66,7 @@ export class MatchesController {
     description: 'Liste des matchs en attente',
     type: [User],
   })
-  @HateoasLinks('match', AppLinkBuilders.matchLinks())
+  @HateoasCollectionOnly('match')
   @Get('pending')
   async getPendingMatches(@Req() req: HttpRequestDto): Promise<User[]> {
     return this.matchesService.getPendingMatches(req);
@@ -81,7 +84,7 @@ export class MatchesController {
     description: 'Liste des likes envoyés',
     type: [User],
   })
-  @HateoasLinks('match', AppLinkBuilders.matchLinks())
+  @HateoasCollectionOnly('match')
   @Get('sent')
   async getSentLikes(@Req() req: HttpRequestDto): Promise<User[]> {
     return this.matchesService.getSentLikes(req);

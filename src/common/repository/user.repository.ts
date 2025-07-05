@@ -18,6 +18,16 @@ export class UserRepository {
     return await this.userRepository.findOne({ where: { user_id: userId } });
   }
 
+  public async findByProfileId(profileId: number): Promise<User | null> {
+    return await this.userRepository.findOne({
+      where: {
+        profile: {
+          id: profileId,
+        },
+      },
+    });
+  }
+
   public async findProfileOrThrowByUserId(
     userId: string,
     relations: string[] = [],

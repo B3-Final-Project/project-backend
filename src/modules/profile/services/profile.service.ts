@@ -295,7 +295,10 @@ export class ProfileService {
     const [longitude, latitude] = coordinates;
 
     // Reverse geocode the coordinates
-    const city = await this.geolocateService.reverseGeocode(latitude, longitude);
+    const city = await this.geolocateService.reverseGeocode(
+      latitude,
+      longitude,
+    );
     // 3. Update coordinates in user
     const user = await this.userRepository.findUserWithProfile(userId);
 

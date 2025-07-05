@@ -1,6 +1,17 @@
-import { Controller, Get, Query, BadRequestException, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Query,
+  BadRequestException,
+  UseGuards,
+} from '@nestjs/common';
 import { GeolocateService } from './geolocate.service';
-import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 import { ReverseGeocodeDto } from './dto/reverse-geocode.dto';
 import { SearchCityDto } from './dto/search-city.dto';
 import { AuthGuard } from '@nestjs/passport';

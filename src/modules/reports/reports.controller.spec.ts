@@ -38,11 +38,11 @@ describe('ReportsController', () => {
         },
       ],
     })
-    .overrideInterceptor(HateoasInterceptor)
-    .useValue({
-      intercept: jest.fn().mockImplementation((_, next) => next.handle()),
-    })
-    .compile();
+      .overrideInterceptor(HateoasInterceptor)
+      .useValue({
+        intercept: jest.fn().mockImplementation((_, next) => next.handle()),
+      })
+      .compile();
 
     controller = module.get<ReportsController>(ReportsController);
     service = module.get(ReportsService);
@@ -125,13 +125,7 @@ describe('ReportsController', () => {
         limit: 5,
       });
 
-      await controller.getAllReports(
-        2,
-        5,
-        1,
-        'user123',
-        'pending',
-      );
+      await controller.getAllReports(2, 5, 1, 'user123', 'pending');
 
       expect(service.getAllReports).toHaveBeenCalledWith({
         offset: 5, // (2-1)*5 = 5
