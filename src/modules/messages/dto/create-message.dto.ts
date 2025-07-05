@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, IsUUID } from 'class-validator';
+import { IsNotEmpty, IsString, IsUUID, IsOptional } from 'class-validator';
 
 export class CreateMessageDto {
   @IsNotEmpty()
@@ -9,4 +9,9 @@ export class CreateMessageDto {
   @IsNotEmpty()
   @IsString()
   content: string;
+
+  @IsOptional()
+  @IsString()
+  @IsUUID()
+  reply_to_id?: string;
 }

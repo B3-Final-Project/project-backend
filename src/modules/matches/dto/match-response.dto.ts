@@ -3,4 +3,5 @@ export class MatchActionResponseDto {
   message: string;
   isMatch?: boolean; // true if both users liked each other
   matchId?: string;
+  conversationId?: string;
 }

@@ -9,21 +9,13 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from '../../common/entities/user.entity';
 import { UserMatches } from '../../common/entities/user-matches.entity';
 import { UserRepository } from '../../common/repository/user.repository';
-import { MessagesService } from '../messages/messages.service';
-import { Message } from 'src/common/entities/message.entity';
-import { Conversation } from 'src/common/entities/conversation.entity';
-import { ConversationRepository } from 'src/common/repository/conversation.repository';
+import { MessagesModule } from '../messages/messages.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([
-      UserMatches,
-      Profile,
-      User,
-      Message,
-      Conversation,
-    ]),
+    TypeOrmModule.forFeature([UserMatches, Profile, User]),
     StatsModule, // Import StatsModule to use AnalyticsService
+    MessagesModule, // Import MessagesModule to use MessagesService and MessagesGateway
   ],
   controllers: [MatchesController],
   providers: [
@@ -31,8 +23,6 @@ import { ConversationRepository } from 'src/common/repository/conversation.repos
     MatchRepository,
     ProfileRepository,
     UserRepository,
-    MessagesService,
-    ConversationRepository,
   ],
   exports: [MatchesService, MatchRepository],
 })

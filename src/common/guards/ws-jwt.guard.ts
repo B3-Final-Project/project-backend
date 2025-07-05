@@ -8,12 +8,7 @@ export class WsJwtGuard implements CanActivate {
   constructor(private readonly jwtService: JwtService) {}
 
   canActivate(context: any): boolean {
-    this.logger.log('🛡️ Guard WebSocket - canActivate appelé !');
-
     const client = context.switchToWs().getClient();
-    this.logger.debug(
-      `🔍 Guard WebSocket - Début de vérification - socketId: ${client.id}`,
-    );
 
     const token = client.handshake.auth.token;
 
@@ -21,15 +16,8 @@ export class WsJwtGuard implements CanActivate {
       this.logger.error(
         '❌ Guard WebSocket - Pas de token fourni dans auth.token',
       );
-      this.logger.debug(
-        `🔍 Auth complet: ${JSON.stringify(client.handshake.auth)}`,
-      );
       return false;
     }
-
-    this.logger.debug(
-      `🔍 Guard WebSocket - Token trouvé: ${token.substring(0, 20)}...`,
-    );
 
     try {
       // Décoder le token sans vérification (pour les tokens AWS Cognito)
@@ -41,10 +29,6 @@ export class WsJwtGuard implements CanActivate {
         );
         return false;
       }
-
-      this.logger.debug(
-        `🔍 Guard WebSocket - Token décodé - sub: ${decoded.sub}, username: ${decoded.username}, exp: ${decoded.exp}, currentTime: ${Math.floor(Date.now() / 1000)}`,
-      );
 
       // Vérifier l'expiration manuellement
       if (decoded.exp && decoded.exp < Math.floor(Date.now() / 1000)) {
@@ -71,10 +55,6 @@ export class WsJwtGuard implements CanActivate {
       // Stocker les informations d'authentification dans le client
       client.handshake.auth.userId = userId;
       client.handshake.auth.groups = decoded.groups ?? [];
-
-      this.logger.log(
-        `✅ Guard WebSocket - Authentification réussie - userId: ${userId}, groups: ${(decoded.groups ?? []).join(', ')}`,
-      );
 
       return true;
     } catch (error) {

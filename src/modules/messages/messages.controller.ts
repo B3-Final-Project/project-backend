@@ -12,6 +12,8 @@ import { AuthGuard } from '@nestjs/passport';
 import { MessagesService } from './messages.service';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { CreateConversationDto } from './dto/create-conversation.dto';
+import { AddReactionDto } from './dto/add-reaction.dto';
+import { RemoveReactionDto } from './dto/remove-reaction.dto';
 import { HttpRequestDto } from '../../common/dto/http-request.dto';
 
 @Controller('messages')
@@ -24,17 +26,20 @@ export class MessagesController {
     @Body() dto: CreateConversationDto,
     @Req() req: HttpRequestDto,
   ) {
-    return this.messagesService.createConversation(dto, req);
+    const conversation = await this.messagesService.createConversation(dto, req);
+    return { data: conversation };
   }
 
   @Post()
   async sendMessage(@Body() dto: CreateMessageDto, @Req() req: HttpRequestDto) {
-    return this.messagesService.sendMessage(dto, req);
+    const message = await this.messagesService.sendMessage(dto, req);
+    return { data: message };
   }
 
   @Get('conversations')
   async getConversations(@Req() req: HttpRequestDto) {
-    return this.messagesService.getConversations(req);
+    const conversations = await this.messagesService.getConversations(req);
+    return { data: conversations };
   }
 
   @Get('conversations/:id')
@@ -42,7 +47,8 @@ export class MessagesController {
     @Param('id') conversationId: string,
     @Req() req: HttpRequestDto,
   ) {
-    return this.messagesService.getMessages(conversationId, req);
+    const messages = await this.messagesService.getMessages(conversationId, req);
+    return { data: messages };
   }
 
   @Post('conversations/:id/read')
@@ -61,5 +67,17 @@ export class MessagesController {
   ) {
     await this.messagesService.deleteConversation(conversationId, req);
     return { success: true };
+  }
+
+  @Post('reactions')
+  async addReaction(@Body() dto: AddReactionDto, @Req() req: HttpRequestDto) {
+    const message = await this.messagesService.addReaction(dto, req);
+    return { data: message };
+  }
+
+  @Delete('reactions')
+  async removeReaction(@Body() dto: RemoveReactionDto, @Req() req: HttpRequestDto) {
+    const message = await this.messagesService.removeReaction(dto, req);
+    return { data: message };
   }
 }
