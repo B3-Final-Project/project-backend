@@ -30,7 +30,7 @@ export function formatConversationForFrontend(
     avatar:
       otherUser?.profile?.avatarUrl ||
       otherUser?.profile?.images?.[0] ||
-      `https://api.dicebear.com/7.x/avataaars/svg?seed=${otherUser?.name || 'user'}`,
+      '/vintage.png',
     otherUserId: otherUserId,
     lastMessage: lastMessage
       ? {

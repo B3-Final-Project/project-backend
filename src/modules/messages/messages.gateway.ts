@@ -274,7 +274,11 @@ export class MessagesGateway
             : conversation.user1_id;
         this.server
           .to(`user:${otherUserId}`)
-          .emit('messagesRead', { conversationId });
+          .emit('messagesRead', { 
+            conversationId,
+            readBy: userId,
+            timestamp: new Date()
+          });
       }
 
       // Confirmer le marquage au client
@@ -339,25 +343,14 @@ export class MessagesGateway
         },
       } as WsRequestDto);
 
-      // Récupérer la conversation pour émettre à tous les participants
-      const conversation = await this.messagesService.getConversationById(
-        updatedMessage.conversation_id,
+      this.logger.log(
+        `✅ Réaction ajoutée - messageId: ${data.message_id}, emoji: ${data.emoji}, userId: ${userId}`,
       );
 
-      if (conversation) {
-        // Émettre la mise à jour du message à tous les utilisateurs de la conversation
-        this.server
-          .to(`conversation:${updatedMessage.conversation_id}`)
-          .emit('messageReactionAdded', updatedMessage);
-
-        // Émettre aussi une notification spécifique à l'autre utilisateur
-        const otherUserId =
-          conversation.user1_id === userId
-            ? conversation.user2_id
-            : conversation.user1_id;
-        
-        this.server.to(`user:${otherUserId}`).emit('messageReactionAdded', updatedMessage);
-      }
+      // Émettre la mise à jour du message à tous les utilisateurs de la conversation
+      this.server
+        .to(`conversation:${updatedMessage.conversationId}`)
+        .emit('messageReactionAdded', updatedMessage);
 
       // Confirmer l'ajout de réaction au client
       client.emit('reactionAdded', { success: true, messageId: data.message_id });
@@ -384,25 +377,14 @@ export class MessagesGateway
         },
       } as WsRequestDto);
 
-      // Récupérer la conversation pour émettre à tous les participants
-      const conversation = await this.messagesService.getConversationById(
-        updatedMessage.conversation_id,
+      this.logger.log(
+        `✅ Réaction supprimée - messageId: ${data.message_id}, emoji: ${data.emoji}, userId: ${userId}`,
       );
 
-      if (conversation) {
-        // Émettre la mise à jour du message à tous les utilisateurs de la conversation
-        this.server
-          .to(`conversation:${updatedMessage.conversation_id}`)
-          .emit('messageReactionRemoved', updatedMessage);
-
-        // Émettre aussi une notification spécifique à l'autre utilisateur
-        const otherUserId =
-          conversation.user1_id === userId
-            ? conversation.user2_id
-            : conversation.user1_id;
-        
-        this.server.to(`user:${otherUserId}`).emit('messageReactionRemoved', updatedMessage);
-      }
+      // Émettre la mise à jour du message à tous les utilisateurs de la conversation
+      this.server
+        .to(`conversation:${updatedMessage.conversationId}`)
+        .emit('messageReactionRemoved', updatedMessage);
 
       // Confirmer la suppression de réaction au client
       client.emit('reactionRemoved', { success: true, messageId: data.message_id });

@@ -207,7 +207,7 @@ export class MatchesService {
         matchedWith: {
           userId: user2Id,
           name: user2Profile.name || 'Quelqu\'un',
-          avatar: user2Profile.profile.images?.[0] || user2Profile.profile.avatarUrl || null,
+          avatar: user2Profile.profile.images?.[0] || user2Profile.profile.avatarUrl || '/vintage.png',
           age: user2Profile.age || null,
         },
         timestamp: new Date(),
@@ -219,7 +219,7 @@ export class MatchesService {
         matchedWith: {
           userId: user1Id,
           name: user1Profile.name || 'Quelqu\'un',
-          avatar: user1Profile.profile.images?.[0] || user1Profile.profile.avatarUrl || null,
+          avatar: user1Profile.profile.images?.[0] || user1Profile.profile.avatarUrl || '/vintage.png',
           age: user1Profile.age || null,
         },
         timestamp: new Date(),
