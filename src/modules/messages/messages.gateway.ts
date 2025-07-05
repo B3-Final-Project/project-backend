@@ -234,10 +234,18 @@ export class MessagesGateway
       // Émettre l'événement de suppression aux deux utilisateurs
       this.server
         .to(`user:${userId}`)
-        .emit('conversationDeleted', { conversationId });
+        .emit('conversationDeleted', { 
+          conversationId,
+          deletedBy: userId,
+          timestamp: new Date()
+        });
       this.server
         .to(`user:${otherUserId}`)
-        .emit('conversationDeleted', { conversationId });
+        .emit('conversationDeleted', { 
+          conversationId,
+          deletedBy: userId,
+          timestamp: new Date()
+        });
 
       // Confirmer la suppression au client
       client.emit('conversationDeleted', { success: true, conversationId });
