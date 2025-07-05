@@ -64,8 +64,8 @@ export class MessagesService {
   private async validateConversationAccessWithRelations(
     conversationId: string,
     userId: string,
-    relations: string[] = ['user1', 'user2'],
-    errorMessage: string
+    errorMessage: string,
+    relations: string[] = ['user1', 'user2']
   ): Promise<Conversation> {
     const conversation = await this.conversationRepository.findOne({
       where: { id: conversationId },
@@ -148,8 +148,8 @@ export class MessagesService {
     const conversation = await this.validateConversationAccessWithRelations(
       dto.conversation_id,
       userId,
-      ['user1', 'user2'],
-      "Vous n'êtes pas autorisé à envoyer des messages dans cette conversation"
+      "Vous n'êtes pas autorisé à envoyer des messages dans cette conversation",
+      ['user1', 'user2']
     );
 
     const message = this.messageRepository.create({
@@ -247,8 +247,8 @@ export class MessagesService {
     await this.validateConversationAccessWithRelations(
       conversationId,
       userId,
-      ['user1', 'user2'],
-      "Vous n'êtes pas autorisé à supprimer cette conversation"
+      "Vous n'êtes pas autorisé à supprimer cette conversation",
+      ['user1', 'user2']
     );
 
     // Supprimer tous les messages de la conversation
