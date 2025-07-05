@@ -44,7 +44,7 @@ export class MessagesService {
   private async validateConversationAccess(
     conversationId: string,
     userId: string,
-    errorMessage: string = "Vous n'êtes pas autorisé à accéder à cette conversation"
+    errorMessage: string
   ): Promise<Conversation> {
     const conversation = await this.conversationRepository.findOne({
       where: { id: conversationId },
@@ -65,7 +65,7 @@ export class MessagesService {
     conversationId: string,
     userId: string,
     relations: string[] = ['user1', 'user2'],
-    errorMessage: string = "Vous n'êtes pas autorisé à accéder à cette conversation"
+    errorMessage: string
   ): Promise<Conversation> {
     const conversation = await this.conversationRepository.findOne({
       where: { id: conversationId },

@@ -14,6 +14,26 @@ import { MessagesService } from '../messages/messages.service';
 import { MessagesGateway } from '../messages/messages.gateway';
 import { CreateConversationDto } from '../messages/dto/create-conversation.dto';
 
+// Constantes pour éliminer les magic strings
+const MATCH_ACTION_TYPES = {
+  LIKE: 'like',
+  PASS: 'pass',
+} as const;
+
+const MATCH_ERROR_TYPES = {
+  LIKE: 'like',
+  PASS: 'pass',
+} as const;
+
+const MATCH_MESSAGES = {
+  MATCH_SUCCESS: 'It\'s a match! Both users liked each other.',
+  LIKE_SENT: 'Like sent, waiting for response.',
+  PROFILE_ALREADY_PROCESSED_PASS: 'Profile already processed (pass)',
+  PROFILE_PASSED: 'Profile passed/seen.',
+  LIKE_ERROR: 'Une erreur s\'est produite lors de l\'envoi du like.',
+  PASS_ERROR: 'Une erreur s\'est produite lors du passage du profil.',
+} as const;
+
 @Injectable()
 export class MatchesService {
   private readonly logger = new Logger(MatchesService.name);
@@ -445,7 +465,7 @@ export class MatchesService {
 
         return {
           success: true,
-          message: 'It’s a match! Both users liked each other.',
+          message: MATCH_MESSAGES.MATCH_SUCCESS,
           isMatch: true,
           matchId: undefined, // You can set a real matchId if you have one
           conversationId: conversation?.id,
@@ -460,14 +480,14 @@ export class MatchesService {
 
       // Émettre la notification d'action de match
       this.emitMatchActionNotification(userId, {
-        type: 'like',
+        type: MATCH_ACTION_TYPES.LIKE,
         matchId: profileId.toString(),
         isMatch: false,
       });
 
       return {
         success: true,
-        message: 'Like sent, waiting for response.',
+        message: MATCH_MESSAGES.LIKE_SENT,
         isMatch: false,
       };
     } catch (error) {
@@ -479,8 +499,8 @@ export class MatchesService {
 
       // Émettre la notification d'erreur
       this.emitMatchErrorNotification(userId, {
-        type: 'like',
-        message: 'Une erreur s\'est produite lors de l\'envoi du like.',
+        type: MATCH_ERROR_TYPES.LIKE,
+        message: MATCH_MESSAGES.LIKE_ERROR,
         matchId: profileId.toString(),
       });
 
@@ -519,11 +539,11 @@ export class MatchesService {
         
         // Émettre la notification d'action de match même si déjà traité
         this.emitMatchActionNotification(userId, {
-          type: 'pass',
+          type: MATCH_ACTION_TYPES.PASS,
           matchId: profileId.toString(),
         });
         
-        return { success: false, message: 'Profile already processed (pass)' };
+        return { success: false, message: MATCH_MESSAGES.PROFILE_ALREADY_PROCESSED_PASS };
       }
 
       // Create the seen record (pass = just mark as seen)
@@ -548,11 +568,11 @@ export class MatchesService {
 
       // Émettre la notification d'action de match
       this.emitMatchActionNotification(userId, {
-        type: 'pass',
+        type: MATCH_ACTION_TYPES.PASS,
         matchId: profileId.toString(),
       });
 
-      return { success: true, message: 'Profile passed/seen.' };
+      return { success: true, message: MATCH_MESSAGES.PROFILE_PASSED };
     } catch (error) {
       this.logger.error('Error in passProfile', {
         userId,
@@ -562,8 +582,8 @@ export class MatchesService {
 
       // Émettre la notification d'erreur
       this.emitMatchErrorNotification(userId, {
-        type: 'pass',
-        message: 'Une erreur s\'est produite lors du passage du profil.',
+        type: MATCH_ERROR_TYPES.PASS,
+        message: MATCH_MESSAGES.PASS_ERROR,
         matchId: profileId.toString(),
       });
 
