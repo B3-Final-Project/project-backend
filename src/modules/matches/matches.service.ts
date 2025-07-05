@@ -10,6 +10,7 @@ import { UserMatches } from '../../common/entities/user-matches.entity';
 import { UserRepository } from '../../common/repository/user.repository';
 import { Profile } from '../../common/entities/profile.entity';
 import { User } from '../../common/entities/user.entity';
+import { MessagesService } from '../messages/messages.service';
 
 @Injectable()
 export class MatchesService {
@@ -20,6 +21,7 @@ export class MatchesService {
     private readonly profileRepository: ProfileRepository,
     private readonly userRepository: UserRepository,
     private readonly analyticsService: AnalyticsService,
+    private readonly messagesService: MessagesService,
   ) {}
 
   /**
@@ -249,11 +251,12 @@ export class MatchesService {
       }
     } else {
       // No match exists, create a LIKE match
-      match = new UserMatches();
-      match.from_profile_id = ourProfileId;
-      match.to_profile_id = profileId;
-      match.action = BoosterAction.LIKE;
-      match = (await this.matchRepository.save([match]))[0];
+      await this.matchRepository.saveMatch({
+        from_profile_id: ourProfileId,
+        to_profile_id: profileId,
+        action: BoosterAction.LIKE,
+      } as UserMatches);
+
       this.logger.log('Like action saved', {
         userId,
         ourProfileId,
@@ -301,6 +304,12 @@ export class MatchesService {
       // Remove previous LIKE logs for both users (cleanup)
       await this.matchRepository.deleteLikesFromTo(ourProfileId, profileId);
       await this.matchRepository.deleteLikesFromTo(profileId, ourProfileId);
+
+      // create new message
+
+      const { user_id } = await this.userRepository.findByProfileId(profileId);
+
+      this.messagesService.createConversation({ user2_id: user_id }, req);
 
       // Track the match actions for analytics
       await this.analyticsService.trackUserAction(
