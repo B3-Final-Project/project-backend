@@ -4,10 +4,13 @@ import {
   Query,
   BadRequestException,
   UseGuards,
+  Param,
+  Body,
 } from '@nestjs/common';
 import { GeolocateService } from './geolocate.service';
 import {
   ApiBearerAuth,
+  ApiBody,
   ApiOperation,
   ApiQuery,
   ApiTags,
@@ -25,23 +28,22 @@ export class GeolocateController {
 
   @Get('reverse')
   @ApiOperation({ summary: 'Reverse geocode coordinates to city' })
-  @ApiQuery({ name: 'lat', type: Number })
-  @ApiQuery({ name: 'lon', type: Number })
-  async reverseGeocode(@Query() query: ReverseGeocodeDto) {
-    const { lat, lon } = query;
+  @ApiBody({
+    type: ReverseGeocodeDto,
+    description: 'Coordinates to reverse geocode',
+  })
+  async reverseGeocode(@Body() body: ReverseGeocodeDto) {
+    const { lat, lon } = body;
     if (isNaN(lat) || isNaN(lon)) {
       throw new BadRequestException('lat and lon must be valid numbers');
     }
     return this.geolocateService.reverseGeocode(lat, lon);
   }
 
-  @Get('search')
+  @Get('search/:city')
   @ApiOperation({ summary: 'Search for a city by name' })
-  @ApiQuery({ name: 'query', type: String })
-  async searchCity(@Query() query: SearchCityDto) {
-    if (!query.query) {
-      throw new BadRequestException('query parameter is required');
-    }
-    return this.geolocateService.searchCity(query.query);
+  @ApiQuery({ name: 'city', type: String })
+  async searchCity(@Param() city: string) {
+    return this.geolocateService.searchCity(city);
   }
 }
