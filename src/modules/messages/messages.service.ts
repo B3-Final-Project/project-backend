@@ -41,6 +41,54 @@ export class MessagesService {
     throw new Error('Invalid request object');
   }
 
+  private async validateConversationAccess(
+    conversationId: string,
+    userId: string,
+    errorMessage: string = "Vous n'êtes pas autorisé à accéder à cette conversation"
+  ): Promise<Conversation> {
+    const conversation = await this.conversationRepository.findOne({
+      where: { id: conversationId },
+    });
+
+    if (!conversation) {
+      throw new NotFoundException('Conversation non trouvée');
+    }
+
+    if (conversation.user1_id !== userId && conversation.user2_id !== userId) {
+      throw new BadRequestException(errorMessage);
+    }
+
+    return conversation;
+  }
+
+  private async validateConversationAccessWithRelations(
+    conversationId: string,
+    userId: string,
+    relations: string[] = ['user1', 'user2'],
+    errorMessage: string = "Vous n'êtes pas autorisé à accéder à cette conversation"
+  ): Promise<Conversation> {
+    const conversation = await this.conversationRepository.findOne({
+      where: { id: conversationId },
+      relations,
+    });
+
+    if (!conversation) {
+      throw new NotFoundException('Conversation non trouvée');
+    }
+
+    if (conversation.user1_id !== userId && conversation.user2_id !== userId) {
+      throw new BadRequestException(errorMessage);
+    }
+
+    return conversation;
+  }
+
+  private getOtherUserId(conversation: Conversation, userId: string): string {
+    return conversation.user1_id === userId
+      ? conversation.user2_id
+      : conversation.user1_id;
+  }
+
   public async createConversation(
     dto: CreateConversationDto,
     req: RequestDto,
@@ -97,20 +145,12 @@ export class MessagesService {
   ): Promise<any> {
     const userId = this.getUserId(req);
 
-    const conversation = await this.conversationRepository.findOne({
-      where: { id: dto.conversation_id },
-      relations: ['user1', 'user2'],
-    });
-
-    if (!conversation) {
-      throw new NotFoundException('Conversation non trouvée');
-    }
-
-    if (conversation.user1_id !== userId && conversation.user2_id !== userId) {
-      throw new BadRequestException(
-        "Vous n'êtes pas autorisé à envoyer des messages dans cette conversation",
-      );
-    }
+    const conversation = await this.validateConversationAccessWithRelations(
+      dto.conversation_id,
+      userId,
+      ['user1', 'user2'],
+      "Vous n'êtes pas autorisé à envoyer des messages dans cette conversation"
+    );
 
     const message = this.messageRepository.create({
       conversation_id: conversation.id,
@@ -152,19 +192,11 @@ export class MessagesService {
   ): Promise<any[]> {
     const userId = this.getUserId(req);
 
-    const conversation = await this.conversationRepository.findOne({
-      where: { id: conversationId },
-    });
-
-    if (!conversation) {
-      throw new NotFoundException('Conversation non trouvée');
-    }
-
-    if (conversation.user1_id !== userId && conversation.user2_id !== userId) {
-      throw new BadRequestException(
-        "Vous n'êtes pas autorisé à voir les messages de cette conversation",
-      );
-    }
+    await this.validateConversationAccess(
+      conversationId,
+      userId,
+      "Vous n'êtes pas autorisé à voir les messages de cette conversation"
+    );
 
     const messages = await this.messageRepository.find({
       where: { conversation_id: conversationId },
@@ -181,27 +213,16 @@ export class MessagesService {
   ): Promise<void> {
     const userId = this.getUserId(req);
 
-    const conversation = await this.conversationRepository.findOne({
-      where: { id: conversationId },
-    });
-
-    if (!conversation) {
-      throw new NotFoundException('Conversation non trouvée');
-    }
-
-    if (conversation.user1_id !== userId && conversation.user2_id !== userId) {
-      throw new BadRequestException(
-        "Vous n'êtes pas autorisé à marquer les messages de cette conversation comme lus",
-      );
-    }
+    const conversation = await this.validateConversationAccess(
+      conversationId,
+      userId,
+      "Vous n'êtes pas autorisé à marquer les messages de cette conversation comme lus"
+    );
 
     await this.messageRepository.update(
       {
         conversation_id: conversationId,
-        sender_id:
-          conversation.user1_id === userId
-            ? conversation.user2_id
-            : conversation.user1_id,
+        sender_id: this.getOtherUserId(conversation, userId),
         is_read: false,
       },
       { is_read: true },
@@ -223,20 +244,12 @@ export class MessagesService {
   ): Promise<void> {
     const userId = this.getUserId(req);
 
-    const conversation = await this.conversationRepository.findOne({
-      where: { id: conversationId },
-      relations: ['user1', 'user2'],
-    });
-
-    if (!conversation) {
-      throw new NotFoundException('Conversation non trouvée');
-    }
-
-    if (conversation.user1_id !== userId && conversation.user2_id !== userId) {
-      throw new BadRequestException(
-        "Vous n'êtes pas autorisé à supprimer cette conversation",
-      );
-    }
+    await this.validateConversationAccessWithRelations(
+      conversationId,
+      userId,
+      ['user1', 'user2'],
+      "Vous n'êtes pas autorisé à supprimer cette conversation"
+    );
 
     // Supprimer tous les messages de la conversation
     await this.messageRepository.delete({ conversation_id: conversationId });
@@ -261,12 +274,11 @@ export class MessagesService {
     }
 
     // Vérifier que l'utilisateur fait partie de la conversation
-    const conversation = message.conversation;
-    if (conversation.user1_id !== userId && conversation.user2_id !== userId) {
-      throw new BadRequestException(
-        "Vous n'êtes pas autorisé à réagir à ce message",
-      );
-    }
+    await this.validateConversationAccess(
+      message.conversation.id,
+      userId,
+      "Vous n'êtes pas autorisé à réagir à ce message"
+    );
 
     // Récupérer les réactions actuelles
     const currentReactions = message.reactions || {};
@@ -312,12 +324,11 @@ export class MessagesService {
     }
 
     // Vérifier que l'utilisateur fait partie de la conversation
-    const conversation = message.conversation;
-    if (conversation.user1_id !== userId && conversation.user2_id !== userId) {
-      throw new BadRequestException(
-        "Vous n'êtes pas autorisé à supprimer cette réaction",
-      );
-    }
+    await this.validateConversationAccess(
+      message.conversation.id,
+      userId,
+      "Vous n'êtes pas autorisé à supprimer cette réaction"
+    );
 
     // Récupérer les réactions actuelles
     const currentReactions = message.reactions || {};

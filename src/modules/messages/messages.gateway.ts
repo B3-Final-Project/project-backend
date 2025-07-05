@@ -40,6 +40,35 @@ export class MessagesGateway
     private readonly userRepository: UserRepository,
   ) {}
 
+  private createWsRequestDto(client: Socket): WsRequestDto {
+    return {
+      user: {
+        userId: client.handshake.auth.userId,
+        groups: client.handshake.auth.groups ?? [],
+      },
+    } as WsRequestDto;
+  }
+
+  private getOtherUserId(conversation: any, userId: string): string {
+    return conversation.user1_id === userId
+      ? conversation.user2_id
+      : conversation.user1_id;
+  }
+
+  private handleWsError(client: Socket, error: any, operation: string) {
+    this.logger.error(
+      `❌ Erreur lors de ${operation}: ${error.message}`,
+    );
+    client.emit('error', { message: `Failed to ${operation}` });
+  }
+
+  private emitToConversationUsers(conversation: any, userId: string, event: string, data: any) {
+    const otherUserId = this.getOtherUserId(conversation, userId);
+    
+    this.server.to(`user:${userId}`).emit(event, data);
+    this.server.to(`user:${otherUserId}`).emit(event, data);
+  }
+
   async handleConnection(client: Socket) {
     try {
       // Appliquer le guard manuellement
@@ -116,12 +145,7 @@ export class MessagesGateway
     try {
       const userId = client.handshake.auth.userId;
 
-      const message = await this.messagesService.sendMessage(data, {
-        user: {
-          userId,
-          groups: client.handshake.auth.groups ?? [],
-        },
-      } as WsRequestDto);
+      const message = await this.messagesService.sendMessage(data, this.createWsRequestDto(client));
 
       this.logger.log(
         `✅ Message traité par le service - messageId: ${message.id}`,
@@ -149,10 +173,7 @@ export class MessagesGateway
           .emit('newMessage', enrichedMessage);
 
         // Émettre aussi une notification spécifique à l'autre utilisateur
-        const otherUserId =
-          conversation.user1_id === userId
-            ? conversation.user2_id
-            : conversation.user1_id;
+        const otherUserId = this.getOtherUserId(conversation, userId);
         
         this.server.to(`user:${otherUserId}`).emit('newMessage', enrichedMessage);
       } else {
@@ -165,10 +186,7 @@ export class MessagesGateway
       // Confirmer l'envoi au client
       client.emit('messageSent', { success: true, messageId: message.id });
     } catch (error) {
-      this.logger.error(
-        `❌ Erreur lors de l'envoi du message: ${error.message}`,
-      );
-      client.emit('error', { message: 'Failed to send message' });
+      this.handleWsError(client, error, 'sendMessage');
     }
   }
 
@@ -179,12 +197,7 @@ export class MessagesGateway
   ) {
     try {
       const userId = client.handshake.auth.userId;
-      const conversation = await this.messagesService.createConversation(data, {
-        user: {
-          userId,
-          groups: client.handshake.auth.groups ?? [],
-        },
-      } as WsRequestDto);
+      const conversation = await this.messagesService.createConversation(data, this.createWsRequestDto(client));
 
 
     } catch (error) {
@@ -214,18 +227,10 @@ export class MessagesGateway
         return;
       }
 
-      const otherUserId =
-        conversation.user1_id === userId
-          ? conversation.user2_id
-          : conversation.user1_id;
+      const otherUserId = this.getOtherUserId(conversation, userId);
 
       // Supprimer la conversation
-      await this.messagesService.deleteConversation(conversationId, {
-        user: {
-          userId,
-          groups: client.handshake.auth.groups ?? [],
-        },
-      } as WsRequestDto);
+      await this.messagesService.deleteConversation(conversationId, this.createWsRequestDto(client));
 
       this.logger.debug(
         `🗑️ Notification de suppression envoyée aux utilisateurs - deletedBy: ${userId}, otherUser: ${otherUserId}`,
@@ -242,10 +247,7 @@ export class MessagesGateway
       // Confirmer la suppression au client
       client.emit('conversationDeleted', { success: true, conversationId });
     } catch (error) {
-      this.logger.error(
-        `❌ Erreur lors de la suppression de la conversation: ${error.message}`,
-      );
-      client.emit('error', { message: 'Failed to delete conversation' });
+      this.handleWsError(client, error, 'deleteConversation');
     }
   }
 
@@ -257,21 +259,13 @@ export class MessagesGateway
     try {
       const userId = client.handshake.auth.userId;
 
-      await this.messagesService.markMessagesAsRead(conversationId, {
-        user: {
-          userId,
-          groups: client.handshake.auth.groups ?? [],
-        },
-      } as WsRequestDto);
+      await this.messagesService.markMessagesAsRead(conversationId, this.createWsRequestDto(client));
 
       // Notifier les autres utilisateurs que les messages ont été lus
       const conversation =
         await this.messagesService.getConversationById(conversationId);
       if (conversation) {
-        const otherUserId =
-          conversation.user1_id === userId
-            ? conversation.user2_id
-            : conversation.user1_id;
+        const otherUserId = this.getOtherUserId(conversation, userId);
         this.server
           .to(`user:${otherUserId}`)
           .emit('messagesRead', { 
@@ -284,10 +278,7 @@ export class MessagesGateway
       // Confirmer le marquage au client
       client.emit('messagesMarkedAsRead', { success: true, conversationId });
     } catch (error) {
-      this.logger.error(
-        `❌ Erreur lors du marquage comme lu: ${error.message}`,
-      );
-      client.emit('error', { message: 'Failed to mark messages as read' });
+      this.handleWsError(client, error, 'markAsRead');
     }
   }
 
@@ -336,12 +327,7 @@ export class MessagesGateway
     try {
       const userId = client.handshake.auth.userId;
 
-      const updatedMessage = await this.messagesService.addReaction(data, {
-        user: {
-          userId,
-          groups: client.handshake.auth.groups ?? [],
-        },
-      } as WsRequestDto);
+      const updatedMessage = await this.messagesService.addReaction(data, this.createWsRequestDto(client));
 
       this.logger.log(
         `✅ Réaction ajoutée - messageId: ${data.message_id}, emoji: ${data.emoji}, userId: ${userId}`,
@@ -355,10 +341,7 @@ export class MessagesGateway
       // Confirmer l'ajout de réaction au client
       client.emit('reactionAdded', { success: true, messageId: data.message_id });
     } catch (error) {
-      this.logger.error(
-        `❌ Erreur lors de l'ajout de la réaction: ${error.message}`,
-      );
-      client.emit('error', { message: 'Failed to add reaction' });
+      this.handleWsError(client, error, 'addReaction');
     }
   }
 
@@ -370,12 +353,7 @@ export class MessagesGateway
     try {
       const userId = client.handshake.auth.userId;
 
-      const updatedMessage = await this.messagesService.removeReaction(data, {
-        user: {
-          userId,
-          groups: client.handshake.auth.groups ?? [],
-        },
-      } as WsRequestDto);
+      const updatedMessage = await this.messagesService.removeReaction(data, this.createWsRequestDto(client));
 
       this.logger.log(
         `✅ Réaction supprimée - messageId: ${data.message_id}, emoji: ${data.emoji}, userId: ${userId}`,
@@ -389,10 +367,7 @@ export class MessagesGateway
       // Confirmer la suppression de réaction au client
       client.emit('reactionRemoved', { success: true, messageId: data.message_id });
     } catch (error) {
-      this.logger.error(
-        `❌ Erreur lors de la suppression de la réaction: ${error.message}`,
-      );
-      client.emit('error', { message: 'Failed to remove reaction' });
+      this.handleWsError(client, error, 'removeReaction');
     }
   }
 }
