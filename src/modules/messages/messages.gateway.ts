@@ -124,7 +124,6 @@ export class MessagesGateway
     @ConnectedSocket() client: Socket,
     @MessageBody() conversationId: string,
   ) {
-    const userId = client.handshake.auth.userId;
     client.join(`conversation:${conversationId}`);
   }
 
@@ -133,7 +132,6 @@ export class MessagesGateway
     @ConnectedSocket() client: Socket,
     @MessageBody() conversationId: string,
   ) {
-    const userId = client.handshake.auth.userId;
     client.leave(`conversation:${conversationId}`);
   }
 
@@ -196,10 +194,7 @@ export class MessagesGateway
     @MessageBody() data: CreateConversationDto,
   ) {
     try {
-      const userId = client.handshake.auth.userId;
-      const conversation = await this.messagesService.createConversation(data, this.createWsRequestDto(client));
-
-
+      await this.messagesService.createConversation(data, this.createWsRequestDto(client));
     } catch (error) {
       this.logger.error(`Error creating conversation: ${error.message}`);
       client.emit('error', { message: 'Failed to create conversation' });

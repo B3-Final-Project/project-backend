@@ -354,11 +354,11 @@ export class MatchesService {
         }
       } else {
         // No match exists, create a LIKE match
-        match = new UserMatches();
-        match.from_profile_id = ourProfileId;
-        match.to_profile_id = profileId;
-        match.action = BoosterAction.LIKE;
-        match = (await this.matchRepository.save([match]))[0];
+        const newMatch = new UserMatches();
+        newMatch.from_profile_id = ourProfileId;
+        newMatch.to_profile_id = profileId;
+        newMatch.action = BoosterAction.LIKE;
+        await this.matchRepository.save([newMatch]);
         this.logger.log('Like action saved', {
           userId,
           ourProfileId,

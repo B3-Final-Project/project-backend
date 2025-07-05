@@ -281,12 +281,10 @@ export class MessagesService {
     );
 
     // Récupérer les réactions actuelles
-    const currentReactions = message.reactions || {};
+    const currentReactions = message.reactions ?? {};
     
     // Ajouter la réaction
-    if (!currentReactions[dto.emoji]) {
-      currentReactions[dto.emoji] = [];
-    }
+    currentReactions[dto.emoji] ??= [];
     
     // Éviter les doublons
     if (!currentReactions[dto.emoji].includes(userId)) {
@@ -331,7 +329,7 @@ export class MessagesService {
     );
 
     // Récupérer les réactions actuelles
-    const currentReactions = message.reactions || {};
+    const currentReactions = message.reactions ?? {};
     
     // Supprimer la réaction
     if (currentReactions[dto.emoji]) {
