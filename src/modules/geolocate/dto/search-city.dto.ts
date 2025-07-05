@@ -5,4 +5,4 @@ export class SearchCityDto {
   @ApiProperty({ type: String })
   @IsString()
   query: string;
-} 
+}

@@ -14,4 +14,4 @@ export interface NominatimSearchResponse {
   lon: string;
   lat: string;
   [key: string]: any;
-} 
+}
