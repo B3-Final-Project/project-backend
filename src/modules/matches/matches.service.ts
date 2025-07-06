@@ -11,6 +11,28 @@ import { UserRepository } from '../../common/repository/user.repository';
 import { Profile } from '../../common/entities/profile.entity';
 import { User } from '../../common/entities/user.entity';
 import { MessagesService } from '../messages/messages.service';
+import { MessagesGateway } from '../messages/messages.gateway';
+import { CreateConversationDto } from '../messages/dto/create-conversation.dto';
+
+// Constantes pour éliminer les magic strings
+const MATCH_ACTION_TYPES = {
+  LIKE: 'like',
+  PASS: 'pass',
+} as const;
+
+const MATCH_ERROR_TYPES = {
+  LIKE: 'like',
+  PASS: 'pass',
+} as const;
+
+const MATCH_MESSAGES = {
+  MATCH_SUCCESS: 'It\'s a match! Both users liked each other.',
+  LIKE_SENT: 'Like sent, waiting for response.',
+  PROFILE_ALREADY_PROCESSED_PASS: 'Profile already processed (pass)',
+  PROFILE_PASSED: 'Profile passed/seen.',
+  LIKE_ERROR: 'Une erreur s\'est produite lors de l\'envoi du like.',
+  PASS_ERROR: 'Une erreur s\'est produite lors du passage du profil.',
+} as const;
 
 @Injectable()
 export class MatchesService {
@@ -22,7 +44,8 @@ export class MatchesService {
     private readonly userRepository: UserRepository,
     private readonly analyticsService: AnalyticsService,
     private readonly messagesService: MessagesService,
-  ) {}
+    private readonly messagesGateway: MessagesGateway,
+  ) { }
 
   /**
    * Helper method to convert profiles to Users
@@ -145,6 +168,104 @@ export class MatchesService {
   }
 
   /**
+   * Create a conversation between two users when they match
+   */
+  private async createMatchConversation(
+    user1Id: string,
+    user2Id: string,
+  ): Promise<any> {
+    try {
+      const createConversationDto: CreateConversationDto = {
+        user2_id: user2Id,
+      };
+
+      // Create conversation using the first user's context
+      const conversation = await this.messagesService.createConversation(
+        createConversationDto,
+        {
+          user: {
+            userId: user1Id,
+            groups: [],
+          },
+        },
+      );
+
+      this.logger.log('Conversation created for match', {
+        user1Id,
+        user2Id,
+        conversationId: conversation.id,
+      });
+
+      return conversation;
+    } catch (error) {
+      this.logger.error('Error creating conversation for match', {
+        user1Id,
+        user2Id,
+        error: error.message,
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Notify users about a new match via WebSocket
+   */
+  private async notifyUsersAboutMatch(
+    user1Id: string,
+    user2Id: string,
+    conversation: any,
+  ): Promise<void> {
+    try {
+      // Récupérer les informations des profils pour enrichir les données du match
+      const user1Profile = await this.userRepository.findUserWithProfile(user1Id);
+      const user2Profile = await this.userRepository.findUserWithProfile(user2Id);
+
+      // Créer les données enrichies pour chaque utilisateur
+      const matchDataForUser1 = {
+        type: 'match',
+        conversation,
+        matchedWith: {
+          userId: user2Id,
+          name: user2Profile.name || 'Quelqu\'un',
+          avatar: user2Profile.profile.images?.[0] || user2Profile.profile.avatarUrl || '/vintage.png',
+          age: user2Profile.age || null,
+        },
+        timestamp: new Date(),
+      };
+
+      const matchDataForUser2 = {
+        type: 'match',
+        conversation,
+        matchedWith: {
+          userId: user1Id,
+          name: user1Profile.name || 'Quelqu\'un',
+          avatar: user1Profile.profile.images?.[0] || user1Profile.profile.avatarUrl || '/vintage.png',
+          age: user1Profile.age || null,
+        },
+        timestamp: new Date(),
+      };
+
+      // Notify both users about the new match
+      this.messagesGateway.emitToUser(user1Id, 'newMatch', matchDataForUser1);
+      this.messagesGateway.emitToUser(user2Id, 'newMatch', matchDataForUser2);
+
+      this.logger.log('Match notifications sent via WebSocket', {
+        user1Id,
+        user2Id,
+        conversationId: conversation.id,
+        user1Name: user1Profile.name,
+        user2Name: user2Profile.name,
+      });
+    } catch (error) {
+      this.logger.error('Error sending match notifications', {
+        user1Id,
+        user2Id,
+        error: error.message,
+      });
+    }
+  }
+
+  /**
    * Get match details for a specific profile
    */
   async getMatchDetails(req: HttpRequestDto, profileId: number): Promise<any> {
@@ -214,133 +335,177 @@ export class MatchesService {
     profileId: number,
   ): Promise<MatchActionResponseDto> {
     const userId = req.user.userId;
-    this.logger.log('User liking profile', {
-      userId,
-      targetProfileId: profileId,
-    });
 
-    // Get the current user's profile
-    const currentUser = await this.userRepository.findUserWithProfile(userId);
-    const ourProfileId = currentUser.profile.id;
+    try {
+      this.logger.log('User liking profile', {
+        userId,
+        targetProfileId: profileId,
+      });
 
-    // Check for existing match (SEEN or LIKE)
-    let match = await this.matchRepository.getMatchRow(ourProfileId, profileId);
-    // Always delete previous LIKE logs from this user to the target before saving a new LIKE
-    await this.matchRepository.deleteLikesFromTo(ourProfileId, profileId);
-    if (match) {
-      if (match.action === BoosterAction.LIKE) {
-        this.logger.log('Profile already liked', {
-          userId,
-          ourProfileId,
-          targetProfileId: profileId,
-        });
-        return {
-          success: false,
-          message: 'Profile already liked',
-          isMatch: false,
-        };
+      // Get the current user's profile
+      const currentUser = await this.userRepository.findUserWithProfile(userId);
+      const ourProfileId = currentUser.profile.id;
+
+      // Check for existing match (SEEN or LIKE)
+      let match = await this.matchRepository.getMatchRow(ourProfileId, profileId);
+      // Always delete previous LIKE logs from this user to the target before saving a new LIKE
+      await this.matchRepository.deleteLikesFromTo(ourProfileId, profileId);
+      if (match) {
+        if (match.action === BoosterAction.LIKE) {
+          this.logger.log('Profile already liked', {
+            userId,
+            ourProfileId,
+            targetProfileId: profileId,
+          });
+          return {
+            success: false,
+            message: 'Profile already liked',
+            isMatch: false,
+          };
+        } else {
+          // Update SEEN to LIKE
+          match.action = BoosterAction.LIKE;
+          match = (await this.matchRepository.save([match]))[0];
+          this.logger.log('SEEN updated to LIKE', {
+            userId,
+            ourProfileId,
+            targetProfileId: profileId,
+          });
+        }
       } else {
-        // Update SEEN to LIKE
-        match.action = BoosterAction.LIKE;
-        match = (await this.matchRepository.save([match]))[0];
-        this.logger.log('SEEN updated to LIKE', {
+        // No match exists, create a LIKE match
+        const newMatch = new UserMatches();
+        newMatch.from_profile_id = ourProfileId;
+        newMatch.to_profile_id = profileId;
+        newMatch.action = BoosterAction.LIKE;
+        await this.matchRepository.save([newMatch]);
+        this.logger.log('Like action saved', {
           userId,
           ourProfileId,
           targetProfileId: profileId,
         });
       }
-    } else {
-      // No match exists, create a LIKE match
-      await this.matchRepository.saveMatch({
-        from_profile_id: ourProfileId,
-        to_profile_id: profileId,
-        action: BoosterAction.LIKE,
-      } as UserMatches);
 
-      this.logger.log('Like action saved', {
-        userId,
-        ourProfileId,
-        targetProfileId: profileId,
-      });
-    }
-
-    // Track the like action for analytics
-    await this.analyticsService.trackUserAction(
-      ourProfileId,
-      profileId,
-      BoosterAction.LIKE,
-    );
-
-    // Check if it's a mutual match
-    const hasLikedUsBack = await this.matchRepository.checkMutualLike(
-      ourProfileId,
-      profileId,
-    );
-
-    if (hasLikedUsBack) {
-      this.logger.log('Mutual match detected!', {
-        userId,
-        ourProfileId,
-        targetProfileId: profileId,
-      });
-
-      const matchRecord1 = new UserMatches();
-      matchRecord1.from_profile_id = ourProfileId;
-      matchRecord1.to_profile_id = profileId;
-      matchRecord1.action = BoosterAction.MATCH;
-
-      const matchRecord2 = new UserMatches();
-      matchRecord2.from_profile_id = profileId;
-      matchRecord2.to_profile_id = ourProfileId;
-      matchRecord2.action = BoosterAction.MATCH;
-
-      await this.matchRepository.save([matchRecord1, matchRecord2]);
-      this.logger.log('Match records created', {
-        userId,
-        ourProfileId,
-        targetProfileId: profileId,
-      });
-
-      // Remove previous LIKE logs for both users (cleanup)
-      await this.matchRepository.deleteLikesFromTo(ourProfileId, profileId);
-      await this.matchRepository.deleteLikesFromTo(profileId, ourProfileId);
-
-      // create new message
-
-      const { user_id } = await this.userRepository.findByProfileId(profileId);
-
-      this.messagesService.createConversation({ user2_id: user_id }, req);
-
-      // Track the match actions for analytics
+      // Track the like action for analytics
       await this.analyticsService.trackUserAction(
         ourProfileId,
         profileId,
-        BoosterAction.MATCH,
+        BoosterAction.LIKE,
       );
-      await this.analyticsService.trackUserAction(
-        profileId,
+
+      // Check if it's a mutual match
+      const hasLikedUsBack = await this.matchRepository.checkMutualLike(
         ourProfileId,
-        BoosterAction.MATCH,
+        profileId,
       );
+
+      if (hasLikedUsBack) {
+        this.logger.log('Mutual match detected!', {
+          userId,
+          ourProfileId,
+          targetProfileId: profileId,
+        });
+
+        const matchRecord1 = new UserMatches();
+        matchRecord1.from_profile_id = ourProfileId;
+        matchRecord1.to_profile_id = profileId;
+        matchRecord1.action = BoosterAction.MATCH;
+
+        const matchRecord2 = new UserMatches();
+        matchRecord2.from_profile_id = profileId;
+        matchRecord2.to_profile_id = ourProfileId;
+        matchRecord2.action = BoosterAction.MATCH;
+
+        await this.matchRepository.save([matchRecord1, matchRecord2]);
+        this.logger.log('Match records created', {
+          userId,
+          ourProfileId,
+          targetProfileId: profileId,
+        });
+
+        // Remove previous LIKE logs for both users (cleanup)
+        await this.matchRepository.deleteLikesFromTo(ourProfileId, profileId);
+        await this.matchRepository.deleteLikesFromTo(profileId, ourProfileId);
+
+        // Track the match actions for analytics
+        await this.analyticsService.trackUserAction(
+          ourProfileId,
+          profileId,
+          BoosterAction.MATCH,
+        );
+        await this.analyticsService.trackUserAction(
+          profileId,
+          ourProfileId,
+          BoosterAction.MATCH,
+        );
+
+        // Création de la conversation et notification WebSocket
+        const targetProfile = await this.profileRepository.findByProfileId(
+          profileId,
+          ['userProfile'],
+        );
+        const targetUserId = targetProfile.userProfile.user_id;
+
+        let conversation;
+        try {
+          conversation = await this.createMatchConversation(userId, targetUserId);
+          await this.notifyUsersAboutMatch(userId, targetUserId, conversation);
+          this.logger.log('Match conversation created and notifications sent', {
+            userId,
+            targetUserId,
+            conversationId: conversation.id,
+          });
+        } catch (conversationError) {
+          this.logger.error('Error creating conversation or sending notifications', {
+            userId,
+            targetUserId,
+            error: conversationError.message,
+          });
+        }
+
+        return {
+          success: true,
+          message: MATCH_MESSAGES.MATCH_SUCCESS,
+          isMatch: true,
+          matchId: undefined, // You can set a real matchId if you have one
+          conversationId: conversation?.id,
+        };
+      }
+
+      this.logger.log('Like sent, waiting for response', {
+        userId,
+        ourProfileId,
+        targetProfileId: profileId,
+      });
+
+      // Émettre la notification d'action de match
+      this.emitMatchActionNotification(userId, {
+        type: MATCH_ACTION_TYPES.LIKE,
+        matchId: profileId.toString(),
+        isMatch: false,
+      });
 
       return {
         success: true,
-        message: 'It’s a match! Both users liked each other.',
-        isMatch: true,
-        matchId: undefined, // You can set a real matchId if you have one
+        message: MATCH_MESSAGES.LIKE_SENT,
+        isMatch: false,
       };
-    }
+    } catch (error) {
+      this.logger.error('Error in likeProfile', {
+        userId,
+        profileId,
+        error: error.message,
+      });
 
-    this.logger.log('Like sent, waiting for response', {
-      userId,
-      ourProfileId,
-      targetProfileId: profileId,
-    });
-    return {
-      success: true,
-      message: 'Like sent, waiting for response.',
-      isMatch: false,
-    };
+      // Émettre la notification d'erreur
+      this.emitMatchErrorNotification(userId, {
+        type: MATCH_ERROR_TYPES.LIKE,
+        message: MATCH_MESSAGES.LIKE_ERROR,
+        matchId: profileId.toString(),
+      });
+
+      throw error;
+    }
   }
 
   /**
@@ -351,46 +516,88 @@ export class MatchesService {
     profileId: number,
   ): Promise<MatchActionResponseDto> {
     const userId = req.user.userId;
-    this.logger.log('User passing profile', {
-      userId,
-      targetProfileId: profileId,
-    });
 
-    // Get the current user's profile
-    const currentUser = await this.userRepository.findUserWithProfile(userId);
-    const ourProfileId = currentUser.profile.id;
+    try {
+      this.logger.log('User passing profile', {
+        userId,
+        targetProfileId: profileId,
+      });
 
-    // Check if already processed
-    if (
-      await this.matchRepository.hasProcessedProfile(ourProfileId, profileId)
-    ) {
-      this.logger.log('Profile already processed (pass)', {
+      // Get the current user's profile
+      const currentUser = await this.userRepository.findUserWithProfile(userId);
+      const ourProfileId = currentUser.profile.id;
+
+      // Check if already processed
+      if (
+        await this.matchRepository.hasProcessedProfile(ourProfileId, profileId)
+      ) {
+        this.logger.log('Profile already processed (pass)', {
+          userId,
+          ourProfileId,
+          targetProfileId: profileId,
+        });
+        
+        // Émettre la notification d'action de match même si déjà traité
+        this.emitMatchActionNotification(userId, {
+          type: MATCH_ACTION_TYPES.PASS,
+          matchId: profileId.toString(),
+        });
+        
+        return { success: false, message: MATCH_MESSAGES.PROFILE_ALREADY_PROCESSED_PASS };
+      }
+
+      // Create the seen record (pass = just mark as seen)
+      const match = new UserMatches();
+      match.from_profile_id = ourProfileId;
+      match.to_profile_id = profileId;
+      match.action = BoosterAction.SEEN;
+
+      await this.matchRepository.save([match]);
+      this.logger.log('Pass action saved', {
         userId,
         ourProfileId,
         targetProfileId: profileId,
       });
-      return { success: false, message: 'Profile already processed (pass)' };
+
+      // Track the pass action for analytics
+      await this.analyticsService.trackUserAction(
+        ourProfileId,
+        profileId,
+        BoosterAction.SEEN,
+      );
+
+      // Émettre la notification d'action de match
+      this.emitMatchActionNotification(userId, {
+        type: MATCH_ACTION_TYPES.PASS,
+        matchId: profileId.toString(),
+      });
+
+      return { success: true, message: MATCH_MESSAGES.PROFILE_PASSED };
+    } catch (error) {
+      this.logger.error('Error in passProfile', {
+        userId,
+        profileId,
+        error: error.message,
+      });
+
+      // Émettre la notification d'erreur
+      this.emitMatchErrorNotification(userId, {
+        type: MATCH_ERROR_TYPES.PASS,
+        message: MATCH_MESSAGES.PASS_ERROR,
+        matchId: profileId.toString(),
+      });
+
+      throw error;
     }
+  }
 
-    // Create the seen record (pass = just mark as seen)
-    const match = new UserMatches();
-    match.from_profile_id = ourProfileId;
-    match.to_profile_id = profileId;
-    match.action = BoosterAction.SEEN;
+  // Méthode pour émettre une notification d'action de match
+  emitMatchActionNotification(userId: string, actionData: { type: 'like' | 'pass'; matchId: string; isMatch?: boolean }) {
+    this.messagesGateway.emitToUser(userId, 'matchAction', actionData);
+  }
 
-    await this.matchRepository.save([match]);
-    this.logger.log('Pass action saved', {
-      userId,
-      ourProfileId,
-      targetProfileId: profileId,
-    });
-
-    // Track the pass action for analytics
-    await this.analyticsService.trackUserAction(
-      ourProfileId,
-      profileId,
-      BoosterAction.SEEN,
-    );
-    return { success: true, message: 'Profile passed/seen.' };
+  // Méthode pour émettre une notification d'erreur de match
+  emitMatchErrorNotification(userId: string, errorData: { type: string; message: string; matchId?: string }) {
+    this.messagesGateway.emitToUser(userId, 'matchError', errorData);
   }
 }

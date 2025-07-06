@@ -26,6 +26,12 @@ export class Message {
   @Column({ type: 'boolean', default: false })
   is_read: boolean;
 
+  @Column({ type: 'varchar', nullable: true })
+  reply_to_id: string;
+
+  @Column({ type: 'jsonb', default: '{}' })
+  reactions: Record<string, string[]>; // emoji -> array of user IDs
+
   @ManyToOne(() => User)
   @JoinColumn({ name: 'sender_id', referencedColumnName: 'user_id' })
   sender: User;
@@ -33,6 +39,10 @@ export class Message {
   @ManyToOne(() => Conversation, (conversation) => conversation.messages)
   @JoinColumn({ name: 'conversation_id' })
   conversation: Conversation;
+
+  @ManyToOne(() => Message, { nullable: true })
+  @JoinColumn({ name: 'reply_to_id' })
+  replyTo: Message;
 
   @CreateDateColumn()
   created_at: Date;
