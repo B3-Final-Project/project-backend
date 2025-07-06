@@ -33,9 +33,6 @@ export class Conversation {
   @OneToMany(() => Message, (message) => message.conversation)
   messages: Message[];
 
-  @Column({ type: 'boolean', default: false })
-  is_active: boolean;
-
   @CreateDateColumn()
   created_at: Date;
 

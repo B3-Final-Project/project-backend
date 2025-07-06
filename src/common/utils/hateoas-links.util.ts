@@ -446,4 +446,98 @@ export class AppLinkBuilders {
       },
     ];
   }
+
+  /**
+   * Message-specific links
+   */
+  static messageLinks(): LinkBuilder[] {
+    return [
+      CommonLinkBuilders.self('/messages'),
+      {
+        rel: 'conversation',
+        href: (resource: any) => `/messages/conversations/${resource.conversation_id}`,
+        method: 'GET',
+        title: 'View conversation',
+      },
+      {
+        rel: 'add-reaction',
+        href: '/messages/reactions',
+        method: 'POST',
+        title: 'Add reaction to message',
+      },
+      {
+        rel: 'remove-reaction',
+        href: '/messages/reactions',
+        method: 'DELETE',
+        title: 'Remove reaction from message',
+      },
+    ];
+  }
+
+  /**
+   * Message collection-specific links
+   */
+  static messageCollectionLinks(): LinkBuilder[] {
+    return [
+      {
+        rel: 'conversation',
+        href: (resource: any) => `/messages/conversations/${resource.conversation_id}`,
+        method: 'GET',
+        title: 'View conversation',
+      },
+    ];
+  }
+
+  /**
+   * Conversation-specific links
+   */
+  static conversationLinks(): LinkBuilder[] {
+    return [
+      CommonLinkBuilders.self('/messages/conversations'),
+      {
+        rel: 'messages',
+        href: (resource: any) => `/messages/conversations/${resource.id}`,
+        method: 'GET',
+        title: 'View messages in conversation',
+      },
+      {
+        rel: 'send-message',
+        href: '/messages',
+        method: 'POST',
+        title: 'Send message to conversation',
+      },
+      {
+        rel: 'mark-read',
+        href: (resource: any) => `/messages/conversations/${resource.id}/read`,
+        method: 'POST',
+        title: 'Mark messages as read',
+      },
+      {
+        rel: 'delete',
+        href: (resource: any) => `/messages/conversations/${resource.id}`,
+        method: 'DELETE',
+        title: 'Delete conversation',
+      },
+    ];
+  }
+
+  /**
+   * Conversation collection-specific links
+   */
+  static conversationCollectionLinks(): LinkBuilder[] {
+    return [
+      {
+        rel: 'create',
+        href: '/messages/conversations',
+        method: 'POST',
+        title: 'Create new conversation',
+      },
+      {
+        rel: 'send-message',
+        href: '/messages',
+        method: 'POST',
+        title: 'Send message',
+      },
+    ];
+  }
 }
