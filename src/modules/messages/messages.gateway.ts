@@ -22,8 +22,10 @@ import { UserRepository } from '../../common/repository/user.repository';
   cors: {
     origin: process.env.FRONTEND_URL ?? 'http://localhost:3000',
     credentials: true,
+    methods: ['GET', 'POST'],
   },
   namespace: '/api/ws/messages',
+  transports: ['websocket', 'polling'],
 })
 export class MessagesGateway
   implements OnGatewayConnection, OnGatewayDisconnect
@@ -56,15 +58,18 @@ export class MessagesGateway
   }
 
   private handleWsError(client: Socket, error: any, operation: string) {
-    this.logger.error(
-      `❌ Erreur lors de ${operation}: ${error.message}`,
-    );
+    this.logger.error(`❌ Erreur lors de ${operation}: ${error.message}`);
     client.emit('error', { message: `Failed to ${operation}` });
   }
 
-  private emitToConversationUsers(conversation: any, userId: string, event: string, data: any) {
+  private emitToConversationUsers(
+    conversation: any,
+    userId: string,
+    event: string,
+    data: any,
+  ) {
     const otherUserId = this.getOtherUserId(conversation, userId);
-    
+
     this.server.to(`user:${userId}`).emit(event, data);
     this.server.to(`user:${otherUserId}`).emit(event, data);
   }
@@ -143,7 +148,10 @@ export class MessagesGateway
     try {
       const userId = client.handshake.auth.userId;
 
-      const message = await this.messagesService.sendMessage(data, this.createWsRequestDto(client));
+      const message = await this.messagesService.sendMessage(
+        data,
+        this.createWsRequestDto(client),
+      );
 
       this.logger.log(
         `✅ Message traité par le service - messageId: ${message.id}`,
@@ -157,7 +165,9 @@ export class MessagesGateway
       if (conversation) {
         // Récupérer les informations de l'expéditeur depuis le UserRepository
         const sender = await this.userRepository.findById(userId);
-        const senderName = sender ? `${sender.name} ${sender.surname}`.trim() : 'Quelqu\'un';
+        const senderName = sender
+          ? `${sender.name} ${sender.surname}`.trim()
+          : "Quelqu'un";
 
         // Créer un objet message enrichi avec les informations de l'expéditeur
         const enrichedMessage = {
@@ -172,8 +182,10 @@ export class MessagesGateway
 
         // Émettre aussi une notification spécifique à l'autre utilisateur
         const otherUserId = this.getOtherUserId(conversation, userId);
-        
-        this.server.to(`user:${otherUserId}`).emit('newMessage', enrichedMessage);
+
+        this.server
+          .to(`user:${otherUserId}`)
+          .emit('newMessage', enrichedMessage);
       } else {
         // Fallback si la conversation n'est pas trouvée
         this.server
@@ -194,7 +206,10 @@ export class MessagesGateway
     @MessageBody() data: CreateConversationDto,
   ) {
     try {
-      await this.messagesService.createConversation(data, this.createWsRequestDto(client));
+      await this.messagesService.createConversation(
+        data,
+        this.createWsRequestDto(client),
+      );
     } catch (error) {
       this.logger.error(`Error creating conversation: ${error.message}`);
       client.emit('error', { message: 'Failed to create conversation' });
@@ -215,7 +230,7 @@ export class MessagesGateway
       // Récupérer la conversation AVANT de la supprimer pour obtenir l'autre utilisateur
       const conversation =
         await this.messagesService.getConversationById(conversationId);
-      
+
       if (!conversation) {
         this.logger.error(`❌ Conversation ${conversationId} non trouvée`);
         client.emit('error', { message: 'Conversation not found' });
@@ -225,27 +240,26 @@ export class MessagesGateway
       const otherUserId = this.getOtherUserId(conversation, userId);
 
       // Supprimer la conversation
-      await this.messagesService.deleteConversation(conversationId, this.createWsRequestDto(client));
+      await this.messagesService.deleteConversation(
+        conversationId,
+        this.createWsRequestDto(client),
+      );
 
       this.logger.debug(
         `🗑️ Notification de suppression envoyée aux utilisateurs - deletedBy: ${userId}, otherUser: ${otherUserId}`,
       );
 
       // Émettre l'événement de suppression aux deux utilisateurs
-      this.server
-        .to(`user:${userId}`)
-        .emit('conversationDeleted', { 
-          conversationId,
-          deletedBy: userId,
-          timestamp: new Date()
-        });
-      this.server
-        .to(`user:${otherUserId}`)
-        .emit('conversationDeleted', { 
-          conversationId,
-          deletedBy: userId,
-          timestamp: new Date()
-        });
+      this.server.to(`user:${userId}`).emit('conversationDeleted', {
+        conversationId,
+        deletedBy: userId,
+        timestamp: new Date(),
+      });
+      this.server.to(`user:${otherUserId}`).emit('conversationDeleted', {
+        conversationId,
+        deletedBy: userId,
+        timestamp: new Date(),
+      });
 
       // Confirmer la suppression au client
       client.emit('conversationDeleted', { success: true, conversationId });
@@ -262,20 +276,21 @@ export class MessagesGateway
     try {
       const userId = client.handshake.auth.userId;
 
-      await this.messagesService.markMessagesAsRead(conversationId, this.createWsRequestDto(client));
+      await this.messagesService.markMessagesAsRead(
+        conversationId,
+        this.createWsRequestDto(client),
+      );
 
       // Notifier les autres utilisateurs que les messages ont été lus
       const conversation =
         await this.messagesService.getConversationById(conversationId);
       if (conversation) {
         const otherUserId = this.getOtherUserId(conversation, userId);
-        this.server
-          .to(`user:${otherUserId}`)
-          .emit('messagesRead', { 
-            conversationId,
-            readBy: userId,
-            timestamp: new Date()
-          });
+        this.server.to(`user:${otherUserId}`).emit('messagesRead', {
+          conversationId,
+          readBy: userId,
+          timestamp: new Date(),
+        });
       }
 
       // Confirmer le marquage au client
@@ -330,7 +345,10 @@ export class MessagesGateway
     try {
       const userId = client.handshake.auth.userId;
 
-      const updatedMessage = await this.messagesService.addReaction(data, this.createWsRequestDto(client));
+      const updatedMessage = await this.messagesService.addReaction(
+        data,
+        this.createWsRequestDto(client),
+      );
 
       this.logger.log(
         `✅ Réaction ajoutée - messageId: ${data.message_id}, emoji: ${data.emoji}, userId: ${userId}`,
@@ -342,7 +360,10 @@ export class MessagesGateway
         .emit('messageReactionAdded', updatedMessage);
 
       // Confirmer l'ajout de réaction au client
-      client.emit('reactionAdded', { success: true, messageId: data.message_id });
+      client.emit('reactionAdded', {
+        success: true,
+        messageId: data.message_id,
+      });
     } catch (error) {
       this.handleWsError(client, error, 'addReaction');
     }
@@ -356,7 +377,10 @@ export class MessagesGateway
     try {
       const userId = client.handshake.auth.userId;
 
-      const updatedMessage = await this.messagesService.removeReaction(data, this.createWsRequestDto(client));
+      const updatedMessage = await this.messagesService.removeReaction(
+        data,
+        this.createWsRequestDto(client),
+      );
 
       this.logger.log(
         `✅ Réaction supprimée - messageId: ${data.message_id}, emoji: ${data.emoji}, userId: ${userId}`,
@@ -368,7 +392,10 @@ export class MessagesGateway
         .emit('messageReactionRemoved', updatedMessage);
 
       // Confirmer la suppression de réaction au client
-      client.emit('reactionRemoved', { success: true, messageId: data.message_id });
+      client.emit('reactionRemoved', {
+        success: true,
+        messageId: data.message_id,
+      });
     } catch (error) {
       this.handleWsError(client, error, 'removeReaction');
     }
