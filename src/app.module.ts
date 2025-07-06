@@ -13,7 +13,6 @@ import { BoosterUsage } from './common/entities/booster-usage.entity';
 import { CognitoStrategy } from './auth/cognito.strategy';
 import { Constants } from './constants';
 import { Conversation } from './common/entities/conversation.entity';
-import { GeolocateModule } from './modules/geolocate/geolocate.module';
 import { HateoasModule } from './common/hateoas.module';
 import { Interest } from './common/entities/interest.entity';
 import { LoggerMiddleware } from './middlewares/logger.middleware';
