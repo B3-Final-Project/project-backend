@@ -14,6 +14,7 @@ import {
   UserManagementResponseDto,
 } from '../dto/user-management.dto';
 
+import { GeolocateService } from '../../geolocate/geolocate.service';
 import { HttpRequestDto } from '../../../common/dto/http-request.dto';
 import { InterestRepository } from '../../../common/repository/interest.repository';
 import { Profile } from '../../../common/entities/profile.entity';
@@ -22,7 +23,6 @@ import { ProfileUtils } from './profile-utils.service';
 import { ReportRepository } from '../../../common/repository/report.repository';
 import { User } from '../../../common/entities/user.entity';
 import { UserRepository } from '../../../common/repository/user.repository';
-import { GeolocateService } from '../../geolocate/geolocate.service';
 
 @Injectable()
 export class ProfileService {
@@ -43,7 +43,15 @@ export class ProfileService {
       req.user.userId,
       ['interests'],
     );
+    const user = await this.userRepository.findById(req.user.userId);
 
+    // 1) Update User entity if personalInfo is provided
+    if (dto.personalInfo) {
+      const updatedUser = ProfileUtils.mapUser(dto, user);
+      if (updatedUser) {
+        await this.userRepository.save(updatedUser);
+      }
+    }
     const updated = ProfileUtils.mapProfile(dto, profile);
 
     // Handle interests if provided
@@ -67,6 +75,7 @@ export class ProfileService {
       req.user.userId,
       ['interests'],
     );
+    const user = await this.userRepository.findById(req.user.userId);
 
     // Handle interestInfo section specially
     if (section === 'interestInfo') {
@@ -76,8 +85,18 @@ export class ProfileService {
           interestInfo.interests,
         );
       }
-
       return this.profileRepository.save(profile);
+    }
+
+    // If patching personalInfo, update User entity as well
+    if (section === 'personalInfo') {
+      const updatedUser = ProfileUtils.mapUser(
+        { [section]: dto } as PartialUpdateProfileDto,
+        user,
+      );
+      if (updatedUser) {
+        await this.userRepository.save(updatedUser);
+      }
     }
 
     // Dynamically map only the provided section for other sections
@@ -88,6 +107,7 @@ export class ProfileService {
     const savedProfile = this.profileRepository.save(updated);
     this.logger.log(`updated profile section`, {
       profile_id: profile.id,
+      section,
       payload: dto,
     });
     return savedProfile;

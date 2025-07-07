@@ -1,5 +1,8 @@
-import { Profile } from '../../../common/entities/profile.entity';
 import { InterestItem, UpdateProfileDto } from '../dto/update-profile.dto';
+
+import { BadRequestException } from '@nestjs/common';
+import { Profile } from '../../../common/entities/profile.entity';
+import { User } from '../../../common/entities/user.entity';
 
 export class ProfileUtils {
   public static mapProfile(
@@ -9,22 +12,48 @@ export class ProfileUtils {
     const { locationWork, preferenceInfo, lifestyleInfo, personalInfo } = dto;
 
     if (locationWork) {
-      Object.assign(entity, locationWork);
+      entity.city = locationWork.city;
+      entity.work = locationWork.work;
+      entity.languages = locationWork.languages;
     }
 
     if (preferenceInfo) {
-      Object.assign(entity, preferenceInfo);
+      entity.min_age = preferenceInfo.min_age;
+      entity.max_age = preferenceInfo.max_age;
+      entity.max_distance = preferenceInfo.max_distance;
+      entity.relationship_type = preferenceInfo.relationship_type;
     }
 
     if (lifestyleInfo) {
-      Object.assign(entity, lifestyleInfo);
+      entity.smoking = lifestyleInfo.smoking;
+      entity.drinking = lifestyleInfo.drinking;
+      entity.religion = lifestyleInfo.religion;
+      entity.politics = lifestyleInfo.politics;
+      entity.zodiac = lifestyleInfo.zodiac;
     }
 
     if (personalInfo) {
-      Object.assign(entity, personalInfo);
+      entity.orientation = personalInfo.orientation;
     }
 
     return entity;
+  }
+
+  public static mapUser(
+    dto: Partial<UpdateProfileDto>,
+    user: User | undefined | null,
+  ): User | undefined {
+    if (!user) return undefined;
+    const { personalInfo } = dto;
+
+    if (personalInfo) {
+      user.name = personalInfo.name;
+      user.surname = personalInfo.surname;
+      user.age = personalInfo.age;
+      user.gender = personalInfo.gender;
+    }
+
+    return user;
   }
 
   public static extractInterestItems(
