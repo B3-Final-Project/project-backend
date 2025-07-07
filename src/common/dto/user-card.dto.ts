@@ -15,11 +15,11 @@ export interface UserCardDto {
   work: string;
   images: string[];
   rarity: RarityEnum;
+  interests: Interest[];
   languages?: string[];
   smoking?: SmokingEnum;
   drinking?: DrinkingEnum;
   zodiac?: ZodiacEnum;
-  interests?: Interest[];
   surname?: string;
   min_age?: number;
   max_age?: number;

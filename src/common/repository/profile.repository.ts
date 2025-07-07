@@ -15,6 +15,7 @@ export class ProfileRepository {
     return this.profileRepository
       .createQueryBuilder('p')
       .leftJoinAndSelect('p.userProfile', 'u')
+      .leftJoinAndSelect('p.interests', 'i')
       .where('u.user_id != :me', { me: userId });
   }
 
