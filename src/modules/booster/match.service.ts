@@ -142,9 +142,9 @@ export class MatchService {
 
     // 5. Relationship type
     if (
-      relationshipType ||
-      relationshipType !== RelationshipTypeEnum.ANY ||
-      prefs.relationship_type != null
+      (relationshipType && relationshipType !== RelationshipTypeEnum.ANY) ||
+      (prefs.relationship_type &&
+        prefs.relationship_type !== RelationshipTypeEnum.ANY)
     ) {
       qb.andWhere('p.relationship_type = :relType', {
         relType: relationshipType ?? prefs.relationship_type,
