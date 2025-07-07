@@ -542,4 +542,24 @@ export class AppLinkBuilders {
       },
     ];
   }
+
+  /**
+   * Geo-location-specific links
+   */
+  static geoLocationLinks(): LinkBuilder[] {
+    return [
+      {
+        rel: 'reverse-geocode',
+        href: '/geolocation/reverse',
+        method: 'PUT',
+        title: 'Reverse geocode coordinates',
+      },
+      {
+        rel: 'search-city',
+        href: '/geolocation/search',
+        method: 'GET',
+        title: 'Search for a city',
+      },
+    ];
+  }
 }

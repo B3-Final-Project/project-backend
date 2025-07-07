@@ -312,13 +312,13 @@ export class ProfileService {
   ): Promise<void> {
     if (!coordinates || coordinates.length !== 2) return;
 
-    const [longitude, latitude] = coordinates;
+    const [lon, lat] = coordinates;
 
     // Reverse geocode the coordinates
-    const city = await this.geolocateService.reverseGeocode(
-      latitude,
-      longitude,
-    );
+    const city = await this.geolocateService.reverseGeocode({
+      lat,
+      lon,
+    });
     // 3. Update coordinates in user
     const user = await this.userRepository.findUserWithProfile(userId);
 
@@ -331,7 +331,7 @@ export class ProfileService {
     // Update user's coordinates
     user.location = {
       type: 'Point',
-      coordinates: [longitude, latitude],
+      coordinates: [lon, lat],
     };
     await this.userRepository.save(user);
   }
