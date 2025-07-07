@@ -141,7 +141,11 @@ export class MatchService {
     const profile = user.profile;
 
     // 5. Relationship type
-    if (relationshipType || prefs.relationship_type != null) {
+    if (
+      relationshipType ||
+      relationshipType !== RelationshipTypeEnum.ANY ||
+      prefs.relationship_type != null
+    ) {
       qb.andWhere('p.relationship_type = :relType', {
         relType: relationshipType ?? prefs.relationship_type,
       });

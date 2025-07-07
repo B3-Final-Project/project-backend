@@ -13,6 +13,7 @@ import { UserMatches } from '../../common/entities/user-matches.entity';
 import { BoosterPack } from '../../common/entities/booster.entity';
 import { CreateBoosterDto } from '../booster/dto/create-booster.dto';
 import { RelationshipTypeEnum } from '../profile/enums';
+import { seedBoosterUsage } from '../../seed/booster-usage.seed';
 
 @Injectable()
 export class SeedService {
@@ -30,8 +31,12 @@ export class SeedService {
   /**
    * Seed users in the database
    */
-  async seedUsers(count: number = 50): Promise<number> {
+  async seedUsers(
+    count: number = 50,
+    boosterUsageCount: number,
+  ): Promise<number> {
     await seedUsers(this.dataSource, count);
+    await seedBoosterUsage(this.dataSource, boosterUsageCount);
     return count;
   }
 
@@ -73,11 +78,15 @@ export class SeedService {
   /**
    * Seed both interests and users in the database
    */
-  async seedUsersAndInterests(userCount: number = 50): Promise<{
+  async seedUsersAndInterests(
+    userCount: number = 50,
+    boosterUsageCount?: number,
+  ): Promise<{
     interestCount: number;
     userCount: number;
   }> {
     await seedUsersAndInterests(this.dataSource, userCount);
+    await seedBoosterUsage(this.dataSource, boosterUsageCount || 50);
 
     const interestRepo = this.dataSource.getRepository(Interest);
     const interestCount = await interestRepo.count();
