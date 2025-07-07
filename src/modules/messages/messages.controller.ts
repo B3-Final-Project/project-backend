@@ -17,7 +17,10 @@ import { AddReactionDto } from './dto/add-reaction.dto';
 import { RemoveReactionDto } from './dto/remove-reaction.dto';
 import { HttpRequestDto } from '../../common/dto/http-request.dto';
 import { HateoasInterceptor } from '../../common/interceptors/hateoas.interceptor';
-import { HateoasLinks, HateoasCollectionOnly } from '../../common/decorators/hateoas.decorator';
+import {
+  HateoasLinks,
+  HateoasCollectionOnly,
+} from '../../common/decorators/hateoas.decorator';
 import { AppLinkBuilders } from '../../common/utils/hateoas-links.util';
 import {
   ApiTags,
@@ -59,15 +62,20 @@ export class MessagesController {
     return this.messagesService.sendMessage(dto, req);
   }
 
-  @ApiOperation({ summary: 'Récupérer toutes les conversations de l\'utilisateur' })
+  @ApiOperation({
+    summary: "Récupérer toutes les conversations de l'utilisateur",
+  })
   @ApiResponse({ status: 200, description: 'Liste des conversations' })
-  @HateoasCollectionOnly('conversation', AppLinkBuilders.conversationCollectionLinks())
+  @HateoasCollectionOnly(
+    'conversation',
+    AppLinkBuilders.conversationCollectionLinks(),
+  )
   @Get('conversations')
   async getConversations(@Req() req: HttpRequestDto) {
     return this.messagesService.getConversations(req);
   }
 
-  @ApiOperation({ summary: 'Récupérer les messages d\'une conversation' })
+  @ApiOperation({ summary: "Récupérer les messages d'une conversation" })
   @ApiParam({ name: 'id', description: 'ID de la conversation' })
   @ApiResponse({ status: 200, description: 'Liste des messages' })
   @ApiResponse({ status: 404, description: 'Conversation non trouvée' })
@@ -80,7 +88,9 @@ export class MessagesController {
     return this.messagesService.getMessages(conversationId, req);
   }
 
-  @ApiOperation({ summary: 'Marquer les messages d\'une conversation comme lus' })
+  @ApiOperation({
+    summary: "Marquer les messages d'une conversation comme lus",
+  })
   @ApiParam({ name: 'id', description: 'ID de la conversation' })
   @ApiResponse({ status: 200, description: 'Messages marqués comme lus' })
   @ApiResponse({ status: 404, description: 'Conversation non trouvée' })
@@ -116,13 +126,16 @@ export class MessagesController {
     return this.messagesService.addReaction(dto, req);
   }
 
-  @ApiOperation({ summary: 'Supprimer une réaction d\'un message' })
+  @ApiOperation({ summary: "Supprimer une réaction d'un message" })
   @ApiBody({ type: RemoveReactionDto })
   @ApiResponse({ status: 200, description: 'Réaction supprimée avec succès' })
   @ApiResponse({ status: 400, description: 'Données invalides' })
   @HateoasLinks('message', AppLinkBuilders.messageLinks())
   @Delete('reactions')
-  async removeReaction(@Body() dto: RemoveReactionDto, @Req() req: HttpRequestDto) {
+  async removeReaction(
+    @Body() dto: RemoveReactionDto,
+    @Req() req: HttpRequestDto,
+  ) {
     return this.messagesService.removeReaction(dto, req);
   }
 }

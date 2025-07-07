@@ -60,11 +60,13 @@ export function formatMessageForFrontend(
     isRead: message.is_read,
     conversationId: message.conversation_id.toString(),
     sender_id: message.sender_id,
-    replyTo: message.replyTo ? {
-      id: message.replyTo.id.toString(),
-      content: message.replyTo.content,
-      sender_id: message.replyTo.sender_id,
-    } : null,
+    replyTo: message.replyTo
+      ? {
+          id: message.replyTo.id.toString(),
+          content: message.replyTo.content,
+          sender_id: message.replyTo.sender_id,
+        }
+      : null,
     reactions: message.reactions || {},
   };
 }

@@ -455,7 +455,8 @@ export class AppLinkBuilders {
       CommonLinkBuilders.self('/messages'),
       {
         rel: 'conversation',
-        href: (resource: any) => `/messages/conversations/${resource.conversation_id}`,
+        href: (resource: any) =>
+          `/messages/conversations/${resource.conversation_id}`,
         method: 'GET',
         title: 'View conversation',
       },
@@ -481,7 +482,8 @@ export class AppLinkBuilders {
     return [
       {
         rel: 'conversation',
-        href: (resource: any) => `/messages/conversations/${resource.conversation_id}`,
+        href: (resource: any) =>
+          `/messages/conversations/${resource.conversation_id}`,
         method: 'GET',
         title: 'View conversation',
       },

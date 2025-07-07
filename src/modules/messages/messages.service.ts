@@ -44,7 +44,7 @@ export class MessagesService {
   private async validateConversationAccess(
     conversationId: string,
     userId: string,
-    errorMessage: string
+    errorMessage: string,
   ): Promise<Conversation> {
     const conversation = await this.conversationRepository.findOne({
       where: { id: conversationId },
@@ -65,7 +65,7 @@ export class MessagesService {
     conversationId: string,
     userId: string,
     errorMessage: string,
-    relations: string[] = ['user1', 'user2']
+    relations: string[] = ['user1', 'user2'],
   ): Promise<Conversation> {
     const conversation = await this.conversationRepository.findOne({
       where: { id: conversationId },
@@ -149,7 +149,7 @@ export class MessagesService {
       dto.conversation_id,
       userId,
       "Vous n'êtes pas autorisé à envoyer des messages dans cette conversation",
-      ['user1', 'user2']
+      ['user1', 'user2'],
     );
 
     const message = this.messageRepository.create({
@@ -195,7 +195,7 @@ export class MessagesService {
     await this.validateConversationAccess(
       conversationId,
       userId,
-      "Vous n'êtes pas autorisé à voir les messages de cette conversation"
+      "Vous n'êtes pas autorisé à voir les messages de cette conversation",
     );
 
     const messages = await this.messageRepository.find({
@@ -216,7 +216,7 @@ export class MessagesService {
     const conversation = await this.validateConversationAccess(
       conversationId,
       userId,
-      "Vous n'êtes pas autorisé à marquer les messages de cette conversation comme lus"
+      "Vous n'êtes pas autorisé à marquer les messages de cette conversation comme lus",
     );
 
     await this.messageRepository.update(
@@ -248,7 +248,7 @@ export class MessagesService {
       conversationId,
       userId,
       "Vous n'êtes pas autorisé à supprimer cette conversation",
-      ['user1', 'user2']
+      ['user1', 'user2'],
     );
 
     // Supprimer tous les messages de la conversation
@@ -258,10 +258,7 @@ export class MessagesService {
     await this.conversationRepository.delete({ id: conversationId });
   }
 
-  public async addReaction(
-    dto: AddReactionDto,
-    req: RequestDto,
-  ): Promise<any> {
+  public async addReaction(dto: AddReactionDto, req: RequestDto): Promise<any> {
     const userId = this.getUserId(req);
 
     const message = await this.messageRepository.findOne({
@@ -277,15 +274,15 @@ export class MessagesService {
     await this.validateConversationAccess(
       message.conversation.id,
       userId,
-      "Vous n'êtes pas autorisé à réagir à ce message"
+      "Vous n'êtes pas autorisé à réagir à ce message",
     );
 
     // Récupérer les réactions actuelles
     const currentReactions = message.reactions ?? {};
-    
+
     // Ajouter la réaction
     currentReactions[dto.emoji] ??= [];
-    
+
     // Éviter les doublons
     if (!currentReactions[dto.emoji].includes(userId)) {
       currentReactions[dto.emoji].push(userId);
@@ -325,18 +322,18 @@ export class MessagesService {
     await this.validateConversationAccess(
       message.conversation.id,
       userId,
-      "Vous n'êtes pas autorisé à supprimer cette réaction"
+      "Vous n'êtes pas autorisé à supprimer cette réaction",
     );
 
     // Récupérer les réactions actuelles
     const currentReactions = message.reactions ?? {};
-    
+
     // Supprimer la réaction
     if (currentReactions[dto.emoji]) {
       currentReactions[dto.emoji] = currentReactions[dto.emoji].filter(
         (id) => id !== userId,
       );
-      
+
       // Supprimer l'emoji s'il n'y a plus de réactions
       if (currentReactions[dto.emoji].length === 0) {
         delete currentReactions[dto.emoji];
