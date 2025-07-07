@@ -20,9 +20,8 @@ export class ProfileUtils {
       Object.assign(entity, lifestyleInfo);
     }
 
-    // Map orientation from personalInfo to profile entity
-    if (personalInfo?.orientation !== undefined) {
-      entity.orientation = personalInfo.orientation;
+    if (personalInfo) {
+      Object.assign(entity, personalInfo);
     }
 
     return entity;
