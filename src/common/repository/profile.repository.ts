@@ -1,8 +1,8 @@
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Profile } from '../entities/profile.entity';
-import { Injectable, NotFoundException } from '@nestjs/common';
 import { BoosterAction } from '../../modules/booster/enums/action.enum';
+import { Profile } from '../entities/profile.entity';
 
 @Injectable()
 export class ProfileRepository {
@@ -15,6 +15,7 @@ export class ProfileRepository {
     return this.profileRepository
       .createQueryBuilder('p')
       .leftJoinAndSelect('p.userProfile', 'u')
+      .leftJoinAndSelect('p.interests', 'i')
       .where('u.user_id != :me', { me: userId });
   }
 
