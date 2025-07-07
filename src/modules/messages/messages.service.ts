@@ -167,10 +167,10 @@ export class MessagesService {
       { updated_at: new Date() },
     );
 
-    // Récupérer le message avec les relations
+    // Récupérer le message avec les relations incluant le profil de l'expéditeur
     const fullMessage = await this.messageRepository.findOne({
       where: { id: savedMessage.id },
-      relations: ['sender', 'conversation', 'replyTo'],
+      relations: ['sender', 'sender.profile', 'conversation', 'replyTo'],
     });
 
     return formatMessageForFrontend(fullMessage, userId);
@@ -200,7 +200,7 @@ export class MessagesService {
 
     const messages = await this.messageRepository.find({
       where: { conversation_id: conversationId },
-      relations: ['sender', 'replyTo'],
+      relations: ['sender', 'sender.profile', 'replyTo'],
       order: { created_at: 'ASC' },
     });
 

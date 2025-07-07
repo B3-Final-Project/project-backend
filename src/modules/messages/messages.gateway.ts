@@ -168,11 +168,16 @@ export class MessagesGateway
         const senderName = sender
           ? `${sender.name} ${sender.surname}`.trim()
           : "Quelqu'un";
+        
+        const senderAvatar = sender?.profile?.avatarUrl || 
+                           sender?.profile?.images?.[0] || 
+                           '/vintage.png';
 
         // Créer un objet message enrichi avec les informations de l'expéditeur
         const enrichedMessage = {
           ...message,
           senderName,
+          senderAvatar,
         };
 
         // Émettre le message enrichi à tous les utilisateurs de la conversation
