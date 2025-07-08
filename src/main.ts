@@ -33,6 +33,7 @@ async function bootstrap() {
       secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
     }),
   });
+  //
 
   app.setGlobalPrefix('api');
 
