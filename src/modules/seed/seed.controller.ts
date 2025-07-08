@@ -91,7 +91,10 @@ export class SeedController {
     )
     count?: number,
   ): Promise<{ message: string; count: number }> {
-    const userCount = await this.seedService.seedUsers(count || 50);
+    const userCount = await this.seedService.seedUsers(
+      count ?? 50,
+      count ?? 50 * 2,
+    );
     return {
       message: 'Users seeded successfully',
       count: userCount,

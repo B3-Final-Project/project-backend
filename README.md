@@ -1,42 +1,73 @@
-# Dating App Server
+# Dating App Backend
 
-## Description
+## Technologies Used
 
-This is the server for the dating app. It is built using Node.js, NestJS, and MongoDB.
+- **Node.js**: JavaScript runtime for server-side applications.
+- **NestJS**: Progressive Node.js framework for building efficient, scalable server-side applications.
+- **TypeORM**: ORM for TypeScript and JavaScript (ES7, ES6, ES5).
+- **PostgreSQL**: Relational database used for persistent storage.
+- **AWS SSO & SOPS**: Secure management of secrets and AWS authentication.
+- **Docker Compose**: For local development and service orchestration.
 
-## Installation
+## Setup Instructions
 
-### Clone the repository
+### 1. Clone the Repository
 
 ```bash
 git clone <repo-url>
+cd projet-b3-backend
 ```
 
-### Install dependencies
+### 2. AWS SSO Login
+
+You need access to AWS resources for secrets decryption and other operations. The AWS SSO configuration is found in the parent `docker compose` module, you will need a registered user in the aws console to decrypt the env variables, to get a user, please contact the admin (Max PINDER-WHITE)
 
 ```bash
-$ npm install
+aws sso login --profile b3
 ```
 
-### Environment variables
+> **Note:** Ensure your AWS config and credentials are set up as described in the infra module.
 
-note: sops must be installed on your machine to get the environment variables
+### 3. Decrypt Environment Files
 
-generate access keys from your aws account and paste them in your config
+This project uses [SOPS](https://github.com/mozilla/sops) for managing encrypted environment files. Make sure SOPS is installed on your machine.
 
-```bash
-aws configure
-```
+- Ensure your `.env` files use **LF (Line Feed)** line endings (not CRLF).
+- Place the encrypted `.env` files in the project root as required.
+
+To decrypt all environment files:
 
 ```bash
 npm run sops:decrypt
 ```
 
-## Running the app
+### 4. Install Dependencies
 
 ```bash
-$ npm run start
+npm install
 ```
+
+### 5. Run the Development Server
+
+```bash
+npm run dev
+```
+
+The server should now be running locally. By default, it will connect to the database and other services as configured in your environment files.
+
+---
+
+## Additional Notes
+
+- For more details on AWS SSO or SOPS setup, refer to the documentation in the parent infrastructure module (`projet-infra`).
+- If you encounter issues with environment variables, double-check line endings and decryption status.
+- For Docker-based development, use the provided `docker-compose.yml`.
+
+---
+
+## License
+
+MIT
 
 
 

@@ -9,4 +9,4 @@ export class RemoveReactionDto {
   @IsNotEmpty()
   @IsString()
   emoji: string;
-} 
+}

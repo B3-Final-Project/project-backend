@@ -78,6 +78,9 @@ export async function seedUsers(dataSource: DataSource, count = 50) {
       min_age: minAge,
       max_age: maxAge,
       max_distance: faker.number.float({ min: 25, max: 150 }),
+      images: faker.helpers.multiple(() => getRandomUserImage(), {
+        count: faker.number.int({ min: 1, max: 5 }),
+      }),
       orientation: faker.helpers.enumValue(OrientationEnum),
       relationship_type: faker.helpers.enumValue(RelationshipTypeEnum),
       smoking: faker.helpers.enumValue(SmokingEnum),
@@ -122,4 +125,10 @@ export async function seedUsersAndInterests(
 ) {
   await seedInterests(dataSource);
   await seedUsers(dataSource, userCount);
+}
+
+function getRandomUserImage() {
+  const gender = faker.helpers.arrayElement(['men', 'women']);
+  const n = faker.number.int({ min: 0, max: 99 });
+  return `https://randomuser.me/api/portraits/${gender}/${n}.jpg`;
 }

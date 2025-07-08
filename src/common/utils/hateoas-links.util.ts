@@ -455,7 +455,8 @@ export class AppLinkBuilders {
       CommonLinkBuilders.self('/messages'),
       {
         rel: 'conversation',
-        href: (resource: any) => `/messages/conversations/${resource.conversation_id}`,
+        href: (resource: any) =>
+          `/messages/conversations/${resource.conversation_id}`,
         method: 'GET',
         title: 'View conversation',
       },
@@ -481,7 +482,8 @@ export class AppLinkBuilders {
     return [
       {
         rel: 'conversation',
-        href: (resource: any) => `/messages/conversations/${resource.conversation_id}`,
+        href: (resource: any) =>
+          `/messages/conversations/${resource.conversation_id}`,
         method: 'GET',
         title: 'View conversation',
       },
@@ -537,6 +539,26 @@ export class AppLinkBuilders {
         href: '/messages',
         method: 'POST',
         title: 'Send message',
+      },
+    ];
+  }
+
+  /**
+   * Geo-location-specific links
+   */
+  static geoLocationLinks(): LinkBuilder[] {
+    return [
+      {
+        rel: 'reverse-geocode',
+        href: '/geolocation/reverse',
+        method: 'PUT',
+        title: 'Reverse geocode coordinates',
+      },
+      {
+        rel: 'search-city',
+        href: '/geolocation/search',
+        method: 'GET',
+        title: 'Search for a city',
       },
     ];
   }

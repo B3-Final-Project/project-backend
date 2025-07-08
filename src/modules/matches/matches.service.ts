@@ -26,12 +26,12 @@ const MATCH_ERROR_TYPES = {
 } as const;
 
 const MATCH_MESSAGES = {
-  MATCH_SUCCESS: 'It\'s a match! Both users liked each other.',
+  MATCH_SUCCESS: "It's a match! Both users liked each other.",
   LIKE_SENT: 'Like sent, waiting for response.',
   PROFILE_ALREADY_PROCESSED_PASS: 'Profile already processed (pass)',
   PROFILE_PASSED: 'Profile passed/seen.',
-  LIKE_ERROR: 'Une erreur s\'est produite lors de l\'envoi du like.',
-  PASS_ERROR: 'Une erreur s\'est produite lors du passage du profil.',
+  LIKE_ERROR: "Une erreur s'est produite lors de l'envoi du like.",
+  PASS_ERROR: "Une erreur s'est produite lors du passage du profil.",
 } as const;
 
 @Injectable()
@@ -45,7 +45,7 @@ export class MatchesService {
     private readonly analyticsService: AnalyticsService,
     private readonly messagesService: MessagesService,
     private readonly messagesGateway: MessagesGateway,
-  ) { }
+  ) {}
 
   /**
    * Helper method to convert profiles to Users
@@ -217,8 +217,10 @@ export class MatchesService {
   ): Promise<void> {
     try {
       // Récupérer les informations des profils pour enrichir les données du match
-      const user1Profile = await this.userRepository.findUserWithProfile(user1Id);
-      const user2Profile = await this.userRepository.findUserWithProfile(user2Id);
+      const user1Profile =
+        await this.userRepository.findUserWithProfile(user1Id);
+      const user2Profile =
+        await this.userRepository.findUserWithProfile(user2Id);
 
       // Créer les données enrichies pour chaque utilisateur
       const matchDataForUser1 = {
@@ -226,8 +228,11 @@ export class MatchesService {
         conversation,
         matchedWith: {
           userId: user2Id,
-          name: user2Profile.name || 'Quelqu\'un',
-          avatar: user2Profile.profile.images?.[0] || user2Profile.profile.avatarUrl || '/vintage.png',
+          name: user2Profile.name || "Quelqu'un",
+          avatar:
+            user2Profile.profile.images?.[0] ||
+            user2Profile.profile.avatarUrl ||
+            '/vintage.png',
           age: user2Profile.age || null,
         },
         timestamp: new Date(),
@@ -238,8 +243,11 @@ export class MatchesService {
         conversation,
         matchedWith: {
           userId: user1Id,
-          name: user1Profile.name || 'Quelqu\'un',
-          avatar: user1Profile.profile.images?.[0] || user1Profile.profile.avatarUrl || '/vintage.png',
+          name: user1Profile.name || "Quelqu'un",
+          avatar:
+            user1Profile.profile.images?.[0] ||
+            user1Profile.profile.avatarUrl ||
+            '/vintage.png',
           age: user1Profile.age || null,
         },
         timestamp: new Date(),
@@ -347,7 +355,10 @@ export class MatchesService {
       const ourProfileId = currentUser.profile.id;
 
       // Check for existing match (SEEN or LIKE)
-      let match = await this.matchRepository.getMatchRow(ourProfileId, profileId);
+      let match = await this.matchRepository.getMatchRow(
+        ourProfileId,
+        profileId,
+      );
       // Always delete previous LIKE logs from this user to the target before saving a new LIKE
       await this.matchRepository.deleteLikesFromTo(ourProfileId, profileId);
       if (match) {
@@ -448,7 +459,10 @@ export class MatchesService {
 
         let conversation;
         try {
-          conversation = await this.createMatchConversation(userId, targetUserId);
+          conversation = await this.createMatchConversation(
+            userId,
+            targetUserId,
+          );
           await this.notifyUsersAboutMatch(userId, targetUserId, conversation);
           this.logger.log('Match conversation created and notifications sent', {
             userId,
@@ -456,11 +470,14 @@ export class MatchesService {
             conversationId: conversation.id,
           });
         } catch (conversationError) {
-          this.logger.error('Error creating conversation or sending notifications', {
-            userId,
-            targetUserId,
-            error: conversationError.message,
-          });
+          this.logger.error(
+            'Error creating conversation or sending notifications',
+            {
+              userId,
+              targetUserId,
+              error: conversationError.message,
+            },
+          );
         }
 
         return {
@@ -536,14 +553,17 @@ export class MatchesService {
           ourProfileId,
           targetProfileId: profileId,
         });
-        
+
         // Émettre la notification d'action de match même si déjà traité
         this.emitMatchActionNotification(userId, {
           type: MATCH_ACTION_TYPES.PASS,
           matchId: profileId.toString(),
         });
-        
-        return { success: false, message: MATCH_MESSAGES.PROFILE_ALREADY_PROCESSED_PASS };
+
+        return {
+          success: false,
+          message: MATCH_MESSAGES.PROFILE_ALREADY_PROCESSED_PASS,
+        };
       }
 
       // Create the seen record (pass = just mark as seen)
@@ -592,12 +612,18 @@ export class MatchesService {
   }
 
   // Méthode pour émettre une notification d'action de match
-  emitMatchActionNotification(userId: string, actionData: { type: 'like' | 'pass'; matchId: string; isMatch?: boolean }) {
+  emitMatchActionNotification(
+    userId: string,
+    actionData: { type: 'like' | 'pass'; matchId: string; isMatch?: boolean },
+  ) {
     this.messagesGateway.emitToUser(userId, 'matchAction', actionData);
   }
 
   // Méthode pour émettre une notification d'erreur de match
-  emitMatchErrorNotification(userId: string, errorData: { type: string; message: string; matchId?: string }) {
+  emitMatchErrorNotification(
+    userId: string,
+    errorData: { type: string; message: string; matchId?: string },
+  ) {
     this.messagesGateway.emitToUser(userId, 'matchError', errorData);
   }
 }

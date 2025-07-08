@@ -6,6 +6,7 @@ import {
   NominatimReverseResponse,
   NominatimSearchResponse,
 } from './interfaces/nominatim.interface';
+import { ReverseGeocodeDto } from './dto/reverse-geocode.dto';
 
 @Injectable()
 export class GeolocateService {
@@ -16,9 +17,9 @@ export class GeolocateService {
   };
 
   async reverseGeocode(
-    lat: number,
-    lon: number,
+    body: ReverseGeocodeDto,
   ): Promise<ReverseGeocodeResultDto> {
+    const { lat, lon } = body;
     try {
       const { data } = await axios.get<NominatimReverseResponse>(
         `${this.NOMINATIM_BASE_URL}/reverse?`,
@@ -37,6 +38,11 @@ export class GeolocateService {
         address?.town ||
         address?.village ||
         address?.municipality;
+      this.logger.log('Reverse geocode result:', {
+        lat,
+        lon,
+        city,
+      });
       return { city: city ?? null };
     } catch (error) {
       this.logger.error(
@@ -60,6 +66,11 @@ export class GeolocateService {
           headers: this.HEADERS,
         },
       );
+      if (!data || data.length === 0) {
+        this.logger.warn(`No results found for city search query: "${query}"`);
+        return [];
+      }
+      this.logger.log(`City search results for query="${query}":`, data);
       return data.map((result) => ({
         name: result.display_name,
         lon: parseFloat(result.lon),
